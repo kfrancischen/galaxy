@@ -1,0 +1,210 @@
+syntax = "proto3";
+
+package galaxy_schema;
+
+service FileSystem {
+    // Directory handling
+    rpc Mkdir( MkdirRequest ) returns ( MkdirResponse ) {}
+    rpc Opendir( OpenDirRequest ) returns( OpenDirResponse ) {}
+    rpc Rmdir( RmdirRequest ) returns ( RmdirResponse ) {}
+    rpc Releasedir( ReleasedirRequest ) returns ( ReleasedirResponse ) {}
+
+    // File handling
+    rpc Mknod( MknodRequest ) returns ( MknodResponse ) {}
+    rpc Open( OpenRequest ) returns ( OpenResponse ) {}
+    rpc Read( ReadRequest ) returns ( ReadResponse ) {}
+    rpc Write( WriteRequest ) returns ( WriteResponse ) {}
+    rpc Unlink( UnlinkRequest ) returns ( UnlinkResponse ) {}
+    rpc Rename( RenameRequest ) returns ( RenameResponse ) {}
+    rpc Release( ReleaseRequest ) returns ( ReleaseResponse ) {}
+    rpc Chmod( ChmodRequest ) returns ( ChmodResponse ) {}
+    rpc Chown( ChownRequest ) returns ( ChownResponse ) {}
+    rpc Access( AccessRequest ) returns ( AccessResponse ) {}
+    rpc Truncate( TruncateRequest ) returns ( TruncateResponse ) {}
+    rpc Fsync( FsyncRequest ) returns ( FsyncResponse ) {}
+}
+
+message FileSystemStatus {
+    int32 return_code = 1;
+}
+
+// process id and owner information
+message Owner {
+    uint32 uid = 1;		/* user ID of owner */
+    uint32 gid = 2;		/* group ID of owner */
+}
+
+message ClientInfo {
+    Owner owner = 1;
+    uint32 pid = 2;		/* process ID */
+}
+
+// Make directory
+
+message MkdirRequest {
+    string name = 1;
+    uint64 mode = 2;
+    ClientInfo info = 3;
+}
+
+message MkdirResponse {
+    FileSystemStatus status = 1;
+}
+
+
+// opening directory
+message OpenDirRequest {
+    string name = 1;
+    ClientInfo info = 2;
+}
+
+message DirEntry {
+    string name = 1;
+    uint64 ino = 2;
+    uint64 mode = 3;
+}
+
+message OpenDirResponse {
+    repeated DirEntry dirs = 1;
+    FileSystemStatus status = 2;
+}
+
+// File handling
+message MknodRequest {
+    string name = 1;
+    uint64 mode = 2;
+    uint64 dev  = 3;
+}
+
+message MknodResponse {
+    FileSystemStatus status = 1;
+}
+
+message OpenRequest {
+    string name = 1;
+    uint32 flags = 2;
+    ClientInfo info = 3;
+}
+
+message OpenResponse {
+    uint32 file_handle = 1;
+    FileSystemStatus status = 2;
+}
+
+message ReadRequest {
+    uint32 file_handle = 1;
+    uint32 size = 2;
+    uint32 offset = 3;
+    ClientInfo info = 4;
+}
+
+message ReadResponse {
+    int32 data_read = 1;
+    bytes data = 2;
+    FileSystemStatus status = 3;
+}
+
+message WriteRequest {
+    uint32 file_handle = 1;
+    bytes data = 2;
+    uint32 size = 3;
+    uint32 offset = 4;
+    ClientInfo info = 5;
+}
+
+message WriteResponse {
+    int32 data_written = 1;
+    FileSystemStatus status = 2;
+}
+
+message UnlinkRequest {
+    string name = 1;
+}
+
+message UnlinkResponse {
+    FileSystemStatus status = 1;
+}
+
+message RenameRequest {
+    string old_name = 1;
+    string new_name = 2;
+}
+
+message RenameResponse {
+    FileSystemStatus status = 1;
+}
+
+message RmdirRequest {
+    string name = 1;
+}
+
+message RmdirResponse {
+    FileSystemStatus status = 1;
+}
+
+message ReleaseRequest {
+    uint32 file_handle = 1;
+}
+
+message ReleaseResponse {
+    FileSystemStatus status = 1;
+}
+
+message ChmodRequest {
+	string name = 1;
+	uint32 mode = 2;
+	ClientInfo info = 3;
+}
+
+message ChmodResponse {
+	FileSystemStatus status = 1;
+}
+
+
+message ChownRequest {
+	string name = 1;
+	uint32 uid = 2;
+	uint32 gid = 3;
+	ClientInfo info = 4;
+}
+
+message ChownResponse {
+	FileSystemStatus status = 1;
+}
+
+message ReleasedirRequest {
+    uint32 file_handle = 1;
+}
+
+message ReleasedirResponse {
+    FileSystemStatus status = 1;
+}
+
+message AccessRequest {
+	string name = 1;
+	uint32 mode = 2;
+	ClientInfo info = 3;
+}
+
+message AccessResponse {
+	FileSystemStatus status = 1;
+}
+
+message TruncateRequest {
+	string name = 1;
+	uint64 size = 2;
+	ClientInfo info = 3;
+}
+
+message TruncateResponse {
+	FileSystemStatus status = 1;
+}
+
+message FsyncRequest {
+	uint32 file_handle = 1;
+	ClientInfo info = 2;
+}
+
+message FsyncResponse {
+	FileSystemStatus status = 1;
+}
