@@ -4,9 +4,12 @@
 #include <cstdio>
 #include <limits.h>
 #include <fstream>
+#include <streambuf>
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/substitute.h"
+#include "absl/time/clock.h"
 #include "glog/logging.h"
 #include <unistd.h>
 #include <dirent.h>
@@ -55,8 +58,22 @@ namespace galaxy {
             return absl::StrJoin(v, seprator);
         }
 
+        std::string GetFileName(const std::string& abs_path) {
+            std::vector<std::string> v = absl::StrSplit(abs_path, kSeperator);
+            CHECK(v.size() >= 1) << "Wrong format of path.";
+            return v.back();
+        }
+
+        std::string GetFileLockName(const std::string& abs_path) {
+            std::string file_name = GetFileName(abs_path);
+            std::string abs_dir = GetFileAbsDir(abs_path);
+            std::string lock_name_template(kLockNameTemplate);
+            std::string lock_name = absl::Substitute(lock_name_template, file_name);
+            return JoinPath(abs_dir, lock_name);
+        }
+
         std::vector<std::string> ListFilesInDir(const std::string& path) {
-            CHECK(ExistDir(path)) << " is not directory or does not exist.";
+            CHECK(ExistDir(path)) << "Input path is not directory or does not exist.";
             std::vector<std::string> file_paths;
 
             DIR* dirp = opendir(path.c_str());
@@ -76,7 +93,7 @@ namespace galaxy {
         }
 
         std::vector<std::string> ListDirsInDir(const std::string& path) {
-            CHECK(ExistDir(path)) << " is not directory or does not exist.";
+            CHECK(ExistDir(path)) << "Input path is not directory or does not exist.";
             std::vector<std::string> dir_paths;
             DIR* dirp = opendir(path.c_str());
             struct dirent* dp;
@@ -95,7 +112,7 @@ namespace galaxy {
         }
 
         bool IsEmpty(const std::string& path) {
-            CHECK(ExistDir(path)) << " is not directory or does not exist.";
+            CHECK(ExistDir(path)) << "Input path is not directory or does not exist.";
             DIR* dirp = opendir(path.c_str());
             struct dirent * dp;
             while ((dp = readdir(dirp)) != NULL) {
@@ -124,7 +141,7 @@ namespace galaxy {
 
         int MkdirRecursive(const std::string &path, mode_t mode, bool check_exist) {
             if (check_exist) {
-                CHECK(internal::ExistDir(path)) << "path does not exist.";
+                CHECK(internal::ExistDir(path)) << "Input path does not exist.";
             }
             char tmp[PATH_MAX];
             char *p;
@@ -219,16 +236,52 @@ namespace galaxy {
             }
         }
 
+        void LockFile(const std::string& lock_name) {
+            while (internal::ExistFile(lock_name)) {
+                absl::SleepFor(kLockRetry);
+            }
+            CreateFileIfNotExist(lock_name, 0777);
+        }
+
+        void UnlockFile(const std::string& lock_name) {
+            CHECK(internal::ExistFile(lock_name)) << "Lock file does not exist.";
+            RmFile(lock_name);
+        }
+
         int RenameFile(const std::string& old_path, const std::string& new_path) {
-            CHECK(!internal::ExistFile(old_path)) << old_path + " does not exist";
-            result = rename(old_path, new_path);
-            if (result == 0) {
-                LOG(INFO) << "Renamed from " << old_path << " to " << new_path;
+            CHECK(internal::ExistFile(old_path)) << old_path + " does not exist";
+            if (rename(old_path.c_str(), new_path.c_str()) == 0) {
+                LOG(INFO) << "Renamed from " << old_path << " to " << new_path << ".";
                 return 0;
             } else{
-                LOG(ERROR) << "Renaming file " << old_path << " failed".
+                LOG(ERROR) << "Renaming file " << old_path << " failed.";
                 return -1;
             }
+        }
+
+        int Read(const std::string& path, std::string& data) {
+            CHECK(internal::ExistFile(path)) << "File " + path + " does not exist.";
+            std::string lock_name = internal::GetFileLockName(path);
+            LockFile(lock_name);
+            std::ifstream infile(path);
+            std::string out((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+            data = out;
+            UnlockFile(lock_name);
+            return 0;
+        }
+
+        int Write(const std::string& path, const std::string& data) {
+            std::string lock_name = internal::GetFileLockName(path);
+            LockFile(lock_name);
+            if (!internal::ExistFile(path)) {
+                LOG(INFO) << "Creating file " << path << ".";
+                CreateFileIfNotExist(path, 0777);
+            }
+            std::ofstream outfile(path);
+            outfile << data;
+            outfile.close();
+            UnlockFile(lock_name);
+            return 0;
         }
     }
 }

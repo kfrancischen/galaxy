@@ -7,6 +7,7 @@ cc_library(
     ],
     deps= [
         "@google_absl//absl/strings",
+        "@google_absl//absl/time",
         "@google_glog//:glog"
     ]
 )

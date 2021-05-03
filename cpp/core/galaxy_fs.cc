@@ -64,4 +64,14 @@ namespace galaxy {
         return galaxy::impl::RenameFile(abs_old_path, abs_new_path);
 
     }
+
+    int GalaxyFs::Read(const std::string& path, std::string& data) {
+        std::string abs_path = internal::JoinPath(root_, path);
+        return galaxy::impl::Read(abs_path, data);
+    }
+
+    int GalaxyFs::Write(const std::string& path, const std::string& data) {
+        std::string abs_path = internal::JoinPath(root_, path);
+        return galaxy::impl::Write(abs_path, data);
+    }
 }

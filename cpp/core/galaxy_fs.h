@@ -30,7 +30,7 @@ namespace galaxy
         int RenameFile(const std::string& old_path, const std::string& new_path);
 
         int Read(const std::string& path, std::string& data);
-        int write(const std::string& path, const std:string& data);
+        int Write(const std::string& path, const std::string& data);
 
     private:
         std::string root_;
