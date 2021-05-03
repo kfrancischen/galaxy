@@ -22,7 +22,7 @@ http_archive(
 )
 
 http_archive(
-  name = "absl",
+  name = "google_absl",
   urls = ["https://github.com/abseil/abseil-cpp/archive/98eb410c93ad059f9bba1bf43f5bb916fc92a5ea.zip"],
   strip_prefix = "abseil-cpp-98eb410c93ad059f9bba1bf43f5bb916fc92a5ea",
   sha256 = "aabf6c57e3834f8dc3873a927f37eaf69975d4b28117fc7427dfb1c661542a87",
@@ -39,6 +39,20 @@ http_archive(
     sha256 = "7954abbb6898830cd10ac9714fbcacf092299fda00ed2baf781172f545120419",
     strip_prefix = "rules_proto_grpc-3.1.1",
     urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/3.1.1.tar.gz"],
+)
+
+http_archive(
+    name = "com_github_gflags_gflags",
+    sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
+    strip_prefix = "gflags-2.2.2",
+    urls = ["https://github.com/gflags/gflags/archive/v2.2.2.tar.gz"],
+)
+
+http_archive(
+    name = "google_glog",
+    sha256 = "62efeb57ff70db9ea2129a16d0f908941e355d09d6d83c9f7b18557c0a7ab59e",
+    strip_prefix = "glog-d516278b1cd33cd148e8989aec488b6049a4ca0b",
+    urls = ["https://github.com/google/glog/archive/d516278b1cd33cd148e8989aec488b6049a4ca0b.zip"],
 )
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
