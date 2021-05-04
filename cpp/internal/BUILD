@@ -6,8 +6,8 @@ cc_library(
         "galaxy_fs_internal.cc",
     ],
     deps= [
-        "@google_absl//absl/strings",
-        "@google_absl//absl/time",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
         "@google_glog//:glog"
     ]
 )

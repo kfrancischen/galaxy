@@ -3,25 +3,24 @@ syntax = "proto3";
 package galaxy_schema;
 
 service FileSystem {
+    // attribute RPC
+    rpc GetAttr( GetAttrRequest ) returns ( GetAttrResponse ) {}
+
     // Directory handling
-    rpc Mkdir( MkdirRequest ) returns ( MkdirResponse ) {}
-    rpc Opendir( OpenDirRequest ) returns( OpenDirResponse ) {}
-    rpc Rmdir( RmdirRequest ) returns ( RmdirResponse ) {}
-    rpc Releasedir( ReleasedirRequest ) returns ( ReleasedirResponse ) {}
+    rpc CreateDirIfNotExist( CreateDirRequest ) returns ( CreateDirResponse ) {}
+    rpc DirOrDie( DirOrDieRequest ) returns( DirOrDieResponse ) {}
+    rpc RmDir( RmDirRequest ) returns ( RmDirResponse ) {}
+    rpc RmDirRecursive( RmDirRecursiveRequest ) returns ( RmDirRecursiveResponse ) {}
+    rpc ListDirsInDir( ListDirsInDirRequest ) returns ( ListDirsInDirResponse ) {}
+    rpc ListFilesInDir( ListFilesInDirRequest ) returns ( ListFilesInDirResponse ) {}
 
     // File handling
-    rpc Mknod( MknodRequest ) returns ( MknodResponse ) {}
-    rpc Open( OpenRequest ) returns ( OpenResponse ) {}
+    rpc CreateFileIfNotExist( CreateFileRequest ) returns ( CreateFileResponse ) {}
+    rpc FileOrDie( FileOrDieRequest ) returns ( FileOrDieResponse ) {}
+    rpc RmFile( RmFileRequest ) returns ( RmFileResponse ) {}
+    rpc RenameFile( RenameFileRequest ) returns ( RenameFileResponse ) {}
     rpc Read( ReadRequest ) returns ( ReadResponse ) {}
     rpc Write( WriteRequest ) returns ( WriteResponse ) {}
-    rpc Unlink( UnlinkRequest ) returns ( UnlinkResponse ) {}
-    rpc Rename( RenameRequest ) returns ( RenameResponse ) {}
-    rpc Release( ReleaseRequest ) returns ( ReleaseResponse ) {}
-    rpc Chmod( ChmodRequest ) returns ( ChmodResponse ) {}
-    rpc Chown( ChownRequest ) returns ( ChownResponse ) {}
-    rpc Access( AccessRequest ) returns ( AccessResponse ) {}
-    rpc Truncate( TruncateRequest ) returns ( TruncateResponse ) {}
-    rpc Fsync( FsyncRequest ) returns ( FsyncResponse ) {}
 }
 
 message FileSystemStatus {
@@ -34,177 +33,162 @@ message Owner {
     uint32 gid = 2;		/* group ID of owner */
 }
 
+message Credential {
+    string password = 1;
+}
+
 message ClientInfo {
     Owner owner = 1;
     uint32 pid = 2;		/* process ID */
 }
 
-// Make directory
 
-message MkdirRequest {
-    string name = 1;
-    uint64 mode = 2;
-    ClientInfo info = 3;
+message Attribute {
+    uint64     dev		= 1;    /* ID of device containing file */
+    uint64     ino		= 2;    /* inode number */
+    uint64     mode		= 3;    /* protection */
+    uint64     nlink 		= 4;   	/* number of hard links */
+    Owner      owner 		= 5;
+    uint64     rdev		= 6;    /* device ID (if special file) */
+    uint64     size		= 7;    /* total size, in bytes */
+    uint64     blksize 		= 8; 	/* blocksize for file system I/O */
+    uint64     blocks 		= 9;  	/* number of 512B blocks allocated */
+    uint64     atime 		= 10;   /* time of last access */
+    uint64     atimens		= 11;
+    uint64     mtime		= 12;   /* time of last modification */
+    uint64     mtimens		= 13;
+    uint64     ctime		= 14;   /* time of last status change */
+    uint64     ctimens		= 15;
 }
 
-message MkdirResponse {
+message GetAttrRequest {
+    string name = 1;
+    ClientInfo info = 2;
+    Credential cred = 3;
+}
+
+message GetAttrResponse {
+	Attribute attr = 1;
+	FileSystemStatus status = 2;
+}
+
+// Make directory
+message CreateDirRequest {
+    string name = 1;
+    uint64 mode = 2;
+    Credential cred = 3;
+}
+
+message CreateDirResponse {
     FileSystemStatus status = 1;
 }
 
-
-// opening directory
-message OpenDirRequest {
+message DirOrDieRequest {
     string name = 1;
-    ClientInfo info = 2;
+    Credential cred = 2;
 }
 
-message DirEntry {
+message DirOrDieResponse {
     string name = 1;
-    uint64 ino = 2;
-    uint64 mode = 3;
+    FileSystemStatus status = 2;
 }
 
-message OpenDirResponse {
-    repeated DirEntry dirs = 1;
+message RmDirRequest {
+    string name = 1;
+    Credential cred = 2;
+}
+
+message RmDirResponse {
+    FileSystemStatus status = 1;
+}
+
+message RmDirRecursiveRequest {
+    string name = 1;
+    Credential cred = 2;
+}
+
+message RmDirRecursiveResponse {
+    FileSystemStatus status = 1;
+}
+
+message ListDirsInDirRequest {
+    string name = 1;
+    Credential cred = 2;
+}
+
+message ListDirsInDirResponse {
+    repeated string sub_dirs = 1;
+    FileSystemStatus status = 2;
+}
+
+
+message ListFilesInDirRequest {
+    string name = 1;
+    Credential cred = 2;
+}
+
+message ListFilesInDirResponse {
+    repeated string sub_files = 1;
     FileSystemStatus status = 2;
 }
 
 // File handling
-message MknodRequest {
+message CreateFileRequest {
     string name = 1;
     uint64 mode = 2;
-    uint64 dev  = 3;
+    Credential cred = 3;
 }
 
-message MknodResponse {
+message CreateFileResponse {
     FileSystemStatus status = 1;
 }
 
-message OpenRequest {
+message FileOrDieRequest {
     string name = 1;
-    uint32 flags = 2;
-    ClientInfo info = 3;
+    Credential cred = 2;
 }
 
-message OpenResponse {
-    uint32 file_handle = 1;
+message FileOrDieResponse {
+    string name = 1;
     FileSystemStatus status = 2;
 }
 
+message RmFileRequest {
+    string name = 1;
+    Credential cred = 2;
+}
+
+message RmFileResponse {
+    FileSystemStatus status = 1;
+}
+
+message RenameFileRequest {
+    string old_name = 1;
+    string new_name = 2;
+    Credential cred = 3;
+}
+
+message RenameFileResponse {
+    FileSystemStatus status = 1;
+}
+
+
 message ReadRequest {
-    uint32 file_handle = 1;
-    uint32 size = 2;
-    uint32 offset = 3;
-    ClientInfo info = 4;
+    string name = 1;
+    Credential cred = 2;
 }
 
 message ReadResponse {
-    int32 data_read = 1;
-    bytes data = 2;
-    FileSystemStatus status = 3;
-}
-
-message WriteRequest {
-    uint32 file_handle = 1;
-    bytes data = 2;
-    uint32 size = 3;
-    uint32 offset = 4;
-    ClientInfo info = 5;
-}
-
-message WriteResponse {
-    int32 data_written = 1;
+    string data = 1;
     FileSystemStatus status = 2;
 }
 
-message UnlinkRequest {
+message WriteRequest {
     string name = 1;
+    string data = 2;
+    ClientInfo info = 3;
 }
 
-message UnlinkResponse {
+message WriteResponse {
     FileSystemStatus status = 1;
-}
-
-message RenameRequest {
-    string old_name = 1;
-    string new_name = 2;
-}
-
-message RenameResponse {
-    FileSystemStatus status = 1;
-}
-
-message RmdirRequest {
-    string name = 1;
-}
-
-message RmdirResponse {
-    FileSystemStatus status = 1;
-}
-
-message ReleaseRequest {
-    uint32 file_handle = 1;
-}
-
-message ReleaseResponse {
-    FileSystemStatus status = 1;
-}
-
-message ChmodRequest {
-	string name = 1;
-	uint32 mode = 2;
-	ClientInfo info = 3;
-}
-
-message ChmodResponse {
-	FileSystemStatus status = 1;
-}
-
-
-message ChownRequest {
-	string name = 1;
-	uint32 uid = 2;
-	uint32 gid = 3;
-	ClientInfo info = 4;
-}
-
-message ChownResponse {
-	FileSystemStatus status = 1;
-}
-
-message ReleasedirRequest {
-    uint32 file_handle = 1;
-}
-
-message ReleasedirResponse {
-    FileSystemStatus status = 1;
-}
-
-message AccessRequest {
-	string name = 1;
-	uint32 mode = 2;
-	ClientInfo info = 3;
-}
-
-message AccessResponse {
-	FileSystemStatus status = 1;
-}
-
-message TruncateRequest {
-	string name = 1;
-	uint64 size = 2;
-	ClientInfo info = 3;
-}
-
-message TruncateResponse {
-	FileSystemStatus status = 1;
-}
-
-message FsyncRequest {
-	uint32 file_handle = 1;
-	ClientInfo info = 2;
-}
-
-message FsyncResponse {
-	FileSystemStatus status = 1;
 }

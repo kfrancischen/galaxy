@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 #include "absl/time/time.h"
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 namespace galaxy {
 
@@ -28,17 +31,20 @@ namespace galaxy {
     namespace impl {
         constexpr absl::Duration kLockRetry = absl::Milliseconds(1);
         int CreateDirIfNotExist(const std::string& path, mode_t mode);
-        int DieDirIfNotExist(const std::string& path, mode_t mode);
+        int DieDirIfNotExist(const std::string& path, std::string& out_path);
 
         int CreateFileIfNotExist(const std::string& path, mode_t mode);
-        int DieFileIfNotExist(const std::string& path, mode_t mode);
+        int DieFileIfNotExist(const std::string& path, std::string& out_path);
+        int ListFilesInDir(const std::string& path, std::vector<std::string>& sub_dirs);
+        int ListDirsInDir(const std::string& path, std::vector<std::string>& sub_files);
 
         int RmDir(const std::string& path);
         int RmDirRecursive(const std::string& path);
-        int RmFile(const std::string& path);
+        int RmFile(const std::string& path, bool require_lock);
         int RenameFile(const std::string& old_path, const std::string& new_path);
         int Read(const std::string& path, std::string& data);
         int Write(const std::string& path, const std::string& data);
+        int GetAttr(const std::string& path, struct stat *statbuf);
     }
 }
 

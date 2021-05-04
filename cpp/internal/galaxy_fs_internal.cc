@@ -11,10 +11,7 @@
 #include "absl/strings/substitute.h"
 #include "absl/time/clock.h"
 #include "glog/logging.h"
-#include <unistd.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 namespace galaxy {
     namespace internal {
@@ -139,10 +136,7 @@ namespace galaxy {
             return 0;
         }
 
-        int MkdirRecursive(const std::string &path, mode_t mode, bool check_exist) {
-            if (check_exist) {
-                CHECK(internal::ExistDir(path)) << "Input path does not exist.";
-            }
+        int MkdirRecursive(const std::string &path, mode_t mode) {
             char tmp[PATH_MAX];
             char *p;
 
@@ -167,11 +161,17 @@ namespace galaxy {
 
     namespace impl {
         int CreateDirIfNotExist(const std::string &path, mode_t mode) {
-            return internal::MkdirRecursive(path, mode, false);
+            return internal::MkdirRecursive(path, mode);
         }
 
-        int DieDirIfNotExist(const std::string &path, mode_t mode) {
-            return internal::MkdirRecursive(path, mode, true);
+        int DieDirIfNotExist(const std::string &path, std::string& out_path) {
+            if (!internal::ExistDir(path)) {
+                LOG(ERROR) << "Path " << path << " does not exist.";
+                return -1;
+            } else {
+                out_path = path;
+                return 0;
+            }
         }
 
         int CreateFileIfNotExist(const std::string& path, mode_t mode) {
@@ -186,10 +186,35 @@ namespace galaxy {
             return 0;
         }
 
-        int DieFileIfNotExist(const std::string& path, mode_t mode) {
+        int DieFileIfNotExist(const std::string& path, std::string& out_path) {
             std::string dir = internal::GetFileAbsDir(path);
-            DieDirIfNotExist(dir, mode);
-            CHECK(!internal::ExistFile(path)) << "File does not exist";
+            if (!internal::ExistFile(path) || DieDirIfNotExist(dir, dir) != 0) {
+                LOG(ERROR) << "Path " << path << " does not exist.";
+                return -1;
+            } else {
+                out_path = path;
+                return 0;
+            }
+        }
+
+        int ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs) {
+            if (!internal::ExistDir(path)) {
+                LOG(ERROR) << "Path " << path << " does not exist.";
+                return -1;
+            }
+            std::vector<std::string> dirs = internal::ListDirsInDir(path);
+            sub_dirs.assign(dirs.begin(), dirs.end());
+            return 0;
+        }
+
+
+        int ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files) {
+            if (!internal::ExistDir(path)) {
+                LOG(ERROR) << "Path " << path << " does not exist.";
+                return -1;
+            }
+            std::vector<std::string> files = internal::ListFilesInDir(path);
+            sub_files.assign(files.begin(), files.end());
             return 0;
         }
 
@@ -200,7 +225,7 @@ namespace galaxy {
             }
             std::vector<std::string> file_paths = internal::ListFilesInDir(path);
             for (const auto & file_path : file_paths) {
-                RmFile(file_path);
+                RmFile(file_path, true);
             }
             if (rmdir(path.c_str()) == 0) {
                 LOG(INFO) << "Removed directory " << path << ".";
@@ -221,21 +246,6 @@ namespace galaxy {
             return RmDir(path);
         }
 
-        int RmFile(const std::string& path) {
-            if (!internal::ExistFile(path)) {
-                LOG(WARNING) << "File " << path << " does not exist.";
-                return 1;
-            } else {
-                if (remove(path.c_str()) != 0) {
-                    LOG(ERROR) << "Removing file " << path << " failed.";
-                    return -1;
-                } else {
-                    LOG(INFO) << "Removed file " << path << ".";
-                    return 0;
-                }
-            }
-        }
-
         void LockFile(const std::string& lock_name) {
             while (internal::ExistFile(lock_name)) {
                 absl::SleepFor(kLockRetry);
@@ -245,7 +255,31 @@ namespace galaxy {
 
         void UnlockFile(const std::string& lock_name) {
             CHECK(internal::ExistFile(lock_name)) << "Lock file does not exist.";
-            RmFile(lock_name);
+            RmFile(lock_name, false);
+        }
+
+
+        int RmFile(const std::string& path, bool require_lock) {
+            if (!internal::ExistFile(path)) {
+                LOG(WARNING) << "File " << path << " does not exist.";
+                return 1;
+            } else {
+                std::string lock_name = internal::GetFileLockName(path);
+                if (require_lock) {
+                    LockFile(lock_name);
+                }
+                int status = remove(path.c_str());
+                if (require_lock) {
+                    UnlockFile(lock_name);
+                }
+                if ( status!= 0) {
+                    LOG(ERROR) << "Removing file " << path << " failed.";
+                    return -1;
+                } else {
+                    LOG(INFO) << "Removed file " << path << ".";
+                    return 0;
+                }
+            }
         }
 
         int RenameFile(const std::string& old_path, const std::string& new_path) {
@@ -282,6 +316,14 @@ namespace galaxy {
             outfile.close();
             UnlockFile(lock_name);
             return 0;
+        }
+
+        int GetAttr(const std::string& path, struct stat *statbuf) {
+            if (lstat(path.c_str(), statbuf) == 0) {
+                return 0;
+            } else {
+                return -1;
+            }
         }
     }
 }
