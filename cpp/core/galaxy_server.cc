@@ -1,7 +1,17 @@
+#include <string>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "cpp/core/galaxy_server.h"
+#include "cpp/core/galaxy_fs.h"
 
 using grpc::ServerContext;
 using grpc::Status;
+
+using galaxy_schema::FileSystemStatus;
+using galaxy_schema::Credential;
+using galaxy_schema::ClientInfo;
+using galaxy_schema::Attribute;
 
 using galaxy_schema::CreateDirRequest;
 using galaxy_schema::CreateDirResponse;
@@ -36,6 +46,10 @@ namespace galaxy
     Status GalaxyServerImpl::GetAttr(ServerContext *context, const GetAttrRequest *request,
                                      GetAttrResponse *reply)
     {
+        std::string path = request->name();
+        struct stat statbuf;
+        GalaxyFs::Instance()->GetAttr(path, &statbuf);
+
         return Status::OK;
     }
 
