@@ -12,7 +12,6 @@ using grpc::Status;
 using galaxy_schema::Owner;
 using galaxy_schema::FileSystemStatus;
 using galaxy_schema::Credential;
-using galaxy_schema::ClientInfo;
 using galaxy_schema::Attribute;
 
 using galaxy_schema::CreateDirRequest;
@@ -50,7 +49,7 @@ namespace galaxy
     }
 
     absl::Status GalaxyServerImpl::VerifyPassword(const Credential& cred) {
-        if (cred.password() == password_) {
+        if (cred.password() != password_) {
             return absl::PermissionDeniedError("Wrong password.");
         } else {
             return absl::OkStatus();
@@ -67,11 +66,12 @@ namespace galaxy
         struct stat statbuf;
         std::string path = request->name();
         if (GalaxyFs::Instance()->GetAttr(path, &statbuf) != 0) {
+            LOG(ERROR) << "GetAttr failed.";
             return Status::CANCELLED;
         } else {
             FileSystemStatus status;
             Owner owner;
-            status.set_return_code(0);
+            status.set_return_code(1);
             owner.set_uid(statbuf.st_uid);
             owner.set_uid(statbuf.st_gid);
 
@@ -98,73 +98,229 @@ namespace galaxy
     Status GalaxyServerImpl::CreateDirIfNotExist(ServerContext *context, const CreateDirRequest *request,
                                                  CreateDirResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        if (GalaxyFs::Instance()->CreateDirIfNotExist(request->name(), request->mode()) != 0) {
+            LOG(ERROR) << "CreateDirIfNotExist failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::DirOrDie(ServerContext *context, const DirOrDieRequest *request,
                                       DirOrDieResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        std::string out_path;
+        if (GalaxyFs::Instance()->DieDirIfNotExist(request->name(), out_path) != 0) {
+            LOG(ERROR) << "DieDirIfNotExist failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            reply->set_name(out_path);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::RmDir(ServerContext *context, const RmDirRequest *request,
                                    RmDirResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        if (GalaxyFs::Instance()->RmDir(request->name()) != 0) {
+            LOG(ERROR) << "RmDir failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::RmDirRecursive(ServerContext *context, const RmDirRecursiveRequest *request,
                                             RmDirRecursiveResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        if (GalaxyFs::Instance()->RmDirRecursive(request->name()) != 0) {
+            LOG(ERROR) << "RmDirRecursive failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
-    Status GalaxyServerImpl::CreateFileIfNotExist(ServerContext *context, const CreateFileRequest *request,
-                                                  CreateFileResponse *reply)
-    {
-        return Status::OK;
-    }
 
     Status GalaxyServerImpl::ListDirsInDir(ServerContext *context, const ListDirsInDirRequest *request,
                                            ListDirsInDirResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        std::vector<std::string> dirs;
+        if (GalaxyFs::Instance()->ListDirsInDir(request->name(), dirs) != 0) {
+            LOG(ERROR) << "ListDirsInDir failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            *reply->mutable_sub_dirs() = {dirs.begin(), dirs.end()};
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::ListFilesInDir(ServerContext *context, const ListFilesInDirRequest *request,
                                             ListFilesInDirResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        std::vector<std::string> files;
+        if (GalaxyFs::Instance()->ListFilesInDir(request->name(), files) != 0) {
+            LOG(ERROR) << "ListFilesInDir failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            *reply->mutable_sub_files() = {files.begin(), files.end()};
+            return Status::OK;
+        }
+    }
+
+
+    Status GalaxyServerImpl::CreateFileIfNotExist(ServerContext *context, const CreateFileRequest *request,
+                                                  CreateFileResponse *reply)
+    {
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        if (GalaxyFs::Instance()->CreateFileIfNotExist(request->name(), request->mode()) != 0) {
+            LOG(ERROR) << "CreateFileIfNotExist failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::FileOrDie(ServerContext *context, const FileOrDieRequest *request,
                                        FileOrDieResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        std::string out_path;
+        if (GalaxyFs::Instance()->DieFileIfNotExist(request->name(), out_path) != 0) {
+            LOG(ERROR) << "DieFileIfNotExist failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            reply->set_name(out_path);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::RmFile(ServerContext *context, const RmFileRequest *request,
                                     RmFileResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        if (GalaxyFs::Instance()->RmFile(request->name()) != 0) {
+            LOG(ERROR) << "RmFile failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::RenameFile(ServerContext *context, const RenameFileRequest *request,
                                         RenameFileResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        if (GalaxyFs::Instance()->RenameFile(request->old_name(), request->new_name()) != 0) {
+            LOG(ERROR) << "RenameFile failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::Read(ServerContext *context, const ReadRequest *request,
                                   ReadResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        std::string data;
+        if (GalaxyFs::Instance()->Read(request->name(), data) != 0) {
+            LOG(ERROR) << "Read failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            reply->set_data(data);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::Write(ServerContext *context, const WriteRequest *request,
                                    WriteResponse *reply)
     {
-        return Status::OK;
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
+        if (GalaxyFs::Instance()->Write(request->name(), request->data()) != 0) {
+            LOG(ERROR) << "Write failed.";
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
 } // namespace galaxy

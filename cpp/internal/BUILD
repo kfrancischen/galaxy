@@ -1,3 +1,5 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 cc_library(
     name = "galaxy_fs_internal_lib",
     visibility = ["//cpp/core:__subpackages__"],
@@ -9,5 +11,21 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@google_glog//:glog"
+    ]
+)
+
+cc_library(
+    name = "galaxy_client_internal_lib",
+    visibility = ["//cpp:__subpackages__"],
+    srcs = [
+        "galaxy_client_internal.h",
+        "galaxy_client_internal.cc",
+    ],
+    deps= [
+        "//schema:fileserver_cc_grpc",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@google_glog//:glog",
+        "@com_github_grpc_grpc//:grpc++",
     ]
 )

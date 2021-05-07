@@ -284,7 +284,14 @@ namespace galaxy {
 
         int RenameFile(const std::string& old_path, const std::string& new_path) {
             CHECK(internal::ExistFile(old_path)) << old_path + " does not exist";
-            if (rename(old_path.c_str(), new_path.c_str()) == 0) {
+            std::string old_lock_name = internal::GetFileLockName(old_path);
+            std::string new_lock_name = internal::GetFileLockName(new_path);
+            LockFile(old_lock_name);
+            LockFile(new_lock_name);
+            int status = rename(old_path.c_str(), new_path.c_str());
+            UnlockFile(old_lock_name);
+            UnlockFile(new_lock_name);
+            if (status == 0) {
                 LOG(INFO) << "Renamed from " << old_path << " to " << new_path << ".";
                 return 0;
             } else{

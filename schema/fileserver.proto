@@ -37,12 +37,6 @@ message Credential {
     string password = 1;
 }
 
-message ClientInfo {
-    Owner owner = 1;
-    uint32 pid = 2;		/* process ID */
-}
-
-
 message Attribute {
     uint64     dev		= 1;    /* ID of device containing file */
     uint64     ino		= 2;    /* inode number */
@@ -63,8 +57,7 @@ message Attribute {
 
 message GetAttrRequest {
     string name = 1;
-    ClientInfo info = 2;
-    Credential cred = 3;
+    Credential cred = 2;
 }
 
 message GetAttrResponse {
@@ -186,7 +179,7 @@ message ReadResponse {
 message WriteRequest {
     string name = 1;
     string data = 2;
-    ClientInfo info = 3;
+    Credential cred = 3;
 }
 
 message WriteResponse {
