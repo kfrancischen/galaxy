@@ -4,5 +4,6 @@
 
 ABSL_DECLARE_FLAG(std::string, fs_root);
 ABSL_DECLARE_FLAG(std::string, fs_address);
+ABSL_DECLARE_FLAG(std::string, fs_password);
 
 #endif  // CPP_CORE_GALAXY_FLAG_H_

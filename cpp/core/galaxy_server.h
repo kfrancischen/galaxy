@@ -3,6 +3,7 @@
 
 #include <grpcpp/grpcpp.h>
 #include "schema/fileserver.grpc.pb.h"
+#include "absl/status/status.h"
 
 namespace galaxy
 {
@@ -47,6 +48,13 @@ namespace galaxy
 
         grpc::Status Write(grpc::ServerContext *context, const galaxy_schema::WriteRequest *request,
                            galaxy_schema::WriteResponse *reply) override;
+
+        void SetPassword(const std::string& password);
+
+        absl::Status VerifyPassword(const galaxy_schema::Credential& cred);
+
+    private:
+        std::string password_;
     };
 } // namespace galaxy
 

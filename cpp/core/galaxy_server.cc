@@ -2,12 +2,14 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "glog/logging.h"
 #include "cpp/core/galaxy_server.h"
 #include "cpp/core/galaxy_fs.h"
 
 using grpc::ServerContext;
 using grpc::Status;
 
+using galaxy_schema::Owner;
 using galaxy_schema::FileSystemStatus;
 using galaxy_schema::Credential;
 using galaxy_schema::ClientInfo;
@@ -43,14 +45,54 @@ using galaxy_schema::WriteResponse;
 namespace galaxy
 {
 
+    void GalaxyServerImpl::SetPassword(const std::string& password) {
+        password_ = password;
+    }
+
+    absl::Status GalaxyServerImpl::VerifyPassword(const Credential& cred) {
+        if (cred.password() == password_) {
+            return absl::PermissionDeniedError("Wrong password.");
+        } else {
+            return absl::OkStatus();
+        }
+    }
+
     Status GalaxyServerImpl::GetAttr(ServerContext *context, const GetAttrRequest *request,
                                      GetAttrResponse *reply)
     {
-        std::string path = request->name();
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client.";
+            return Status::CANCELLED;
+        }
         struct stat statbuf;
-        GalaxyFs::Instance()->GetAttr(path, &statbuf);
+        std::string path = request->name();
+        if (GalaxyFs::Instance()->GetAttr(path, &statbuf) != 0) {
+            return Status::CANCELLED;
+        } else {
+            FileSystemStatus status;
+            Owner owner;
+            status.set_return_code(0);
+            owner.set_uid(statbuf.st_uid);
+            owner.set_uid(statbuf.st_gid);
 
-        return Status::OK;
+            Attribute attributes;
+            attributes.set_dev(statbuf.st_dev);
+            attributes.set_ino(statbuf.st_ino);
+            attributes.set_mode(statbuf.st_mode);
+            attributes.set_nlink(statbuf.st_nlink);
+            attributes.mutable_owner()->CopyFrom(owner);
+            attributes.set_rdev(statbuf.st_rdev);
+            attributes.set_size(statbuf.st_size);
+            attributes.set_blksize(statbuf.st_blksize);
+            attributes.set_blocks(statbuf.st_blocks);
+            attributes.set_atime(statbuf.st_atime);
+            attributes.set_mtime(statbuf.st_mtime);
+            attributes.set_ctime(statbuf.st_ctime);
+
+            reply->mutable_attr()->CopyFrom(attributes);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
     }
 
     Status GalaxyServerImpl::CreateDirIfNotExist(ServerContext *context, const CreateDirRequest *request,

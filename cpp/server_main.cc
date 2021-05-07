@@ -17,6 +17,7 @@ void RunGalaxyServer()
 {
     std::string server_address(absl::GetFlag(FLAGS_fs_address));
     GalaxyServerImpl galaxy_service;
+    galaxy_service.SetPassword(absl::GetFlag(FLAGS_fs_password));
 
     ServerBuilder builder;
 
