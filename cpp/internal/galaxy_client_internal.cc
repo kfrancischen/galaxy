@@ -163,6 +163,17 @@ namespace galaxy
             throw status.error_message();
         }
     }
+    RenameFileResponse GalaxyClientInternal::RenameFile(const RenameFileRequest &request) {
+        RenameFileResponse reply;
+        ClientContext context;
+        Status status = stub_->RenameFile(&context, request, &reply);
+        if (status.ok()) {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
 
     ReadResponse GalaxyClientInternal::Read(const ReadRequest &request)
     {

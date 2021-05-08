@@ -8,5 +8,10 @@ ABSL_DECLARE_FLAG(std::string, fs_password);
 ABSL_DECLARE_FLAG(int, fs_log_ttl);
 ABSL_DECLARE_FLAG(std::string, fs_log_dir);
 ABSL_DECLARE_FLAG(int, fs_verbose_level);
+ABSL_DECLARE_FLAG(bool, fs_alsologtostderr);
+
+// Global configurations
+ABSL_DECLARE_FLAG(std::string, fs_global_config);
+ABSL_DECLARE_FLAG(std::string, fs_cell);
 
 #endif  // CPP_CORE_GALAXY_FLAG_H_

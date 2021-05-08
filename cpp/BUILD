@@ -9,6 +9,7 @@ cc_binary(
     deps = [
         "//cpp/core:galaxy_server_impl_lib",
         "//cpp/core:galaxy_flag_lib",
+        "//cpp/util:galaxy_util_lib",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@google_glog//:glog"
@@ -26,6 +27,7 @@ cc_library(
         "//schema:fileserver_cc_grpc",
         "//cpp/core:galaxy_flag_lib",
         "//cpp/internal:galaxy_client_internal_lib",
+        "//cpp/util:galaxy_util_lib",
         "@google_glog//:glog",
         "@com_google_absl//absl/flags:flag",
         "@com_github_grpc_grpc//:grpc++",

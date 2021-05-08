@@ -7,6 +7,7 @@
 
 namespace galaxy {
     namespace client {
+        
         void CreateDirIfNotExist(const std::string& path, const int mode=0777);
         std::string DirOrDie(const std::string& path);
         void RmDir(const std::string& path);

@@ -1,5 +1,6 @@
 #include "cpp/client.h"
 #include "cpp/core/galaxy_flag.h"
+#include "cpp/util/galaxy_util.h"
 #include "absl/flags/flag.h"
 
 using galaxy_schema::Owner;
@@ -37,11 +38,27 @@ using galaxy_schema::WriteResponse;
 
 using galaxy::GalaxyClientInternal;
 
+
+absl::StatusOr<std::string> InitClient(const std::string& path) {
+    absl::StatusOr<std::pair<std::string, std::string>> cell_and_path = galaxy::util::GetCellAndPathFromPath(path);
+    if (!cell_and_path.ok()) {
+        return absl::InternalError("Wrong format of path.");
+    } else {
+        absl::SetFlag(&FLAGS_fs_cell, (*cell_and_path).first);
+        return (*cell_and_path).second;
+    }
+}
+
+
 void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         CreateDirRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.set_mode(mode);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         CreateDirResponse response = client.CreateDirIfNotExist(request);
@@ -55,10 +72,14 @@ void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode
 }
 
 std::string galaxy::client::DirOrDie(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         DirOrDieRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         DirOrDieResponse response = client.DirOrDie(request);
         FileSystemStatus status = response.status();
@@ -73,10 +94,14 @@ std::string galaxy::client::DirOrDie(const std::string& path) {
 }
 
 void galaxy::client::RmDir(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RmDirRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RmDirResponse response = client.RmDir(request);
         FileSystemStatus status = response.status();
@@ -89,10 +114,14 @@ void galaxy::client::RmDir(const std::string& path) {
 }
 
 void galaxy::client::RmDirRecursive(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RmDirRecursiveRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RmDirRecursiveResponse response = client.RmDirRecursive(request);
         FileSystemStatus status = response.status();
@@ -105,10 +134,14 @@ void galaxy::client::RmDirRecursive(const std::string& path) {
 }
 
 std::vector<std::string> galaxy::client::ListDirsInDir(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         ListDirsInDirRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         ListDirsInDirResponse response = client.ListDirsInDir(request);
         FileSystemStatus status = response.status();
@@ -124,10 +157,14 @@ std::vector<std::string> galaxy::client::ListDirsInDir(const std::string& path) 
 }
 
 std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         ListFilesInDirRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         ListFilesInDirResponse response = client.ListFilesInDir(request);
         FileSystemStatus status = response.status();
@@ -143,10 +180,14 @@ std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path)
 }
 
 void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mode) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         CreateFileRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.set_mode(mode);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         CreateFileResponse response = client.CreateFileIfNotExist(request);
@@ -160,10 +201,14 @@ void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mod
 }
 
 std::string galaxy::client::FileOrDie(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         FileOrDieRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         FileOrDieResponse response = client.FileOrDie(request);
         FileSystemStatus status = response.status();
@@ -178,10 +223,14 @@ std::string galaxy::client::FileOrDie(const std::string& path) {
 }
 
 void galaxy::client::RmFile(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RmFileRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RmFileResponse response = client.RmFile(request);
         FileSystemStatus status = response.status();
@@ -194,11 +243,17 @@ void galaxy::client::RmFile(const std::string& path) {
 }
 
 void galaxy::client::RenameFile(const std::string& old_path, const std::string& new_path) {
+    absl::StatusOr<std::string> old_path_or = InitClient(old_path);
+    CHECK(old_path_or.ok()) << "Wrong format of path " << old_path;
+    absl::StatusOr<std::string> new_path_or = InitClient(new_path);
+    CHECK(new_path_or.ok()) << "Wrong format of path " << new_path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RenameFileRequest request;
-        request.set_old_name(old_path);
-        request.set_new_name(new_path);
+        request.set_old_name(*old_path_or);
+        request.set_new_name(*new_path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RenameFileResponse response = client.RenameFile(request);
         FileSystemStatus status = response.status();
@@ -211,10 +266,14 @@ void galaxy::client::RenameFile(const std::string& old_path, const std::string& 
 }
 
 std::string galaxy::client::Read(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         ReadRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         ReadResponse response = client.Read(request);
         FileSystemStatus status = response.status();
@@ -229,11 +288,15 @@ std::string galaxy::client::Read(const std::string& path) {
 }
 
 void galaxy::client::Write(const std::string& path, const std::string& data, const std::string& mode) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     CHECK(mode == "a" || mode == "w");
     try {
         WriteRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.set_data(data);
         if (mode == "a") {
             request.set_mode(WriteMode::APPEND);
@@ -252,10 +315,14 @@ void galaxy::client::Write(const std::string& path, const std::string& data, con
 }
 
 std::string galaxy::client::GetAttr(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    CHECK(path_or.ok()) << "Wrong format of path " << path;
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    CHECK(result.ok()) << "Fail to parse the global config.";
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         GetAttrRequest request;
-        request.set_name(path);
+        request.set_name(*path_or);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         GetAttrResponse response = client.GetAttr(request);
         FileSystemStatus status = response.status();
