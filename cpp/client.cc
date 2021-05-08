@@ -71,7 +71,7 @@ std::string galaxy::client::DirOrDie(const std::string& path) {
     }
 }
 
-void RmDir(const std::string& path) {
+void galaxy::client::RmDir(const std::string& path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RmDirRequest request;
@@ -87,7 +87,7 @@ void RmDir(const std::string& path) {
     }
 }
 
-void RmDirRecursive(const std::string& path) {
+void galaxy::client::RmDirRecursive(const std::string& path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RmDirRecursiveRequest request;
@@ -103,7 +103,7 @@ void RmDirRecursive(const std::string& path) {
     }
 }
 
-std::vector<std::string> ListDirsInDir(const std::string& path) {
+std::vector<std::string> galaxy::client::ListDirsInDir(const std::string& path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         ListDirsInDirRequest request;
@@ -122,7 +122,7 @@ std::vector<std::string> ListDirsInDir(const std::string& path) {
     }
 }
 
-std::vector<std::string> ListFilesInDir(const std::string& path) {
+std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         ListFilesInDirRequest request;
@@ -141,7 +141,7 @@ std::vector<std::string> ListFilesInDir(const std::string& path) {
     }
 }
 
-void CreateFileIfNotExist(const std::string& path, const int mode) {
+void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mode) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         CreateFileRequest request;
@@ -158,7 +158,7 @@ void CreateFileIfNotExist(const std::string& path, const int mode) {
     }
 }
 
-std::string FileOrDie(const std::string& path) {
+std::string galaxy::client::FileOrDie(const std::string& path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         FileOrDieRequest request;
@@ -176,7 +176,7 @@ std::string FileOrDie(const std::string& path) {
     }
 }
 
-void RmFile(const std::string& path) {
+void galaxy::client::RmFile(const std::string& path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RmFileRequest request;
@@ -192,7 +192,7 @@ void RmFile(const std::string& path) {
     }
 }
 
-void RenameFile(const std::string& old_path, const std::string& new_path) {
+void galaxy::client::RenameFile(const std::string& old_path, const std::string& new_path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         RenameFileRequest request;
@@ -209,7 +209,7 @@ void RenameFile(const std::string& old_path, const std::string& new_path) {
     }
 }
 
-std::string Read(const std::string& path) {
+std::string galaxy::client::Read(const std::string& path) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         ReadRequest request;
@@ -227,7 +227,7 @@ std::string Read(const std::string& path) {
     }
 }
 
-void Write(const std::string& path, const std::string& data) {
+void galaxy::client::Write(const std::string& path, const std::string& data) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
     try {
         WriteRequest request;
@@ -241,5 +241,23 @@ void Write(const std::string& path, const std::string& data) {
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
+    }
+}
+
+std::string galaxy::client::GetAttr(const std::string& path) {
+    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    try {
+        GetAttrRequest request;
+        request.set_name(path);
+        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        GetAttrResponse response = client.GetAttr(request);
+        FileSystemStatus status = response.status();
+        CHECK_EQ(status.return_code(), 1);
+        return response.attr().DebugString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return "";
     }
 }

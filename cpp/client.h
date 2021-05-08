@@ -19,6 +19,7 @@ namespace galaxy {
         void RenameFile(const std::string& old_path, const std::string& new_path);
         std::string Read(const std::string& path);
         void Write(const std::string& path, const std::string& data);
+        std::string GetAttr(const std::string& path);
     }  // namespace client
 } // namespace galaxy
 
