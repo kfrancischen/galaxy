@@ -47,30 +47,42 @@ namespace galaxy {
             }
         }
 
-        std::string GetFileAbsDir(const std::string& abs_path) {
+        absl::StatusOr<std::string> GetFileAbsDir(const std::string& abs_path) {
             std::vector<std::string> v = absl::StrSplit(abs_path, kSeperator);
-            CHECK(v.size() >= 1) << "Wrong format of path.";
+            if (v.size() < 1) {
+                return absl::FailedPreconditionError("Path incorrect.");
+            }
+
             v.pop_back();
             std::string seprator(1, kSeperator);
             return absl::StrJoin(v, seprator);
         }
 
-        std::string GetFileName(const std::string& abs_path) {
+        absl::StatusOr<std::string> GetFileName(const std::string& abs_path) {
             std::vector<std::string> v = absl::StrSplit(abs_path, kSeperator);
-            CHECK(v.size() >= 1) << "Wrong format of path.";
+            if (v.size() < 1) {
+                return absl::FailedPreconditionError("Path incorrect.");
+            }
             return v.back();
         }
 
-        std::string GetFileLockName(const std::string& abs_path) {
-            std::string file_name = GetFileName(abs_path);
-            std::string abs_dir = GetFileAbsDir(abs_path);
-            std::string lock_name_template(kLockNameTemplate);
-            std::string lock_name = absl::Substitute(lock_name_template, file_name);
-            return JoinPath(abs_dir, lock_name);
+        absl::StatusOr<std::string> GetFileLockName(const std::string& abs_path) {
+            absl::StatusOr<std::string> file_name = GetFileName(abs_path);
+            absl::StatusOr<std::string> abs_dir = GetFileAbsDir(abs_path);
+            if (file_name.ok() && abs_dir.ok()) {
+                std::string lock_name_template(kLockNameTemplate);
+                std::string lock_name = absl::Substitute(lock_name_template, *file_name);
+                return JoinPath(*abs_dir, lock_name);
+            } else {
+                return absl::FailedPreconditionError("Path incorrect.");
+            }
+
         }
 
-        std::vector<std::string> ListFilesInDir(const std::string& path) {
-            CHECK(ExistDir(path)) << "Input path is not directory or does not exist.";
+        absl::StatusOr<std::vector<std::string>> ListFilesInDir(const std::string& path) {
+            if (!ExistDir(path)) {
+                return absl::NotFoundError("Input path is not directory or does not exist.");
+            }
             std::vector<std::string> file_paths;
 
             DIR* dirp = opendir(path.c_str());
@@ -89,8 +101,10 @@ namespace galaxy {
             return file_paths;
         }
 
-        std::vector<std::string> ListDirsInDir(const std::string& path) {
-            CHECK(ExistDir(path)) << "Input path is not directory or does not exist.";
+        absl::StatusOr<std::vector<std::string>> ListDirsInDir(const std::string& path) {
+            if (!ExistDir(path)) {
+                return absl::NotFoundError("Input path is not directory or does not exist.");
+            }
             std::vector<std::string> dir_paths;
             DIR* dirp = opendir(path.c_str());
             struct dirent* dp;
@@ -109,7 +123,9 @@ namespace galaxy {
         }
 
         bool IsEmpty(const std::string& path) {
-            CHECK(ExistDir(path)) << "Input path is not directory or does not exist.";
+            if (!ExistDir(path)) {
+                return true;;
+            }
             DIR* dirp = opendir(path.c_str());
             struct dirent * dp;
             while ((dp = readdir(dirp)) != NULL) {
@@ -125,11 +141,11 @@ namespace galaxy {
 
         int Mkdir(const std::string& path, mode_t mode) {
             if (ExistDir(path)) {
-                LOG(INFO) << "Directory " << path << " already exist.";
+                VLOG_EVERY_N(1, 10) << "Directory " << path << " already exist.";
             } else {
-                LOG(INFO) << "Making directory " + path << ".";
+                VLOG_EVERY_N(1, 10) << "Making directory " << path << ".";
                 if (mkdir(path.c_str(), mode) != 0 && errno != EEXIST) {
-                    LOG(ERROR) << "Making directory " + path << " failed.";
+                    LOG(ERROR) << "Making directory " << path << " failed.";
                     return -1;
                 }
             }
@@ -160,87 +176,114 @@ namespace galaxy {
     }
 
     namespace impl {
-        int CreateDirIfNotExist(const std::string &path, mode_t mode) {
-            return internal::MkdirRecursive(path, mode);
-        }
 
-        int DieDirIfNotExist(const std::string &path, std::string& out_path) {
-            if (!internal::ExistDir(path)) {
-                LOG(ERROR) << "Path " << path << " does not exist.";
-                return -1;
+        absl::Status CreateDirIfNotExist(const std::string &path, mode_t mode) {
+            if (internal::MkdirRecursive(path, mode) != 0) {
+                return absl::InvalidArgumentError("Invalid argument for CreateDirIfNotExist: " + path + ".");
             } else {
-                out_path = path;
-                return 0;
+                return absl::OkStatus();
             }
         }
 
-        int CreateFileIfNotExist(const std::string& path, mode_t mode) {
-            std::string dir = internal::GetFileAbsDir(path);
-            CHECK_EQ(CreateDirIfNotExist(dir, mode), 0) << "Creating directory failed.";
+        absl::Status DieDirIfNotExist(const std::string &path, std::string& out_path) {
+            if (!internal::ExistDir(path)) {
+                LOG(ERROR) << "Path " << path << " does not exist during function call DieDirIfNotExist.";
+                return absl::NotFoundError("Path " + path + " does not exist for DieDirIfNotExist.");
+            } else {
+                out_path = path;
+                return absl::OkStatus();
+            }
+        }
+
+        absl::Status CreateFileIfNotExist(const std::string& path, mode_t mode) {
+            absl::StatusOr<std::string> dir = internal::GetFileAbsDir(path);
+            if (!dir.ok() || !CreateDirIfNotExist(*dir, mode).ok()){
+                return absl::InternalError("CreateFileIfNotExist failed for " + path + " because dir creation failed.");
+            }
             if (internal::ExistFile(path)) {
-                LOG(INFO) << "File " << path << " already exist.";
+                VLOG_EVERY_N(1, 10) << "File " << path << " already exist.";
             } else {
                 std::ofstream (path.c_str());
-                LOG(INFO) << "Creating file " << path <<".";
+                VLOG_EVERY_N(1, 10) << "Creating file " << path <<".";
             }
-            return 0;
+            return absl::OkStatus();
         }
 
-        int DieFileIfNotExist(const std::string& path, std::string& out_path) {
-            std::string dir = internal::GetFileAbsDir(path);
-            if (!internal::ExistFile(path) || DieDirIfNotExist(dir, dir) != 0) {
-                LOG(ERROR) << "Path " << path << " does not exist.";
-                return -1;
+        absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path) {
+            absl::StatusOr<std::string> dir = internal::GetFileAbsDir(path);
+            std::string dir_tmp;
+            if (!internal::ExistFile(path) || !dir.ok() ||!DieDirIfNotExist(*dir, dir_tmp).ok()) {
+                return absl::NotFoundError("Path " + path + " does not exist for DieFileIfNotExist.");
             } else {
                 out_path = path;
-                return 0;
+                return absl::OkStatus();
             }
         }
 
-        int ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs) {
+        absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs) {
             if (!internal::ExistDir(path)) {
-                LOG(ERROR) << "Path " << path << " does not exist.";
-                return -1;
+                LOG(ERROR) << "Path " << path << " does not exist during function call ExistDir.";
+                return absl::NotFoundError("Path " + path + " does not exist for ListDirsInDir.");
+            } else {
+                absl::StatusOr<std::vector<std::string>> dirs = internal::ListDirsInDir(path);
+                if (!dirs.ok()) {
+                    return absl::NotFoundError("Input path is not directory or does not exist.");
+                }
+                sub_dirs.assign((*dirs).begin(), (*dirs).end());
+                return absl::OkStatus();
             }
-            std::vector<std::string> dirs = internal::ListDirsInDir(path);
-            sub_dirs.assign(dirs.begin(), dirs.end());
-            return 0;
         }
 
 
-        int ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files) {
+        absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files) {
             if (!internal::ExistDir(path)) {
-                LOG(ERROR) << "Path " << path << " does not exist.";
-                return -1;
+                LOG(ERROR) << "Path " << path << " does not exist during function call ListFilesInDir.";
+                return absl::NotFoundError("Path " + path + " does not exist for ListFilesInDir.");
+            } else {
+                absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDir(path);
+                if (!files.ok()) {
+                    return absl::NotFoundError("Input path is not directory or does not exist.");
+                }
+                sub_files.assign((*files).begin(), (*files).end());
+                return absl::OkStatus();
             }
-            std::vector<std::string> files = internal::ListFilesInDir(path);
-            sub_files.assign(files.begin(), files.end());
-            return 0;
         }
 
-        int RmDir(const std::string& path) {
+        absl::Status RmDir(const std::string& path) {
             if (!internal::ExistDir(path)) {
-                LOG(WARNING) << "Directory " << path << " does not exist.";
-                return 0;
+                LOG(ERROR) << "Directory " << path << " does not exist during function call RmDir.";
+                return absl::NotFoundError("Path " + path + " does not exist for RmDir.");
             }
-            std::vector<std::string> file_paths = internal::ListFilesInDir(path);
-            for (const auto & file_path : file_paths) {
-                RmFile(file_path, true);
+            absl::StatusOr<std::vector<std::string>> file_paths = internal::ListFilesInDir(path);
+            if (!file_paths.ok()) {
+                return absl::NotFoundError("Input path is not directory or does not exist.");
+            }
+
+            for (const auto & file_path : *file_paths) {
+                if (!RmFile(file_path, true).ok()) {
+                    return absl::InternalError("Removing directory " + file_path + " failed.");
+                }
             }
             if (rmdir(path.c_str()) == 0) {
-                LOG(INFO) << "Removed directory " << path << ".";
-                return 0;
+                VLOG_EVERY_N(1, 10) << "Removed directory " << path << ".";
+                return absl::OkStatus();
             } else {
-                LOG(ERROR) << "Removing directory " << path << " failed.";
-                return -1;
+                LOG(ERROR)  << "Removing directory " << path << " failed during functionn call RmDir.";
+                return absl::InternalError("Removing directory " + path + " failed.");
             }
         }
 
-        int RmDirRecursive(const std::string& path) {
-            std::vector<std::string> dirs_path = internal::ListDirsInDir(path);
-            if (!dirs_path.empty()) {
-                for (const auto& dir_path : dirs_path) {
-                    RmDirRecursive(dir_path);
+        absl::Status RmDirRecursive(const std::string& path) {
+            absl::StatusOr<std::vector<std::string>> dirs_path = internal::ListDirsInDir(path);
+            if (!dirs_path.ok()) {
+                return absl::NotFoundError("Input path is not directory or does not exist.");
+            }
+
+            if (!(*dirs_path).empty()) {
+                for (const auto& dir_path : *dirs_path) {
+                    if (!RmDirRecursive(dir_path).ok()) {
+                        return absl::InternalError("Recursively removing directory " + dir_path + " failed.");
+                    }
                 }
             }
             return RmDir(path);
@@ -250,86 +293,108 @@ namespace galaxy {
             while (internal::ExistFile(lock_name)) {
                 absl::SleepFor(kLockRetry);
             }
-            CreateFileIfNotExist(lock_name, 0777);
+            CHECK(CreateFileIfNotExist(lock_name, 0777).ok()) << "Creating lock for " + lock_name + " failed.";
         }
 
         void UnlockFile(const std::string& lock_name) {
             CHECK(internal::ExistFile(lock_name)) << "Lock file does not exist.";
-            RmFile(lock_name, false);
+            CHECK(RmFile(lock_name, false).ok()) << "Removing lock for " + lock_name + " failed.";
         }
 
-
-        int RmFile(const std::string& path, bool require_lock) {
+        absl::Status RmFile(const std::string& path, bool require_lock) {
             if (!internal::ExistFile(path)) {
-                LOG(WARNING) << "File " << path << " does not exist.";
-                return 1;
+                LOG(ERROR) << "File " << path << " does not exist during function call RmFile.";
+                return absl::NotFoundError("Path " + path + " does not exist for RmFile.");
             } else {
-                std::string lock_name = internal::GetFileLockName(path);
+                absl::StatusOr<std::string> lock_name = internal::GetFileLockName(path);
+                if (!lock_name.ok()) {
+                    return absl::InternalError("Fail to create lock file.");
+                }
                 if (require_lock) {
-                    LockFile(lock_name);
+                    LockFile(*lock_name);
                 }
                 int status = remove(path.c_str());
                 if (require_lock) {
-                    UnlockFile(lock_name);
+                    UnlockFile(*lock_name);
                 }
                 if ( status!= 0) {
-                    LOG(ERROR) << "Removing file " << path << " failed.";
-                    return -1;
+                    LOG(ERROR) << "Removing file " << path << " failed during function call RmFile";
+                    return absl::InternalError("Removing file " + path + " failed.");
                 } else {
-                    LOG(INFO) << "Removed file " << path << ".";
-                    return 0;
+                    VLOG_EVERY_N(1, 10) << "Removed file " << path << ".";
+                    return absl::OkStatus();
                 }
             }
         }
 
-        int RenameFile(const std::string& old_path, const std::string& new_path) {
-            CHECK(internal::ExistFile(old_path)) << old_path + " does not exist";
-            std::string old_lock_name = internal::GetFileLockName(old_path);
-            std::string new_lock_name = internal::GetFileLockName(new_path);
-            LockFile(old_lock_name);
-            LockFile(new_lock_name);
+        absl::Status RenameFile(const std::string& old_path, const std::string& new_path) {
+            if (!internal::ExistFile(old_path)) {
+                return absl::NotFoundError("Path " + old_path + " does not exist for RenameFile.");
+            }
+            absl::StatusOr<std::string> old_lock_name = internal::GetFileLockName(old_path);
+            absl::StatusOr<std::string> new_lock_name = internal::GetFileLockName(new_path);
+            if (!old_lock_name.ok() || !new_lock_name.ok()) {
+                return absl::InternalError("Fail to create lock file.");
+            }
+            LockFile(*old_lock_name);
+            LockFile(*new_lock_name);
             int status = rename(old_path.c_str(), new_path.c_str());
-            UnlockFile(old_lock_name);
-            UnlockFile(new_lock_name);
+            UnlockFile(*old_lock_name);
+            UnlockFile(*new_lock_name);
             if (status == 0) {
-                LOG(INFO) << "Renamed from " << old_path << " to " << new_path << ".";
-                return 0;
+                VLOG_EVERY_N(1, 10) << "Renamed from " << old_path << " to " << new_path << ".";
+                return absl::OkStatus();
             } else{
-                LOG(ERROR) << "Renaming file " << old_path << " failed.";
-                return -1;
+                LOG(ERROR) << "Renaming file " << old_path << " failed during function call RenameFile.";
+                return absl::InternalError("Renaming file " + old_path + " failed.");
             }
         }
 
-        int Read(const std::string& path, std::string& data) {
-            CHECK(internal::ExistFile(path)) << "File " + path + " does not exist.";
-            std::string lock_name = internal::GetFileLockName(path);
-            LockFile(lock_name);
+        absl::Status Read(const std::string& path, std::string& data) {
+            if (!internal::ExistFile(path)) {
+                return absl::NotFoundError("Path " + path + " does not exist for Read.");
+            }
+            absl::StatusOr<std::string> lock_name = internal::GetFileLockName(path);
+            if (!lock_name.ok()) {
+                return absl::InternalError("Fail to create lock file.");
+            }
+            LockFile(*lock_name);
             std::ifstream infile(path);
             std::string out((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
             data = out;
-            UnlockFile(lock_name);
-            return 0;
+            UnlockFile(*lock_name);
+            return absl::OkStatus();
         }
 
-        int Write(const std::string& path, const std::string& data) {
-            std::string lock_name = internal::GetFileLockName(path);
-            LockFile(lock_name);
-            if (!internal::ExistFile(path)) {
-                LOG(INFO) << "Creating file " << path << ".";
-                CreateFileIfNotExist(path, 0777);
+        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode) {
+            absl::StatusOr<std::string> lock_name = internal::GetFileLockName(path);
+            if (!lock_name.ok()) {
+                return absl::InternalError("Fail to create lock file.");
             }
-            std::ofstream outfile(path);
+            LockFile(*lock_name);
+            if (!internal::ExistFile(path)) {
+                VLOG_EVERY_N(1, 10) << "Creating file " << path << ".";
+                if (!CreateFileIfNotExist(path, 0777).ok()) {
+                    return absl::InternalError("Creating file " + path + " failed.");
+                }
+            }
+            std::ofstream outfile;
+            if (mode == "a") {
+                outfile.open(path, std::ios_base::app);
+            } else {
+                outfile.open(path);
+            }
             outfile << data;
             outfile.close();
-            UnlockFile(lock_name);
-            return 0;
+            UnlockFile(*lock_name);
+            return absl::OkStatus();
         }
 
-        int GetAttr(const std::string& path, struct stat *statbuf) {
+        absl::Status GetAttr(const std::string& path, struct stat *statbuf) {
             if (lstat(path.c_str(), statbuf) == 0) {
-                return 0;
+                return absl::OkStatus();
             } else {
-                return -1;
+                return absl::InvalidArgumentError("GetAttr failed for " + path + ".");
             }
         }
     }

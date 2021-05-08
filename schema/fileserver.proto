@@ -25,6 +25,12 @@ service FileSystem {
 
 message FileSystemStatus {
     int32 return_code = 1;
+    string return_message = 2;
+}
+
+enum WriteMode {
+    OVERWRITE = 0;
+    APPEND = 1;
 }
 
 // process id and owner information
@@ -179,7 +185,8 @@ message ReadResponse {
 message WriteRequest {
     string name = 1;
     string data = 2;
-    Credential cred = 3;
+    WriteMode mode = 3;
+    Credential cred = 4;
 }
 
 message WriteResponse {

@@ -7,6 +7,7 @@
 #include "cpp/core/galaxy_flag.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "glog/logging.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -40,6 +41,11 @@ void RunGalaxyServer()
 int main(int argc, char* argv[])
 {
     absl::ParseCommandLine(argc, argv);
+    FLAGS_colorlogtostderr = true;
+    FLAGS_v = absl::GetFlag(FLAGS_fs_verbose_level);
+    FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
+    google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
+    google::InitGoogleLogging(argv[0]);
     RunGalaxyServer();
     return 0;
 }

@@ -42,7 +42,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -55,7 +55,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -68,7 +68,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -81,7 +81,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -94,7 +94,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -107,7 +107,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -120,7 +120,7 @@ namespace galaxy
         if (status.ok())  {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -133,7 +133,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -146,7 +146,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -159,7 +159,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -172,7 +172,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
@@ -185,7 +185,7 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
-            LOG(ERROR) << status.error_code() << ": " + status.error_message();
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }

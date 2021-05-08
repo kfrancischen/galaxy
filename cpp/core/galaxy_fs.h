@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include "absl/status/status.h"
 
 namespace galaxy
 {
@@ -18,23 +19,23 @@ namespace galaxy
 
         void SetRootDir(const std::string& path);
 
-        int CreateDirIfNotExist(const std::string& path, mode_t mode=0777);
-        int DieDirIfNotExist(const std::string& path, std::string& out_path);
+        absl::Status CreateDirIfNotExist(const std::string& path, mode_t mode=0777);
+        absl::Status DieDirIfNotExist(const std::string& path, std::string& out_path);
 
-        int CreateFileIfNotExist(const std::string& path, mode_t mode=0777);
-        int DieFileIfNotExist(const std::string& path, std::string& out_path);
+        absl::Status CreateFileIfNotExist(const std::string& path, mode_t mode=0777);
+        absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path);
 
-        int ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs);
-        int ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files);
+        absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs);
+        absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files);
 
-        int RmDir(const std::string& path);
-        int RmDirRecursive(const std::string& path);
-        int RmFile(const std::string& path);
-        int RenameFile(const std::string& old_path, const std::string& new_path);
+        absl::Status RmDir(const std::string& path);
+        absl::Status RmDirRecursive(const std::string& path);
+        absl::Status RmFile(const std::string& path);
+        absl::Status RenameFile(const std::string& old_path, const std::string& new_path);
 
-        int Read(const std::string& path, std::string& data);
-        int Write(const std::string& path, const std::string& data);
-        int GetAttr(const std::string& path, struct stat *statbuf);
+        absl::Status Read(const std::string& path, std::string& data);
+        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode);
+        absl::Status GetAttr(const std::string& path, struct stat *statbuf);
 
     private:
         std::string root_;

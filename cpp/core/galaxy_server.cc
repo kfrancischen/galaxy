@@ -8,11 +8,13 @@
 
 using grpc::ServerContext;
 using grpc::Status;
+using grpc::StatusCode;
 
 using galaxy_schema::Owner;
 using galaxy_schema::FileSystemStatus;
 using galaxy_schema::Credential;
 using galaxy_schema::Attribute;
+using galaxy_schema::WriteMode;
 
 using galaxy_schema::CreateDirRequest;
 using galaxy_schema::CreateDirResponse;
@@ -60,14 +62,15 @@ namespace galaxy
                                      GetAttrResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call GetAttr";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call GetAttr.");
         }
         struct stat statbuf;
         std::string path = request->name();
-        if (GalaxyFs::Instance()->GetAttr(path, &statbuf) != 0) {
-            LOG(ERROR) << "GetAttr failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->GetAttr(path, &statbuf);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "GetAttr failed during function call GetAttr with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             Owner owner;
@@ -99,12 +102,12 @@ namespace galaxy
                                                  CreateDirResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call CreateDirIfNotExist.");
         }
-        if (GalaxyFs::Instance()->CreateDirIfNotExist(request->name(), request->mode()) != 0) {
-            LOG(ERROR) << "CreateDirIfNotExist failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->CreateDirIfNotExist(request->name(), request->mode());
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "CreateDirIfNotExist failed during function call CreateDirIfNotExist with error" << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -117,13 +120,14 @@ namespace galaxy
                                       DirOrDieResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call DirOrDie.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call DirOrDie.");
         }
         std::string out_path;
-        if (GalaxyFs::Instance()->DieDirIfNotExist(request->name(), out_path) != 0) {
-            LOG(ERROR) << "DieDirIfNotExist failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->DieDirIfNotExist(request->name(), out_path);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "DieDirIfNotExist failed during function call DirOrDie with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -137,12 +141,13 @@ namespace galaxy
                                    RmDirResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call RmDir.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RmDir.");
         }
-        if (GalaxyFs::Instance()->RmDir(request->name()) != 0) {
-            LOG(ERROR) << "RmDir failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->RmDir(request->name());
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "RmDir failed during function call RmDir with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -155,12 +160,13 @@ namespace galaxy
                                             RmDirRecursiveResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call RmDirRecursive.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RmDirRecursive.");
         }
-        if (GalaxyFs::Instance()->RmDirRecursive(request->name()) != 0) {
-            LOG(ERROR) << "RmDirRecursive failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->RmDirRecursive(request->name());
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "RmDirRecursive failed during function call RmDirRecursive with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -174,13 +180,14 @@ namespace galaxy
                                            ListDirsInDirResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call ListDirsInDir.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ListDirsInDir.");
         }
         std::vector<std::string> dirs;
-        if (GalaxyFs::Instance()->ListDirsInDir(request->name(), dirs) != 0) {
-            LOG(ERROR) << "ListDirsInDir failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->ListDirsInDir(request->name(), dirs);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "ListDirsInDir failed during function call ListDirsInDir with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -194,13 +201,14 @@ namespace galaxy
                                             ListFilesInDirResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call ListFilesInDir.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ListFilesInDir.");
         }
         std::vector<std::string> files;
-        if (GalaxyFs::Instance()->ListFilesInDir(request->name(), files) != 0) {
-            LOG(ERROR) << "ListFilesInDir failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->ListFilesInDir(request->name(), files);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "ListFilesInDir failed during function call ListFilesInDir with error" << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -215,12 +223,13 @@ namespace galaxy
                                                   CreateFileResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call CreateFileIfNotExist.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call CreateFileIfNotExist.");
         }
-        if (GalaxyFs::Instance()->CreateFileIfNotExist(request->name(), request->mode()) != 0) {
-            LOG(ERROR) << "CreateFileIfNotExist failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->CreateFileIfNotExist(request->name(), request->mode());
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "CreateFileIfNotExist failed during function call CreateFileIfNotExist with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -233,13 +242,14 @@ namespace galaxy
                                        FileOrDieResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call FileOrDie.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call FileOrDie.");
         }
         std::string out_path;
-        if (GalaxyFs::Instance()->DieFileIfNotExist(request->name(), out_path) != 0) {
-            LOG(ERROR) << "DieFileIfNotExist failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->DieFileIfNotExist(request->name(), out_path);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "DieFileIfNotExist failed during function call FileOrDie with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -253,12 +263,13 @@ namespace galaxy
                                     RmFileResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call RmFile.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RmFile.");
         }
-        if (GalaxyFs::Instance()->RmFile(request->name()) != 0) {
-            LOG(ERROR) << "RmFile failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->RmFile(request->name());
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "RmFile failed during function call RmFile with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -271,12 +282,13 @@ namespace galaxy
                                         RenameFileResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call RenameFile.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RenameFile.");
         }
-        if (GalaxyFs::Instance()->RenameFile(request->old_name(), request->new_name()) != 0) {
-            LOG(ERROR) << "RenameFile failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->RenameFile(request->old_name(), request->new_name());
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "RenameFile failed during function call RenameFile with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -289,13 +301,14 @@ namespace galaxy
                                   ReadResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client client during function call Read.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Read.");
         }
         std::string data;
-        if (GalaxyFs::Instance()->Read(request->name(), data) != 0) {
-            LOG(ERROR) << "Read failed.";
-            return Status::CANCELLED;
+        absl::Status fs_status = GalaxyFs::Instance()->Read(request->name(), data);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "Read failed client during function call Read with error "<< fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);
@@ -309,12 +322,17 @@ namespace galaxy
                                    WriteResponse *reply)
     {
         if (!VerifyPassword(request->cred()).ok()) {
-            LOG(ERROR) << "Wrong password from client.";
-            return Status::CANCELLED;
+            LOG(ERROR) << "Wrong password from client during function call Write.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Write.");
         }
-        if (GalaxyFs::Instance()->Write(request->name(), request->data()) != 0) {
-            LOG(ERROR) << "Write failed.";
-            return Status::CANCELLED;
+        std::string mode = "w";
+        if (request->mode() == WriteMode::APPEND) {
+            mode = "a";
+        }
+        absl::Status fs_status = GalaxyFs::Instance()->Write(request->name(), request->data(), mode);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "Write failed during function call Write with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
         } else {
             FileSystemStatus status;
             status.set_return_code(1);

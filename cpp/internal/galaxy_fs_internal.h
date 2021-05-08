@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include "absl/time/time.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -18,33 +20,35 @@ namespace galaxy {
         std::string JoinPath(const std::string& root_path, const std::string& added_path);
         bool ExistDir(const std::string& path);
         bool ExistFile(const std::string& path);
-        std::string GetFileAbsDir(const std::string& abs_path);
-        std::string GetFileName(const std::string& abs_path);
-        std::string GetFileLockName(const std::string& abs_path);
-        std::vector<std::string> ListFilesInDir(const std::string& path);
-        std::vector<std::string> ListDirsInDir(const std::string& path);
-        bool isEmpty(const std::string& path);
+        absl::StatusOr<std::string> GetFileAbsDir(const std::string& abs_path);
+        absl::StatusOr<std::string> GetFileName(const std::string& abs_path);
+        absl::StatusOr<std::string> GetFileLockName(const std::string& abs_path);
+        absl::StatusOr<std::vector<std::string>> ListFilesInDir(const std::string& path);
+        absl::StatusOr<std::vector<std::string>> ListDirsInDir(const std::string& path);
+        bool IsEmpty(const std::string& path);
         int Mkdir(const std::string& path, mode_t mode);
         int MkdirRecursive(const std::string &path, mode_t mode, bool check_exist);
     }
 
     namespace impl {
+        // void LockFile(const std::string& lock_name);
+        // void UnLockFile(const std::string& lock_name);
         constexpr absl::Duration kLockRetry = absl::Milliseconds(1);
-        int CreateDirIfNotExist(const std::string& path, mode_t mode);
-        int DieDirIfNotExist(const std::string& path, std::string& out_path);
+        absl::Status CreateDirIfNotExist(const std::string& path, mode_t mode);
+        absl::Status DieDirIfNotExist(const std::string& path, std::string& out_path);
 
-        int CreateFileIfNotExist(const std::string& path, mode_t mode);
-        int DieFileIfNotExist(const std::string& path, std::string& out_path);
-        int ListFilesInDir(const std::string& path, std::vector<std::string>& sub_dirs);
-        int ListDirsInDir(const std::string& path, std::vector<std::string>& sub_files);
+        absl::Status CreateFileIfNotExist(const std::string& path, mode_t mode);
+        absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path);
+        absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_dirs);
+        absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_files);
 
-        int RmDir(const std::string& path);
-        int RmDirRecursive(const std::string& path);
-        int RmFile(const std::string& path, bool require_lock);
-        int RenameFile(const std::string& old_path, const std::string& new_path);
-        int Read(const std::string& path, std::string& data);
-        int Write(const std::string& path, const std::string& data);
-        int GetAttr(const std::string& path, struct stat *statbuf);
+        absl::Status RmDir(const std::string& path);
+        absl::Status RmDirRecursive(const std::string& path);
+        absl::Status RmFile(const std::string& path, bool require_lock);
+        absl::Status RenameFile(const std::string& old_path, const std::string& new_path);
+        absl::Status Read(const std::string& path, std::string& data);
+        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode);
+        absl::Status GetAttr(const std::string& path, struct stat *statbuf);
     }
 }
 

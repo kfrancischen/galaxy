@@ -6,6 +6,7 @@ using galaxy_schema::Owner;
 using galaxy_schema::FileSystemStatus;
 using galaxy_schema::Credential;
 using galaxy_schema::Attribute;
+using galaxy_schema::WriteMode;
 
 using galaxy_schema::CreateDirRequest;
 using galaxy_schema::CreateDirResponse;
@@ -227,12 +228,18 @@ std::string galaxy::client::Read(const std::string& path) {
     }
 }
 
-void galaxy::client::Write(const std::string& path, const std::string& data) {
+void galaxy::client::Write(const std::string& path, const std::string& data, const std::string& mode) {
     GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    CHECK(mode == "a" || mode == "w");
     try {
         WriteRequest request;
         request.set_name(path);
         request.set_data(data);
+        if (mode == "a") {
+            request.set_mode(WriteMode::APPEND);
+        } else {
+            request.set_mode(WriteMode::OVERWRITE);
+        }
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         WriteResponse response = client.Write(request);
         FileSystemStatus status = response.status();
