@@ -38,3 +38,4 @@ bazel*
 build/*
 dist/*
 python/*egg-info/*
+python/__pycache__/*

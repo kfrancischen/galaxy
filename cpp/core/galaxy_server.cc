@@ -76,7 +76,7 @@ namespace galaxy
             Owner owner;
             status.set_return_code(1);
             owner.set_uid(statbuf.st_uid);
-            owner.set_uid(statbuf.st_gid);
+            owner.set_gid(statbuf.st_gid);
 
             Attribute attributes;
             attributes.set_dev(statbuf.st_dev);

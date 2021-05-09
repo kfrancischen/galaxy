@@ -33,5 +33,6 @@ cc_library(
         "@google_glog//:glog",
         "@com_google_absl//absl/flags:flag",
         "@com_github_grpc_grpc//:grpc++",
+        "@rapidjson",
     ]
 )
