@@ -71,12 +71,14 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
     std::string path_copy(path);
     path_copy.erase(path_copy.begin());
     std::vector<std::string> v = absl::StrSplit(path_copy, kSeperator);
-    if (v.size() < 1 || v[0].find("-d") == std::string::npos) {
+    std::string cell_suffix(kCellSuffix);
+    if (v.size() < 1 || v[0].find(cell_suffix) == std::string::npos) {
         return absl::InvalidArgumentError("Input path is invalid.");
     }
     std::string cell = v[0];
-    cell.pop_back();
-    cell.pop_back();
+    for (size_t i = 0; i< cell_suffix.length(); i++) {
+        cell.pop_back();
+    }
     v.erase(v.begin());
     std::string seprator(1, kSeperator);
     std::string file_path = absl::StrJoin(v, seprator);
