@@ -5,6 +5,7 @@ namespace galaxy {
     namespace constant {
         constexpr char kSeparator = '/';
         constexpr char kCellSuffix[] = "-d";
+        constexpr char kCellPrefix[] = "/galaxy";
         constexpr char kLockNameTemplate[] = ".$0.lock";
     }  // namespace const
 }  // namespace galaxy

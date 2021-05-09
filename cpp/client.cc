@@ -58,9 +58,10 @@ absl::StatusOr<std::string> InitClient(const std::string& path) {
 std::string MapToCellPath(const std::string& path) {
     std::string separator(1, galaxy::constant::kSeparator);
     std::string cell_suffix(galaxy::constant::kCellSuffix);
-    std::string cell_prefix = separator + absl::GetFlag(FLAGS_fs_cell) + cell_suffix;
+    std::string cell_prefix(galaxy::constant::kCellPrefix);
+    std::string path_prefix = cell_prefix + separator + absl::GetFlag(FLAGS_fs_cell) + cell_suffix;
     std::string out_path(path);
-    out_path.replace(0, absl::GetFlag(FLAGS_fs_root).length(), cell_prefix);
+    out_path.replace(0, absl::GetFlag(FLAGS_fs_root).length(), path_prefix);
     return out_path;
 }
 

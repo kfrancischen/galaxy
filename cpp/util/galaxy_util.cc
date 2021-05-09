@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <regex>
 #include <sys/stat.h>
 #include "cpp/util/galaxy_util.h"
 #include "cpp/core/galaxy_flag.h"
@@ -76,15 +77,14 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
     path_copy.erase(path_copy.begin());
     std::vector<std::string> v = absl::StrSplit(path_copy, galaxy::constant::kSeparator);
     std::string cell_suffix(galaxy::constant::kCellSuffix);
-    if (v.size() < 1 || v[0].find(cell_suffix) == std::string::npos) {
+    std::string cell_prefix(galaxy::constant::kCellPrefix);
+    std::string separator(1, galaxy::constant::kSeparator);
+    if (v.size() < 2 || separator + v[0] != cell_prefix || v[1].find(cell_suffix) == std::string::npos) {
         return absl::InvalidArgumentError("Input path is invalid.");
     }
-    std::string cell = v[0];
-    for (size_t i = 0; i< cell_suffix.length(); i++) {
-        cell.pop_back();
-    }
-    v.erase(v.begin());
-    std::string separator(1, galaxy::constant::kSeparator);
+    std::string cell = v[1];
+    cell.erase(cell_suffix.length());
+    v.erase(v.begin(), v.begin() + 1);
     std::string file_path = absl::StrJoin(v, separator);
     return std::make_pair(cell, file_path);
 }

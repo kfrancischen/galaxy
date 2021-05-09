@@ -1,6 +1,6 @@
 /* Example cmd
 * GALAXY_fs_global_config=/home/pslx/galaxy/example/cpp/server_config_example.json \
-* bazel run -c opt //example/cpp:client_example -- --proto_test=/aa-d/Downloads/test1/test.pb
+* bazel run -c opt //example/cpp:client_example -- --proto_test=/galaxy/aa-d/Downloads/test1/test.pb
 */
 
 #include <iostream>
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
         galaxy::client::CreateFileIfNotExist(absl::GetFlag(FLAGS_createfile_test));
         galaxy::client::Write(absl::GetFlag(FLAGS_createfile_test), "hello world");
         std::cout << galaxy::client::Read(absl::GetFlag(FLAGS_createfile_test)) << std::endl;
-        std::cout << galaxy::client::Read("/aa-d/some_random_file") << std::endl;
+        std::cout << galaxy::client::Read("/galaxy/aa-d/some_random_file") << std::endl;
     }
     if (!absl::GetFlag(FLAGS_proto_test).empty()) {
         galaxy_schema::Credential cred;

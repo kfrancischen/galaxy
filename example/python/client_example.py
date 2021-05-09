@@ -7,9 +7,9 @@ from python import gclient as gclient
 
 
 def main():
-    gclient.create_dir_if_not_exist("/aa-d/Download/test_from_python")
-    print(gclient.list_dirs_in_dir("/aa-d/Download"))
-    print(gclient.dir_or_die("/aa-d/Download"))
+    gclient.create_dir_if_not_exist("/galaxy/aa-d/Download/test_from_python")
+    print(gclient.list_dirs_in_dir("/galaxy/aa-d/Download"))
+    print(gclient.dir_or_die("/galaxy/aa-d/Download"))
     print(gclient.llist_dirs_in_dir("/home/pslx/Download"))
 
 
