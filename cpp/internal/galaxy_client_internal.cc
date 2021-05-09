@@ -1,6 +1,8 @@
 #include <string>
-#include "glog/logging.h"
 #include "cpp/internal/galaxy_client_internal.h"
+#include "cpp/core/galaxy_flag.h"
+#include "glog/logging.h"
+#include "absl/flags/flag.h"
 
 using grpc::ClientContext;
 using grpc::Status;
@@ -38,6 +40,7 @@ namespace galaxy
     {
         GetAttrResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->GetAttr(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -51,6 +54,7 @@ namespace galaxy
     {
         CreateDirResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->CreateDirIfNotExist(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -64,6 +68,7 @@ namespace galaxy
     {
         DirOrDieResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->DirOrDie(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -77,6 +82,7 @@ namespace galaxy
     {
         RmDirResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->RmDir(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -90,6 +96,7 @@ namespace galaxy
     {
         RmDirRecursiveResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->RmDirRecursive(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -103,6 +110,7 @@ namespace galaxy
     {
         ListDirsInDirResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->ListDirsInDir(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -116,6 +124,7 @@ namespace galaxy
     {
         ListFilesInDirResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->ListFilesInDir(&context, request, &reply);
         if (status.ok())  {
             return reply;
@@ -129,6 +138,7 @@ namespace galaxy
     {
         CreateFileResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->CreateFileIfNotExist(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -142,6 +152,7 @@ namespace galaxy
     {
         FileOrDieResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->FileOrDie(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -155,6 +166,7 @@ namespace galaxy
     {
         RmFileResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->RmFile(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -166,6 +178,7 @@ namespace galaxy
     RenameFileResponse GalaxyClientInternal::RenameFile(const RenameFileRequest &request) {
         RenameFileResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->RenameFile(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -179,6 +192,7 @@ namespace galaxy
     {
         ReadResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->Read(&context, request, &reply);
         if (status.ok()) {
             return reply;
@@ -192,6 +206,7 @@ namespace galaxy
     {
         WriteResponse reply;
         ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->Write(&context, request, &reply);
         if (status.ok()) {
             return reply;

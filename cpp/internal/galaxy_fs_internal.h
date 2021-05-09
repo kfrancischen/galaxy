@@ -13,10 +13,6 @@
 namespace galaxy {
 
     namespace internal {
-
-        constexpr char kSeperator = '/';
-        constexpr char kLockNameTemplate[] = ".$0.lock";
-
         std::string JoinPath(const std::string& root_path, const std::string& added_path);
         bool ExistDir(const std::string& path);
         bool ExistFile(const std::string& path);

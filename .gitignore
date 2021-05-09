@@ -37,4 +37,4 @@ bazel*
 # python build
 build/*
 dist/*
-*egg-info/*
+python/*egg-info/*

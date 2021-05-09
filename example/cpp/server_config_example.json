@@ -8,5 +8,15 @@
         "fs_ip": "192.168.1.112",
         "fs_verbose_level": 1,
         "fs_alsologtostderr": true
+    },
+    "bb": {
+        "fs_root": "/home/pslx",
+        "fs_log_dir": "/home/pslx/Downloads/galaxy_log",
+        "fs_password": "test",
+        "fs_log_ttl": 7,
+        "fs_port": 50051,
+        "fs_ip": "192.168.1.111",
+        "fs_verbose_level": 1,
+        "fs_alsologtostderr": true
     }
 }

@@ -1,7 +1,11 @@
+/* Example cmd
+* GALAXY_fs_global_config=/home/pslx/galaxy/example/cpp/server_config_example.json \
+* bazel run -c opt //example/cpp:client_example -- --proto_test=/aa-d/Downloads/test1/test.pb
+*/
+
 #include <iostream>
 #include <string>
 #include <vector>
-
 
 #include "cpp/client.h"
 #include "cpp/core/galaxy_flag.h"

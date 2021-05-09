@@ -93,7 +93,7 @@ setuptools.setup(
     name="galaxy_py",
     version=_get_version(),
     description="Simple distributed file system based on gRPC.",
-    keywords="distributed system;gRPC",
+    keywords="distributed system, gRPC",
     url="https://github.com/kfrancischen/galaxy",
     python_requires=">=3.6",
     package_dir={"": "python"},

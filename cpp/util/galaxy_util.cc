@@ -2,8 +2,10 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <sys/stat.h>
 #include "cpp/util/galaxy_util.h"
 #include "cpp/core/galaxy_flag.h"
+#include "cpp/internal/galaxy_const.h"
 #include "include/rapidjson/istreamwrapper.h"
 #include "include/rapidjson/document.h"
 #include "include/rapidjson/prettywriter.h"
@@ -50,7 +52,9 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
             absl::SetFlag(&FLAGS_fs_log_ttl, cell_config["fs_log_ttl"].GetInt());
         }
         if (cell_config.HasMember("fs_log_dir") && is_server) {
-            absl::SetFlag(&FLAGS_fs_log_dir, cell_config["fs_log_dir"].GetString());
+            std::string log_dir = cell_config["fs_log_dir"].GetString();
+            mkdir(log_dir.c_str(), 0777);
+            absl::SetFlag(&FLAGS_fs_log_dir, log_dir);
         }
         if (cell_config.HasMember("fs_verbose_level") && is_server) {
             absl::SetFlag(&FLAGS_fs_verbose_level, cell_config["fs_verbose_level"].GetInt());
@@ -65,13 +69,13 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
 }
 
 absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPathFromPath(const std::string& path) {
-    if (path.empty() || path[0] != kSeperator) {
+    if (path.empty() || path[0] != galaxy::constant::kSeparator) {
         return absl::InvalidArgumentError("Input path is invalid.");
     }
     std::string path_copy(path);
     path_copy.erase(path_copy.begin());
-    std::vector<std::string> v = absl::StrSplit(path_copy, kSeperator);
-    std::string cell_suffix(kCellSuffix);
+    std::vector<std::string> v = absl::StrSplit(path_copy, galaxy::constant::kSeparator);
+    std::string cell_suffix(galaxy::constant::kCellSuffix);
     if (v.size() < 1 || v[0].find(cell_suffix) == std::string::npos) {
         return absl::InvalidArgumentError("Input path is invalid.");
     }
@@ -80,7 +84,7 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
         cell.pop_back();
     }
     v.erase(v.begin());
-    std::string seprator(1, kSeperator);
-    std::string file_path = absl::StrJoin(v, seprator);
+    std::string separator(1, galaxy::constant::kSeparator);
+    std::string file_path = absl::StrJoin(v, separator);
     return std::make_pair(cell, file_path);
 }

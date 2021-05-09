@@ -1,4 +1,5 @@
 #include "cpp/internal/galaxy_fs_internal.h"
+#include "cpp/internal/galaxy_const.h"
 
 #include <iostream>
 #include <cstdio>
@@ -17,8 +18,12 @@ namespace galaxy {
     namespace internal {
 
         std::string JoinPath(const std::string& root_path, const std::string& added_path) {
-            if (root_path.back() != kSeperator) {
-                std::string seprator(1, kSeperator);
+            if (root_path.empty()) {
+                LOG(WARNING) << "In local mode.";
+                return added_path;
+            }
+            if (root_path.back() != galaxy::constant::kSeparator) {
+                std::string seprator(1, galaxy::constant::kSeparator);
                 return absl::StrCat(root_path, seprator, added_path);
             } else {
                 return absl::StrCat(root_path, added_path);
@@ -48,18 +53,18 @@ namespace galaxy {
         }
 
         absl::StatusOr<std::string> GetFileAbsDir(const std::string& abs_path) {
-            std::vector<std::string> v = absl::StrSplit(abs_path, kSeperator);
+            std::vector<std::string> v = absl::StrSplit(abs_path, galaxy::constant::kSeparator);
             if (v.size() < 1) {
                 return absl::FailedPreconditionError("Path incorrect.");
             }
 
             v.pop_back();
-            std::string seprator(1, kSeperator);
+            std::string seprator(1, galaxy::constant::kSeparator);
             return absl::StrJoin(v, seprator);
         }
 
         absl::StatusOr<std::string> GetFileName(const std::string& abs_path) {
-            std::vector<std::string> v = absl::StrSplit(abs_path, kSeperator);
+            std::vector<std::string> v = absl::StrSplit(abs_path, galaxy::constant::kSeparator);
             if (v.size() < 1) {
                 return absl::FailedPreconditionError("Path incorrect.");
             }
@@ -70,7 +75,7 @@ namespace galaxy {
             absl::StatusOr<std::string> file_name = GetFileName(abs_path);
             absl::StatusOr<std::string> abs_dir = GetFileAbsDir(abs_path);
             if (file_name.ok() && abs_dir.ok()) {
-                std::string lock_name_template(kLockNameTemplate);
+                std::string lock_name_template(galaxy::constant::kLockNameTemplate);
                 std::string lock_name = absl::Substitute(lock_name_template, *file_name);
                 return JoinPath(*abs_dir, lock_name);
             } else {
@@ -141,9 +146,9 @@ namespace galaxy {
 
         int Mkdir(const std::string& path, mode_t mode) {
             if (ExistDir(path)) {
-                VLOG_EVERY_N(1, 10) << "Directory " << path << " already exist.";
+                VLOG(1) << "Directory " << path << " already exist.";
             } else {
-                VLOG_EVERY_N(1, 10) << "Making directory " << path << ".";
+                VLOG(1) << "Making directory " << path << ".";
                 if (mkdir(path.c_str(), mode) != 0 && errno != EEXIST) {
                     LOG(ERROR) << "Making directory " << path << " failed.";
                     return -1;
@@ -201,10 +206,10 @@ namespace galaxy {
                 return absl::InternalError("CreateFileIfNotExist failed for " + path + " because dir creation failed.");
             }
             if (internal::ExistFile(path)) {
-                VLOG_EVERY_N(1, 10) << "File " << path << " already exist.";
+                VLOG(1) << "File " << path << " already exist.";
             } else {
                 std::ofstream (path.c_str());
-                VLOG_EVERY_N(1, 10) << "Creating file " << path <<".";
+                VLOG(1) << "Creating file " << path <<".";
             }
             return absl::OkStatus();
         }
@@ -265,7 +270,7 @@ namespace galaxy {
                 }
             }
             if (rmdir(path.c_str()) == 0) {
-                VLOG_EVERY_N(1, 10) << "Removed directory " << path << ".";
+                VLOG(1) << "Removed directory " << path << ".";
                 return absl::OkStatus();
             } else {
                 LOG(ERROR)  << "Removing directory " << path << " failed during functionn call RmDir.";
@@ -321,7 +326,7 @@ namespace galaxy {
                     LOG(ERROR) << "Removing file " << path << " failed during function call RmFile";
                     return absl::InternalError("Removing file " + path + " failed.");
                 } else {
-                    VLOG_EVERY_N(1, 10) << "Removed file " << path << ".";
+                    VLOG(1) << "Removed file " << path << ".";
                     return absl::OkStatus();
                 }
             }
@@ -342,7 +347,7 @@ namespace galaxy {
             UnlockFile(*old_lock_name);
             UnlockFile(*new_lock_name);
             if (status == 0) {
-                VLOG_EVERY_N(1, 10) << "Renamed from " << old_path << " to " << new_path << ".";
+                VLOG(1) << "Renamed from " << old_path << " to " << new_path << ".";
                 return absl::OkStatus();
             } else{
                 LOG(ERROR) << "Renaming file " << old_path << " failed during function call RenameFile.";
@@ -373,7 +378,7 @@ namespace galaxy {
             }
             LockFile(*lock_name);
             if (!internal::ExistFile(path)) {
-                VLOG_EVERY_N(1, 10) << "Creating file " << path << ".";
+                VLOG(1) << "Creating file " << path << ".";
                 if (!CreateFileIfNotExist(path, 0777).ok()) {
                     return absl::InternalError("Creating file " + path + " failed.");
                 }
