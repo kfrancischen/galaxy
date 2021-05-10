@@ -30,6 +30,8 @@ using galaxy_schema::ListDirsInDirRequest;
 using galaxy_schema::ListDirsInDirResponse;
 using galaxy_schema::ListFilesInDirRequest;
 using galaxy_schema::ListFilesInDirResponse;
+using galaxy_schema::ListAllInDirRecursiveRequest;
+using galaxy_schema::ListAllInDirRecursiveResponse;
 using galaxy_schema::ReadRequest;
 using galaxy_schema::ReadResponse;
 using galaxy_schema::RenameFileRequest;
@@ -218,6 +220,28 @@ namespace galaxy
         }
     }
 
+    Status GalaxyServerImpl::ListAllInDirRecursive(ServerContext *context, const ListAllInDirRecursiveRequest *request,
+                                 ListAllInDirRecursiveResponse *reply)
+    {
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client during function call ListAllInDirRecursive.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ListAllInDirRecursive.");
+        }
+        std::vector<std::string> files;
+        std::vector<std::string> dirs;
+        absl::Status fs_status = GalaxyFs::Instance()->ListAllInDirRecursive(request->name(), dirs, files);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "ListFilesInDir failed during function call ListAllInDirRecursive with error" << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
+        } else {
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            *reply->mutable_sub_files() = {files.begin(), files.end()};
+            *reply->mutable_sub_dirs() = {dirs.begin(), dirs.end()};
+            return Status::OK;
+        }
+    }
 
     Status GalaxyServerImpl::CreateFileIfNotExist(ServerContext *context, const CreateFileRequest *request,
                                                   CreateFileResponse *reply)

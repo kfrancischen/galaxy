@@ -29,6 +29,7 @@ void RunGalaxyServer()
     grpc::ResourceQuota rq;
     rq.SetMaxThreads(absl::GetFlag(FLAGS_fs_num_thread));
     builder.SetResourceQuota(rq);
+    builder.SetMaxMessageSize(absl::GetFlag(FLAGS_fs_max_msg_size) * 1024 * 1024);
 
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

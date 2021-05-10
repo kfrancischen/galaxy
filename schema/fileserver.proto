@@ -13,6 +13,7 @@ service FileSystem {
     rpc RmDirRecursive( RmDirRecursiveRequest ) returns ( RmDirRecursiveResponse ) {}
     rpc ListDirsInDir( ListDirsInDirRequest ) returns ( ListDirsInDirResponse ) {}
     rpc ListFilesInDir( ListFilesInDirRequest ) returns ( ListFilesInDirResponse ) {}
+    rpc ListAllInDirRecursive( ListAllInDirRecursiveRequest ) returns ( ListAllInDirRecursiveResponse ) {}
 
     // File handling
     rpc CreateFileIfNotExist( CreateFileRequest ) returns ( CreateFileResponse ) {}
@@ -129,6 +130,17 @@ message ListFilesInDirRequest {
 message ListFilesInDirResponse {
     repeated string sub_files = 1;
     FileSystemStatus status = 2;
+}
+
+message ListAllInDirRecursiveRequest {
+    string name = 1;
+    Credential cred = 2;
+}
+
+message ListAllInDirRecursiveResponse {
+    repeated string sub_files = 1;
+    repeated string sub_dirs = 2;
+    FileSystemStatus status = 3;
 }
 
 // File handling

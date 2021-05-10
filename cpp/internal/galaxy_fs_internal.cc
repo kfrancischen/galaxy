@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <limits.h>
 #include <fstream>
+#include <iterator>
 #include <streambuf>
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
@@ -106,6 +107,31 @@ namespace galaxy {
             return file_paths;
         }
 
+        void _ListFilesInDirRecursive(const std::string& path, std::vector<std::string>& result) {
+            absl::StatusOr<std::vector<std::string>> sub_files_or = ListFilesInDir(path);
+            if (sub_files_or.ok()) {
+                std::vector<std::string> sub_files = *sub_files_or;
+                result.reserve(result.size() + std::distance(sub_files.begin(), sub_files.end()));
+                result.insert(result.end(), sub_files.begin(), sub_files.end());
+            }
+
+            absl::StatusOr<std::vector<std::string>> sub_dirs_or = ListDirsInDir(path);
+            if (sub_dirs_or.ok()) {
+                for (const auto& val : *sub_dirs_or) {
+                    _ListFilesInDirRecursive(val, result);
+                }
+            }
+        }
+
+        absl::StatusOr<std::vector<std::string>> ListFilesInDirRecursive(const std::string& path) {
+            if (!ExistDir(path)) {
+                return absl::NotFoundError("Input path is not directory or does not exist.");
+            }
+            std::vector<std::string> sub_files;
+            _ListFilesInDirRecursive(path, sub_files);
+            return sub_files;
+        }
+
         absl::StatusOr<std::vector<std::string>> ListDirsInDir(const std::string& path) {
             if (!ExistDir(path)) {
                 return absl::NotFoundError("Input path is not directory or does not exist.");
@@ -125,6 +151,27 @@ namespace galaxy {
             }
             closedir(dirp);
             return dir_paths;
+        }
+
+        void _ListDirsInDirRecursive(const std::string& path, std::vector<std::string>& result) {
+            absl::StatusOr<std::vector<std::string>> sub_dirs_or = ListDirsInDir(path);
+            if (sub_dirs_or.ok()) {
+                std::vector<std::string> sub_dirs = *sub_dirs_or;
+                result.reserve(result.size() + std::distance(sub_dirs.begin(), sub_dirs.end()));
+                result.insert(result.end(), sub_dirs.begin(), sub_dirs.end());
+                for (const auto& val : sub_dirs) {
+                    _ListDirsInDirRecursive(val, result);
+                }
+            }
+        }
+
+        absl::StatusOr<std::vector<std::string>> ListDirsInDirRecursive(const std::string& path) {
+            if (!ExistDir(path)) {
+                return absl::NotFoundError("Input path is not directory or does not exist.");
+            }
+            std::vector<std::string> sub_dirs;
+            _ListDirsInDirRecursive(path, sub_dirs);
+            return sub_dirs;
         }
 
         bool IsEmpty(const std::string& path) {
@@ -246,6 +293,27 @@ namespace galaxy {
                 return absl::NotFoundError("Path " + path + " does not exist for ListFilesInDir.");
             } else {
                 absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDir(path);
+                if (!files.ok()) {
+                    return absl::NotFoundError("Input path is not directory or does not exist.");
+                }
+                sub_files.assign((*files).begin(), (*files).end());
+                return absl::OkStatus();
+            }
+        }
+
+
+        absl::Status ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
+            std::vector<std::string>& sub_files) {
+            if (!internal::ExistDir(path)) {
+                LOG(ERROR) << "Path " << path << " does not exist during function call ListDirsInDirRecursive.";
+                return absl::NotFoundError("Path " + path + " does not exist for ListDirsInDirRecursive.");
+            } else {
+                absl::StatusOr<std::vector<std::string>> dirs = internal::ListDirsInDirRecursive(path);
+                if (!dirs.ok()) {
+                    return absl::NotFoundError("Input path is not directory or does not exist.");
+                }
+                absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDirRecursive(path);
+                sub_dirs.assign((*dirs).begin(), (*dirs).end());
                 if (!files.ok()) {
                     return absl::NotFoundError("Input path is not directory or does not exist.");
                 }

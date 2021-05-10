@@ -18,6 +18,7 @@ namespace galaxy
         galaxy_schema::RmDirRecursiveResponse RmDirRecursive(const galaxy_schema::RmDirRecursiveRequest &request);
         galaxy_schema::ListDirsInDirResponse ListDirsInDir(const galaxy_schema::ListDirsInDirRequest &request);
         galaxy_schema::ListFilesInDirResponse ListFilesInDir(const galaxy_schema::ListFilesInDirRequest &request);
+        galaxy_schema::ListAllInDirRecursiveResponse ListAllInDirRecursive(const galaxy_schema::ListAllInDirRecursiveRequest &request);
         galaxy_schema::CreateFileResponse CreateFileIfNotExist(const galaxy_schema::CreateFileRequest &request);
         galaxy_schema::FileOrDieResponse FileOrDie(const galaxy_schema::FileOrDieRequest &request);
         galaxy_schema::RmFileResponse RmFile(const galaxy_schema::RmFileRequest &request);

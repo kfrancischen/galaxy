@@ -25,6 +25,10 @@ class gclient_ext:
         return gclient.list_dirs_in_dir(path) + gclient.list_files_in_dir(path)
 
     @classmethod
+    def list_all_in_dir_recursive(cls, path):
+        return gclient.list_dirs_in_dir_recursive(path) + gclient.list_files_in_dir_recursive(path)
+
+    @classmethod
     def cp_file(cls, from_path, to_path):
         if not gclient.file_or_die(from_path):
             return
@@ -45,6 +49,28 @@ class gclient_ext:
             gclient.write(to_path, data)
 
         gclient.rm_file(from_path)
+
+    @classmethod
+    def cp_folder(cls, from_path, to_path):
+        if not gclient.dir_or_die(from_path):
+            return
+
+        all_files = gclient.list_files_in_dir_recursive(from_path)
+        for old_file in all_files:
+            new_file = old_file.replace(from_path, to_path)
+            cls.cp_file(old_file, new_file)
+
+
+    @classmethod
+    def mv_folder(cls, from_path, to_path):
+        if not gclient.dir_or_die(from_path):
+            return
+
+        all_files = gclient.list_files_in_dir_recursive(from_path)
+        for old_file in all_files:
+            new_file = old_file.replace(from_path, to_path)
+            cls.mv_file(old_file, new_file)
+        gclient.rm_dir_recursive(from_path)
 
 
 __all__ = [

@@ -11,6 +11,7 @@ ABSL_DECLARE_FLAG(int, fs_verbose_level);
 ABSL_DECLARE_FLAG(bool, fs_alsologtostderr);
 ABSL_DECLARE_FLAG(int, fs_rpc_ddl);
 ABSL_DECLARE_FLAG(int, fs_num_thread);
+ABSL_DECLARE_FLAG(int, fs_max_msg_size);
 
 // Global configurations
 ABSL_DECLARE_FLAG(std::string, fs_global_config);

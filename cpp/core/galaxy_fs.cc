@@ -50,6 +50,12 @@ namespace galaxy {
         return galaxy::impl::ListFilesInDir(abs_path, sub_files);
     }
 
+    absl::Status GalaxyFs::ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
+            std::vector<std::string>& sub_files) {
+        std::string abs_path = internal::JoinPath(root_, path);
+        return galaxy::impl::ListAllInDirRecursive(abs_path, sub_dirs, sub_files);
+    }
+
     absl::Status GalaxyFs::RmDir(const std::string& path) {
         std::string abs_path = internal::JoinPath(root_, path);
         return galaxy::impl::RmDir(abs_path);

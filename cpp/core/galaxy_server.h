@@ -31,6 +31,9 @@ namespace galaxy
         grpc::Status ListFilesInDir(grpc::ServerContext *context, const galaxy_schema::ListFilesInDirRequest *request,
                                     galaxy_schema::ListFilesInDirResponse *reply) override;
 
+        grpc::Status ListAllInDirRecursive(grpc::ServerContext *context, const galaxy_schema::ListAllInDirRecursiveRequest *request,
+                                    galaxy_schema::ListAllInDirRecursiveResponse *reply) override;
+
         grpc::Status CreateFileIfNotExist(grpc::ServerContext *context, const galaxy_schema::CreateFileRequest *request,
                                           galaxy_schema::CreateFileResponse *reply) override;
 

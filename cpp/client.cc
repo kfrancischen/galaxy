@@ -36,6 +36,8 @@ using galaxy_schema::ListDirsInDirRequest;
 using galaxy_schema::ListDirsInDirResponse;
 using galaxy_schema::ListFilesInDirRequest;
 using galaxy_schema::ListFilesInDirResponse;
+using galaxy_schema::ListAllInDirRecursiveRequest;
+using galaxy_schema::ListAllInDirRecursiveResponse;
 using galaxy_schema::ReadRequest;
 using galaxy_schema::ReadResponse;
 using galaxy_schema::RenameFileRequest;
@@ -72,11 +74,17 @@ std::string MapToCellPath(const std::string& path) {
     return out_path;
 }
 
-
-void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const int mode) {
+GalaxyClientInternal GetChannelClient() {
     absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
     CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    grpc::ChannelArguments ch_args;
+    ch_args.SetMaxReceiveMessageSize(-1);
+    GalaxyClientInternal client(grpc::CreateCustomChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials(), ch_args));
+    return client;
+}
+
+void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const int mode) {
+    GalaxyClientInternal client = GetChannelClient();
     try {
         CreateDirRequest request;
         request.set_name(path);
@@ -93,9 +101,7 @@ void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const i
 }
 
 std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         DirOrDieRequest request;
         request.set_name(path);
@@ -113,9 +119,7 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
 }
 
 void galaxy::client::impl::RRmDir(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         RmDirRequest request;
         request.set_name(path);
@@ -131,9 +135,7 @@ void galaxy::client::impl::RRmDir(const std::string& path) {
 }
 
 void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         RmDirRecursiveRequest request;
         request.set_name(path);
@@ -149,9 +151,7 @@ void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
 }
 
 std::vector<std::string> galaxy::client::impl::RListDirsInDir(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         ListDirsInDirRequest request;
         request.set_name(path);
@@ -173,9 +173,7 @@ std::vector<std::string> galaxy::client::impl::RListDirsInDir(const std::string&
 }
 
 std::vector<std::string> galaxy::client::impl::RListFilesInDir(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         ListFilesInDirRequest request;
         request.set_name(path);
@@ -196,10 +194,52 @@ std::vector<std::string> galaxy::client::impl::RListFilesInDir(const std::string
     }
 }
 
+std::vector<std::string> galaxy::client::impl::RListDirsInDirRecursive(const std::string& path) {
+    GalaxyClientInternal client = GetChannelClient();
+    try {
+        ListAllInDirRecursiveRequest request;
+        request.set_name(path);
+        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
+        FileSystemStatus status = response.status();
+        CHECK_EQ(status.return_code(), 1) << "Fail to call RListDirsInDirRecursive.";
+        std::vector<std::string> result(response.sub_dirs().begin(), response.sub_dirs().end());
+        for (size_t i = 0; i < result.size(); i++) {
+            result[i] = MapToCellPath(result[i]);
+        }
+        return result;
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return std::vector<std::string>();
+    }
+}
+
+std::vector<std::string> galaxy::client::impl::RListFilesInDirRecursive(const std::string& path) {
+    GalaxyClientInternal client = GetChannelClient();
+    try {
+        ListAllInDirRecursiveRequest request;
+        request.set_name(path);
+        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
+        FileSystemStatus status = response.status();
+        CHECK_EQ(status.return_code(), 1) << "Fail to call RListFilesInDirRecursive.";
+        std::vector<std::string> result(response.sub_files().begin(), response.sub_files().end());
+        for (size_t i = 0; i < result.size(); i++) {
+            result[i] = MapToCellPath(result[i]);
+        }
+        return result;
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return std::vector<std::string>();
+    }
+}
+
 void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const int mode) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         CreateFileRequest request;
         request.set_name(path);
@@ -216,9 +256,7 @@ void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const 
 }
 
 std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         FileOrDieRequest request;
         request.set_name(path);
@@ -236,9 +274,7 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
 }
 
 void galaxy::client::impl::RRmFile(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         RmFileRequest request;
         request.set_name(path);
@@ -254,9 +290,7 @@ void galaxy::client::impl::RRmFile(const std::string& path) {
 }
 
 void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::string& new_path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         RenameFileRequest request;
         request.set_old_name(old_path);
@@ -273,9 +307,7 @@ void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::s
 }
 
 std::string galaxy::client::impl::RRead(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         ReadRequest request;
         request.set_name(path);
@@ -293,9 +325,7 @@ std::string galaxy::client::impl::RRead(const std::string& path) {
 }
 
 void galaxy::client::impl::RWrite(const std::string& path, const std::string& data, const std::string& mode) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     CHECK(mode == "a" || mode == "w");
     try {
         WriteRequest request;
@@ -318,9 +348,7 @@ void galaxy::client::impl::RWrite(const std::string& path, const std::string& da
 }
 
 std::string galaxy::client::impl::RGetAttr(const std::string& path) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    GalaxyClientInternal client(grpc::CreateChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials()));
+    GalaxyClientInternal client = GetChannelClient();
     try {
         GetAttrRequest request;
         request.set_name(path);
@@ -421,6 +449,39 @@ std::vector<std::string> galaxy::client::impl::LListFilesInDir(const std::string
         return std::vector<std::string>();
     }
 }
+
+std::vector<std::string> galaxy::client::impl::LListDirsInDirRecursive(const std::string& path) {
+    try {
+        std::vector<std::string> sub_files;
+        std::vector<std::string> sub_dirs;
+        GalaxyFs fs("");
+        auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files);
+        CHECK(status.ok()) << "ListDirsInDirRecursive failed with error " << status.ToString();
+        return sub_dirs;
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return std::vector<std::string>();
+    }
+}
+
+std::vector<std::string> galaxy::client::impl::LListFilesInDirRecursive(const std::string& path) {
+    try {
+        std::vector<std::string> sub_files;
+        std::vector<std::string> sub_dirs;
+        GalaxyFs fs("");
+        auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files);
+        CHECK(status.ok()) << "ListFilesInDirRecursive failed with error " << status.ToString();
+        return sub_files;
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return std::vector<std::string>();
+    }
+}
+
 
 void galaxy::client::impl::LCreateFileIfNotExist(const std::string& path, const int mode) {
     try {
@@ -603,6 +664,28 @@ std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path)
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LListFilesInDir(path);
+    }
+}
+
+std::vector<std::string> galaxy::client::ListDirsInDirRecursive(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    if (path_or.ok()) {
+        VLOG(2) << "Using remote mode";
+        return galaxy::client::impl::RListDirsInDirRecursive(*path_or);
+    } else {
+        VLOG(1) << "Using local mode";
+        return galaxy::client::impl::LListDirsInDirRecursive(path);
+    }
+}
+
+std::vector<std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    if (path_or.ok()) {
+        VLOG(2) << "Using remote mode";
+        return galaxy::client::impl::RListFilesInDirRecursive(*path_or);
+    } else {
+        VLOG(1) << "Using local mode";
+        return galaxy::client::impl::LListFilesInDirRecursive(path);
     }
 }
 

@@ -16,6 +16,8 @@ PYBIND11_MODULE(_gclient, m)
     m.def("rm_dir_recursive", &galaxy::client::RmDirRecursive, "Wrapper for RmDirRecursive", py::arg("path"));
     m.def("list_dirs_in_dir", &galaxy::client::ListDirsInDir, "Wrapper for ListDirsInDir", py::arg("path"));
     m.def("list_files_in_dir", &galaxy::client::ListFilesInDir, "Wrapper for ListFilesInDir", py::arg("path"));
+    m.def("list_dirs_in_dir_recursive", &galaxy::client::ListDirsInDirRecursive, "Wrapper for ListDirsInDirRecursive", py::arg("path"));
+    m.def("list_files_in_dir_recursive", &galaxy::client::ListFilesInDirRecursive, "Wrapper for ListFilesInDirRecursive", py::arg("path"));
     m.def("create_file_if_not_exist", &galaxy::client::CreateFileIfNotExist, "Wrapper for CreateFileIfNotExist", py::arg("path"), py::arg("mode") = 0777);
     m.def("file_or_die", &galaxy::client::FileOrDie, "Wrapper for FileOrDie", py::arg("path"));
     m.def("rm_file", &galaxy::client::RmFile, "Wrapper for RmFile", py::arg("path"));

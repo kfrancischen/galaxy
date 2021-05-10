@@ -28,6 +28,9 @@ namespace galaxy
         absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs);
         absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files);
 
+        absl::Status ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
+            std::vector<std::string>& sub_files);
+
         absl::Status RmDir(const std::string& path);
         absl::Status RmDirRecursive(const std::string& path);
         absl::Status RmFile(const std::string& path);

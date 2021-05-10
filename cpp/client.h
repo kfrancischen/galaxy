@@ -14,6 +14,8 @@ namespace galaxy {
             void RRmDirRecursive(const std::string& path);
             std::vector<std::string> RListDirsInDir(const std::string& path);
             std::vector<std::string> RListFilesInDir(const std::string& path);
+            std::vector<std::string> RListDirsInDirRecursive(const std::string& path);
+            std::vector<std::string> RListFilesInDirRecursive(const std::string& path);
             void RCreateFileIfNotExist(const std::string& path, const int mode=0777);
             std::string RFileOrDie(const std::string& path);
             void RRmFile(const std::string& path);
@@ -29,6 +31,8 @@ namespace galaxy {
             void LRmDirRecursive(const std::string& path);
             std::vector<std::string> LListDirsInDir(const std::string& path);
             std::vector<std::string> LListFilesInDir(const std::string& path);
+            std::vector<std::string> LListDirsInDirRecursive(const std::string& path);
+            std::vector<std::string> LListFilesInDirRecursive(const std::string& path);
             void LCreateFileIfNotExist(const std::string& path, const int mode=0777);
             std::string LFileOrDie(const std::string& path);
             void LRmFile(const std::string& path);
@@ -43,6 +47,8 @@ namespace galaxy {
         void RmDirRecursive(const std::string& path);
         std::vector<std::string> ListDirsInDir(const std::string& path);
         std::vector<std::string> ListFilesInDir(const std::string& path);
+        std::vector<std::string> ListDirsInDirRecursive(const std::string& path);
+        std::vector<std::string> ListFilesInDirRecursive(const std::string& path);
         void CreateFileIfNotExist(const std::string& path, const int mode=0777);
         std::string FileOrDie(const std::string& path);
         void RmFile(const std::string& path);

@@ -65,6 +65,9 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
         if (cell_config.HasMember("fs_num_thread") && is_server) {
             absl::SetFlag(&FLAGS_fs_num_thread, cell_config["fs_num_thread"].GetInt());
         }
+        if (cell_config.HasMember("fs_max_msg_size") && is_server) {
+            absl::SetFlag(&FLAGS_fs_max_msg_size, cell_config["fs_max_msg_size"].GetInt());
+        }
         return "Getting cell config for cell [" + cell + "]:\n" + sb.GetString();
     } else {
         return absl::NotFoundError(config_path + " does not exist.");

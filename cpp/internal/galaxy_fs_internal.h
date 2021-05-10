@@ -21,6 +21,8 @@ namespace galaxy {
         absl::StatusOr<std::string> GetFileLockName(const std::string& abs_path);
         absl::StatusOr<std::vector<std::string>> ListFilesInDir(const std::string& path);
         absl::StatusOr<std::vector<std::string>> ListDirsInDir(const std::string& path);
+        absl::StatusOr<std::vector<std::string>> ListDirsInDirRecursive(const std::string& path);
+        absl::StatusOr<std::vector<std::string>> ListFilesInDirRecursive(const std::string& path);
         bool IsEmpty(const std::string& path);
         int Mkdir(const std::string& path, mode_t mode);
         int MkdirRecursive(const std::string &path, mode_t mode, bool check_exist);
@@ -35,8 +37,10 @@ namespace galaxy {
 
         absl::Status CreateFileIfNotExist(const std::string& path, mode_t mode);
         absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path);
-        absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_dirs);
-        absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_files);
+        absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files);
+        absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs);
+        absl::Status ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
+            std::vector<std::string>& sub_files);
 
         absl::Status RmDir(const std::string& path);
         absl::Status RmDirRecursive(const std::string& path);

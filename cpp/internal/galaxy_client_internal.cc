@@ -21,6 +21,8 @@ using galaxy_schema::ListDirsInDirRequest;
 using galaxy_schema::ListDirsInDirResponse;
 using galaxy_schema::ListFilesInDirRequest;
 using galaxy_schema::ListFilesInDirResponse;
+using galaxy_schema::ListAllInDirRecursiveRequest;
+using galaxy_schema::ListAllInDirRecursiveResponse;
 using galaxy_schema::ReadRequest;
 using galaxy_schema::ReadResponse;
 using galaxy_schema::RenameFileRequest;
@@ -126,6 +128,20 @@ namespace galaxy
         ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->ListFilesInDir(&context, request, &reply);
+        if (status.ok())  {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
+    ListAllInDirRecursiveResponse GalaxyClientInternal::ListAllInDirRecursive(const ListAllInDirRecursiveRequest &request)
+    {
+        ListAllInDirRecursiveResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        Status status = stub_->ListAllInDirRecursive(&context, request, &reply);
         if (status.ok())  {
             return reply;
         } else {
