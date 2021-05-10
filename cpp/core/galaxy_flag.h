@@ -10,6 +10,7 @@ ABSL_DECLARE_FLAG(std::string, fs_log_dir);
 ABSL_DECLARE_FLAG(int, fs_verbose_level);
 ABSL_DECLARE_FLAG(bool, fs_alsologtostderr);
 ABSL_DECLARE_FLAG(int, fs_rpc_ddl);
+ABSL_DECLARE_FLAG(int, fs_num_thread);
 
 // Global configurations
 ABSL_DECLARE_FLAG(std::string, fs_global_config);

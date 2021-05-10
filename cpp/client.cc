@@ -84,7 +84,7 @@ void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const i
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         CreateDirResponse response = client.CreateDirIfNotExist(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call CreateDirIfNotExist.";
     }
     catch (std::string errorMsg)
     {
@@ -102,7 +102,7 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         DirOrDieResponse response = client.DirOrDie(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call DirOrDie.";
         return MapToCellPath(response.name());
     }
     catch (std::string errorMsg)
@@ -122,7 +122,7 @@ void galaxy::client::impl::RRmDir(const std::string& path) {
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RmDirResponse response = client.RmDir(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call RmDir.";
     }
     catch (std::string errorMsg)
     {
@@ -140,7 +140,7 @@ void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RmDirRecursiveResponse response = client.RmDirRecursive(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call RmDirRecursive.";
     }
     catch (std::string errorMsg)
     {
@@ -158,7 +158,7 @@ std::vector<std::string> galaxy::client::impl::RListDirsInDir(const std::string&
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         ListDirsInDirResponse response = client.ListDirsInDir(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call ListDirsInDir.";
         std::vector<std::string> result(response.sub_dirs().begin(), response.sub_dirs().end());
         for (size_t i = 0; i < result.size(); i++) {
             result[i] = MapToCellPath(result[i]);
@@ -182,7 +182,7 @@ std::vector<std::string> galaxy::client::impl::RListFilesInDir(const std::string
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         ListFilesInDirResponse response = client.ListFilesInDir(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call ListFilesInDir.";
         std::vector<std::string> result(response.sub_files().begin(), response.sub_files().end());
         for (size_t i = 0; i < result.size(); i++) {
             result[i] = MapToCellPath(result[i]);
@@ -207,7 +207,7 @@ void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const 
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         CreateFileResponse response = client.CreateFileIfNotExist(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call CreateFileIfNotExist.";
     }
     catch (std::string errorMsg)
     {
@@ -225,7 +225,7 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         FileOrDieResponse response = client.FileOrDie(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call FileOrDie.";
         return MapToCellPath(response.name());
     }
     catch (std::string errorMsg)
@@ -245,7 +245,7 @@ void galaxy::client::impl::RRmFile(const std::string& path) {
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RmFileResponse response = client.RmFile(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call RmFile.";
     }
     catch (std::string errorMsg)
     {
@@ -264,7 +264,7 @@ void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::s
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         RenameFileResponse response = client.RenameFile(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call RenameFile.";
     }
     catch (std::string errorMsg)
     {
@@ -282,7 +282,7 @@ std::string galaxy::client::impl::RRead(const std::string& path) {
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         ReadResponse response = client.Read(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call Read.";
         return response.data();
     }
     catch (std::string errorMsg)
@@ -309,7 +309,7 @@ void galaxy::client::impl::RWrite(const std::string& path, const std::string& da
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         WriteResponse response = client.Write(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call Write.";
     }
     catch (std::string errorMsg)
     {
@@ -327,7 +327,7 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         GetAttrResponse response = client.GetAttr(request);
         FileSystemStatus status = response.status();
-        CHECK_EQ(status.return_code(), 1);
+        CHECK_EQ(status.return_code(), 1) << "Fail to call GetAttr.";
         std::string output_attr;
         google::protobuf::util::JsonPrintOptions option;
         option.add_whitespace = true;
@@ -342,141 +342,200 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
 }
 
 void galaxy::client::impl::LCreateDirIfNotExist(const std::string& path, const int mode) {
-    GalaxyFs fs("");
-    auto status = fs.CreateDirIfNotExist(path, mode);
-    if (!status.ok()) {
-        LOG(ERROR) << "CreateDirIfNotExist failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        auto status = fs.CreateDirIfNotExist(path, mode);
+        CHECK(status.ok()) << "CreateDirIfNotExist failed with error " << status.ToString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
     }
 }
 
 std::string galaxy::client::impl::LDirOrDie(const std::string& path) {
-    GalaxyFs fs("");
-    std::string out_path;
-    auto status = fs.DieDirIfNotExist(path, out_path);
-    if (!status.ok()) {
-        LOG(ERROR) << "DirOrDie failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        std::string out_path;
+        auto status = fs.DieDirIfNotExist(path, out_path);
+        CHECK(status.ok()) << "DirOrDie failed with error " << status.ToString();
+        return out_path;
     }
-    return out_path;
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return "";
+    }
 }
 
 void galaxy::client::impl::LRmDir(const std::string& path) {
-    GalaxyFs fs("");
-    auto status = fs.RmDir(path);
-    if (!status.ok()) {
-        LOG(ERROR) << "RmDir failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        auto status = fs.RmDir(path);
+        CHECK(status.ok()) << "RmDir failed with error " << status.ToString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
     }
 }
 
 void galaxy::client::impl::LRmDirRecursive(const std::string& path) {
-    GalaxyFs fs("");
-    auto status = fs.RmDirRecursive(path);
-    if (!status.ok()) {
-        LOG(ERROR) << "RmDirRecursive failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        auto status = fs.RmDirRecursive(path);
+        CHECK(status.ok()) << "RmDirRecursive failed with error " << status.ToString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
     }
 }
 
 std::vector<std::string> galaxy::client::impl::LListDirsInDir(const std::string& path) {
-    std::vector<std::string> sub_dirs;
-    GalaxyFs fs("");
-    auto status = fs.ListDirsInDir(path, sub_dirs);
-    if (!status.ok()) {
-        LOG(ERROR) << "ListDirsInDir failed with error " << status.ToString();
+    try {
+        std::vector<std::string> sub_dirs;
+        GalaxyFs fs("");
+        auto status = fs.ListDirsInDir(path, sub_dirs);
+        CHECK(status.ok()) << "ListDirsInDir failed with error " << status.ToString();
+        return sub_dirs;
     }
-    return sub_dirs;
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return std::vector<std::string>();
+    }
 }
 
 std::vector<std::string> galaxy::client::impl::LListFilesInDir(const std::string& path) {
-    std::vector<std::string> sub_files;
-    GalaxyFs fs("");
-    auto status = fs.ListFilesInDir(path, sub_files);
-    if (!status.ok()) {
-        LOG(ERROR) << "ListFilesInDir failed with error " << status.ToString();
+    try {
+        std::vector<std::string> sub_files;
+        GalaxyFs fs("");
+        auto status = fs.ListFilesInDir(path, sub_files);
+        CHECK(status.ok()) << "ListFilesInDir failed with error " << status.ToString();
+        return sub_files;
     }
-    return sub_files;
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return std::vector<std::string>();
+    }
 }
 
 void galaxy::client::impl::LCreateFileIfNotExist(const std::string& path, const int mode) {
-    GalaxyFs fs("");
-    auto status = fs.CreateFileIfNotExist(path, mode);
-    if (!status.ok()) {
-        LOG(ERROR) << "CreateFileIfNotExist failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        auto status = fs.CreateFileIfNotExist(path, mode);
+        CHECK(status.ok()) << "LCreateFileIfNotExist failed with error " << status.ToString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
     }
 }
 
 std::string galaxy::client::impl::LFileOrDie(const std::string& path) {
-    GalaxyFs fs("");
-    std::string out_path;
-    auto status = fs.DieFileIfNotExist(path, out_path);
-    if (!status.ok()) {
-        LOG(ERROR) << "FileOrDie failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        std::string out_path;
+        auto status = fs.DieFileIfNotExist(path, out_path);
+        CHECK(status.ok()) << "FileOrDie failed with error " << status.ToString();
+        return out_path;
     }
-    return out_path;
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return "";
+    }
 }
 
 void galaxy::client::impl::LRmFile(const std::string& path) {
-    GalaxyFs fs("");
-    auto status = fs.RmFile(path);
-    if (!status.ok()) {
-        LOG(ERROR) << "RmFile failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        auto status = fs.RmFile(path);
+        CHECK(status.ok()) << "RmFile failed with error " << status.ToString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
     }
 }
 
 void galaxy::client::impl::LRenameFile(const std::string& old_path, const std::string& new_path) {
-    GalaxyFs fs("");
-    auto status = fs.RenameFile(old_path, new_path);
-    if (!status.ok()) {
-        LOG(ERROR) << "RenameFile failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        auto status = fs.RenameFile(old_path, new_path);
+        CHECK(status.ok()) << "RenameFile failed with error " << status.ToString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
     }
 }
 
 std::string galaxy::client::impl::LRead(const std::string& path) {
-    GalaxyFs fs("");
-    std::string data;
-    auto status = fs.Read(path, data);
-    if (!status.ok()) {
-        LOG(ERROR) << "Read failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        std::string data;
+        auto status = fs.Read(path, data);
+        CHECK(status.ok()) << "Read failed with error " << status.ToString();
+        return data;
     }
-    return data;
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return "";
+    }
 }
 
 void galaxy::client::impl::LWrite(const std::string& path, const std::string& data, const std::string& mode) {
-    GalaxyFs fs("");
-    auto status = fs.Write(path, data, mode);
-    if (!status.ok()) {
-        LOG(ERROR) << "Write failed with error " << status.ToString();
+    try {
+        GalaxyFs fs("");
+        auto status = fs.Write(path, data, mode);
+        CHECK(status.ok()) << "Write failed with error " << status.ToString();
     }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+    }
+
 }
 
 std::string galaxy::client::impl::LGetAttr(const std::string& path) {
-    GalaxyFs fs("");
-    struct stat statbuf;
-    auto status = fs.GetAttr(path, &statbuf);
-    if (!status.ok()) {
-        LOG(ERROR) << "GetAttr failed with error " << status.ToString();
-    }
-    rapidjson::Document doc;
-    doc.SetObject();
-    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
-    rapidjson::Value owner(rapidjson::kObjectType);
-    owner.AddMember("uid", statbuf.st_uid, allocator);
-    owner.AddMember("gid", statbuf.st_uid, allocator);
-    doc.AddMember("owner", owner, allocator);
-    doc.AddMember("dev", statbuf.st_dev, allocator);
-    doc.AddMember("ino", statbuf.st_ino, allocator);
-    doc.AddMember("mode", statbuf.st_mode, allocator);
-    doc.AddMember("nlink", statbuf.st_nlink, allocator);
-    doc.AddMember("rdev", statbuf.st_rdev, allocator);
-    doc.AddMember("size", statbuf.st_size, allocator);
-    doc.AddMember("blksize", statbuf.st_blksize, allocator);
-    doc.AddMember("blocks", statbuf.st_blocks, allocator);
-    doc.AddMember("atime", statbuf.st_atime, allocator);
-    doc.AddMember("mtime", statbuf.st_mtime, allocator);
-    doc.AddMember("ctime", statbuf.st_ctime, allocator);
+    try {
+        GalaxyFs fs("");
+        struct stat statbuf;
+        auto status = fs.GetAttr(path, &statbuf);
+        CHECK(status.ok()) << "GetAttr failed with error " << status.ToString();
+        rapidjson::Document doc;
+        doc.SetObject();
+        rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+        rapidjson::Value owner(rapidjson::kObjectType);
+        owner.AddMember("uid", statbuf.st_uid, allocator);
+        owner.AddMember("gid", statbuf.st_uid, allocator);
+        doc.AddMember("owner", owner, allocator);
+        doc.AddMember("dev", statbuf.st_dev, allocator);
+        doc.AddMember("ino", statbuf.st_ino, allocator);
+        doc.AddMember("mode", statbuf.st_mode, allocator);
+        doc.AddMember("nlink", statbuf.st_nlink, allocator);
+        doc.AddMember("rdev", statbuf.st_rdev, allocator);
+        doc.AddMember("size", statbuf.st_size, allocator);
+        doc.AddMember("blksize", statbuf.st_blksize, allocator);
+        doc.AddMember("blocks", statbuf.st_blocks, allocator);
+        doc.AddMember("atime", statbuf.st_atime, allocator);
+        doc.AddMember("mtime", statbuf.st_mtime, allocator);
+        doc.AddMember("ctime", statbuf.st_ctime, allocator);
 
-    rapidjson::StringBuffer sb;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
-    doc.Accept(writer);
-    return sb.GetString();
+        rapidjson::StringBuffer sb;
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
+        doc.Accept(writer);
+        return sb.GetString();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return "";
+    }
 }
 
 

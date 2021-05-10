@@ -28,6 +28,7 @@ GALAXY_DEFINE_string(fs_log_dir, "/home/pslx/Downloads/galaxy_log", "The directo
 GALAXY_DEFINE_int(fs_verbose_level, 0, "The verbose level for glogs.");
 GALAXY_DEFINE_bool(fs_alsologtostderr, false, "Whether to also send log to stderr in addition to log files.");
 GALAXY_DEFINE_int(fs_rpc_ddl, 10, "The deadline for grpc in seconds.");
+GALAXY_DEFINE_int(fs_num_thread, 3, "The number of threads for gRPC.");
 
 // Global configurations
 GALAXY_DEFINE_string(fs_global_config, "", "The global configuration (json file) for galaxy filesystems.");

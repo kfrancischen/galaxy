@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include <grpcpp/health_check_service_interface.h>
 #include "cpp/core/galaxy_server.h"
 #include "cpp/core/galaxy_flag.h"
 #include "cpp/util/galaxy_util.h"
@@ -21,7 +23,12 @@ void RunGalaxyServer()
     GalaxyServerImpl galaxy_service;
     galaxy_service.SetPassword(absl::GetFlag(FLAGS_fs_password));
 
+    grpc::EnableDefaultHealthCheckService(true);
+    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     ServerBuilder builder;
+    grpc::ResourceQuota rq;
+    rq.SetMaxThreads(absl::GetFlag(FLAGS_fs_num_thread));
+    builder.SetResourceQuota(rq);
 
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

@@ -9,23 +9,6 @@ import setuptools
 from setuptools.command import build_ext
 
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-
-
-def _get_version():
-    """Parse the version string from __init__.py."""
-    with open(os.path.join(HERE, "python", "package.bzl")) as f:
-        key = "VERSION_LABEL"
-        try:
-            version_line = next(line for line in f if line.startswith(key))
-        except StopIteration:
-            raise ValueError("VERSION not defined")
-        else:
-            ns = {}
-            exec(version_line, ns)  # pylint: disable=exec-used
-            return ns[key]
-
-
 class BazelExtension(setuptools.Extension):
     """A C/C++ extension that is defined as a Bazel BUILD target."""
 
@@ -91,20 +74,26 @@ class BuildBazelExtension(build_ext.build_ext):
 
 setuptools.setup(
     name="galaxy_py",
-    version=_get_version(),
+    version="0.0.3",
     description="Simple distributed file system based on gRPC.",
+    long_description="README.md",
     keywords="distributed system, gRPC",
     url="https://github.com/kfrancischen/galaxy",
     python_requires=">=3.6",
     package_dir={"": "python"},
     cmdclass=dict(build_ext=BuildBazelExtension),
+    include_package_data=True,
     ext_modules=[
         BazelExtension("gclient", "//python:gclient",)
     ],
     zip_safe=False,
+    author="Francis Chen",
+    author_email="kfrancischen@gmail.com",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Distributed File System"
     ],
     install_requires=[],
     license="Apache 2.0",

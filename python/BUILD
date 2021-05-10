@@ -7,9 +7,9 @@ package(default_visibility = ["//visibility:public"])
 pybind_extension(
     name = "_gclient",
     srcs = ["client.cc"],
-    copts = ["-DPYTHON_EXECUTABLE=/home/pslx/anaconda3/envs/pslx/bin/python"],
     deps = [
         "//cpp:client",
+        "@google_glog//:glog",
     ],
     linkstatic = True,
 )

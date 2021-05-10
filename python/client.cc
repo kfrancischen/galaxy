@@ -1,11 +1,13 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "cpp/client.h"
+#include "glog/logging.h"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(_gclient, m)
 {
+    google::InitGoogleLogging("GALAXY_CLIENT");
     m.doc() = "galaxy client"; // optional module docstring
     m.def("create_dir_if_not_exist", &galaxy::client::CreateDirIfNotExist, "Wrapper for CreateDirIfNotExist",
           py::arg("path"), py::arg("mode") = 0777);

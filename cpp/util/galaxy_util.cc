@@ -2,7 +2,6 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <regex>
 #include <sys/stat.h>
 #include "cpp/util/galaxy_util.h"
 #include "cpp/core/galaxy_flag.h"
@@ -63,6 +62,9 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
         if (cell_config.HasMember("fs_alsologtostderr") && is_server) {
             absl::SetFlag(&FLAGS_fs_alsologtostderr, cell_config["fs_alsologtostderr"].GetBool());
         }
+        if (cell_config.HasMember("fs_num_thread") && is_server) {
+            absl::SetFlag(&FLAGS_fs_num_thread, cell_config["fs_num_thread"].GetInt());
+        }
         return "Getting cell config for cell [" + cell + "]:\n" + sb.GetString();
     } else {
         return absl::NotFoundError(config_path + " does not exist.");
@@ -84,7 +86,7 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
     }
     std::string cell = v[1];
     cell.erase(cell_suffix.length());
-    v.erase(v.begin(), v.begin() + 1);
+    v.erase(v.begin(), v.begin() + 2);
     std::string file_path = absl::StrJoin(v, separator);
     return std::make_pair(cell, file_path);
 }

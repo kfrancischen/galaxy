@@ -7,7 +7,8 @@
         "fs_port": 50051,
         "fs_ip": "192.168.1.112",
         "fs_verbose_level": 1,
-        "fs_alsologtostderr": true
+        "fs_alsologtostderr": true,
+        "fs_num_thread": 10
     },
     "bb": {
         "fs_root": "/home/pslx",
