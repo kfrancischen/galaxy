@@ -124,7 +124,23 @@ write(path, data, mode="w")
 * Args:
     1. path: the path to the file
     2. data: the data in string format
-    3. mode: "w" means overwrite and "a" means append.
+    3. mode: `w` means overwrite and `a` means append.
+
+```python
+read_large(path)
+```
+* Decription: read a large file.
+* Args:
+    1. path: the path to the file
+
+```python
+write_large(path, data, mode="w")
+```
+* Decription: write large data to a file.
+* Args:
+    1. path: the path to the file
+    2. data: the data in string format
+    3. mode: `w` means overwrite and `a` means append.
 
 ```python
 get_attr(path)
@@ -196,6 +212,11 @@ mv_folder(from_path, to_path)
 * Args:
     1. from_path: the path to the folder
     2. to_path: the path to the moved folder
+
+There are a few functions that enables transfer for large files with gRPC streaming: `cp_file_large`, `mv_file_large`, `cp_folder_large` and `mv_folder_large`. But it is highly recommend to use the [fileutil](#fileutil-tool) tool for better performance.
+
+#### Fileutil tool
+TO BE ADDED
 
 #### Flags
 galaxy allows users to set following flags to customize server (mainly) and the client. These flags are defined in [galaxy_flag,h](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.h), and their definitions are at [galaxy_flag.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.cc). For servers the flags of `fs_root`, `fs_address`, `fs_password` must be specified, and the values of these flags are usually put in the global configuration file. Besides using the configuration file or using the cmd line fashion [abseil](https://abseil.io/docs/cpp/quickstart) supports, one can also specify the flags by using `GALAXY_${FLAG_NAME}` environment variable. For instance, setting `GALAXY_fs_root=/home` is equivalent to parsing `fs_root=/home` as cmd line argument.
