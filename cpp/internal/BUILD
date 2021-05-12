@@ -36,6 +36,7 @@ cc_library(
     deps= [
         "//schema:fileserver_cc_grpc",
         "//cpp/core:galaxy_flag_lib",
+        "//cpp/internal:galaxy_const_lib",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/flags:flag",

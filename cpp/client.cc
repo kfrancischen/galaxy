@@ -347,6 +347,49 @@ void galaxy::client::impl::RWrite(const std::string& path, const std::string& da
     }
 }
 
+
+std::string galaxy::client::impl::RReadLarge(const std::string& path) {
+    GalaxyClientInternal client = GetChannelClient();
+    try {
+        ReadRequest request;
+        request.set_name(path);
+        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        ReadResponse response = client.ReadLarge(request);
+        FileSystemStatus status = response.status();
+        CHECK_EQ(status.return_code(), 1) << "Fail to call ReadLarge.";
+        return response.data();
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+        return "";
+    }
+}
+
+void galaxy::client::impl::RWriteLarge(const std::string& path, const std::string& data, const std::string& mode) {
+    GalaxyClientInternal client = GetChannelClient();
+    CHECK(mode == "a" || mode == "w");
+    try {
+        WriteRequest request;
+        request.set_name(path);
+        request.set_data(data);
+        if (mode == "a") {
+            request.set_mode(WriteMode::APPEND);
+        } else {
+            request.set_mode(WriteMode::OVERWRITE);
+        }
+        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        WriteResponse response = client.WriteLarge(request);
+        FileSystemStatus status = response.status();
+        CHECK_EQ(status.return_code(), 1) << "Fail to call WriteLarge.";
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+    }
+}
+
+
 std::string galaxy::client::impl::RGetAttr(const std::string& path) {
     GalaxyClientInternal client = GetChannelClient();
     try {
@@ -562,6 +605,14 @@ void galaxy::client::impl::LWrite(const std::string& path, const std::string& da
 
 }
 
+std::string galaxy::client::impl::LReadLarge(const std::string& path) {
+    return galaxy::client::impl::LRead(path);
+}
+
+void galaxy::client::impl::LWriteLarge(const std::string& path, const std::string& data, const std::string& mode) {
+    galaxy::client::impl::LWrite(path, data, mode);
+}
+
 std::string galaxy::client::impl::LGetAttr(const std::string& path) {
     try {
         GalaxyFs fs("");
@@ -757,6 +808,28 @@ void galaxy::client::Write(const std::string& path, const std::string& data, con
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LWrite(path, data, mode);
+    }
+}
+
+std::string galaxy::client::ReadLarge(const std::string& path) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    if (path_or.ok()) {
+        VLOG(2) << "Using remote mode";
+        return galaxy::client::impl::RReadLarge(*path_or);
+    } else {
+        VLOG(1) << "Using local mode";
+        return galaxy::client::impl::LReadLarge(path);
+    }
+}
+
+void galaxy::client::WriteLarge(const std::string& path, const std::string& data, const std::string& mode) {
+    absl::StatusOr<std::string> path_or = InitClient(path);
+    if (path_or.ok()) {
+        VLOG(2) << "Using remote mode";
+        galaxy::client::impl::RWriteLarge(*path_or, data, mode);
+    } else {
+        VLOG(1) << "Using local mode";
+        galaxy::client::impl::LWriteLarge(path, data, mode);
     }
 }
 

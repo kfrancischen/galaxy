@@ -374,6 +374,18 @@ namespace galaxy {
             CHECK(RmFile(lock_name, false).ok()) << "Removing lock for " + lock_name + " failed.";
         }
 
+        void Lock(const std::string& path) {
+            absl::StatusOr<std::string> lock_name = internal::GetFileLockName(path);
+            CHECK(lock_name.ok()) << "Fail to create lock file.";
+            LockFile(*lock_name);
+        }
+
+        void Unlock(const std::string& path) {
+            absl::StatusOr<std::string> lock_name = internal::GetFileLockName(path);
+            CHECK(lock_name.ok()) << "Fail to create lock file.";
+            UnlockFile(*lock_name);
+        }
+
         absl::Status RmFile(const std::string& path, bool require_lock) {
             if (!internal::ExistFile(path)) {
                 LOG(ERROR) << "File " << path << " does not exist during function call RmFile.";
@@ -439,12 +451,16 @@ namespace galaxy {
             return absl::OkStatus();
         }
 
-        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode) {
-            absl::StatusOr<std::string> lock_name = internal::GetFileLockName(path);
-            if (!lock_name.ok()) {
-                return absl::InternalError("Fail to create lock file.");
+        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode, bool require_lock) {
+            absl::StatusOr<std::string> lock_name;
+            if (require_lock) {
+                lock_name = internal::GetFileLockName(path);
+                if (!lock_name.ok()) {
+                    return absl::InternalError("Fail to create lock file.");
+                }
+                LockFile(*lock_name);
             }
-            LockFile(*lock_name);
+
             if (!internal::ExistFile(path)) {
                 VLOG(1) << "Creating file " << path << ".";
                 if (!CreateFileIfNotExist(path, 0777).ok()) {
@@ -459,7 +475,9 @@ namespace galaxy {
             }
             outfile << data;
             outfile.close();
-            UnlockFile(*lock_name);
+            if (require_lock) {
+                UnlockFile(*lock_name);
+            }
             return absl::OkStatus();
         }
 

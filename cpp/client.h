@@ -22,6 +22,8 @@ namespace galaxy {
             void RRenameFile(const std::string& old_path, const std::string& new_path);
             std::string RRead(const std::string& path);
             void RWrite(const std::string& path, const std::string& data, const std::string& mode="w");
+            std::string RReadLarge(const std::string& path);
+            void RWriteLarge(const std::string& path, const std::string& data, const std::string& mode="w");
             std::string RGetAttr(const std::string& path);
 
             // Local clients
@@ -39,6 +41,8 @@ namespace galaxy {
             void LRenameFile(const std::string& old_path, const std::string& new_path);
             std::string LRead(const std::string& path);
             void LWrite(const std::string& path, const std::string& data, const std::string& mode="w");
+            std::string LReadLarge(const std::string& path);
+            void LWriteLarge(const std::string& path, const std::string& data, const std::string& mode="w");
             std::string LGetAttr(const std::string& path);
         }
         void CreateDirIfNotExist(const std::string& path, const int mode=0777);
@@ -55,6 +59,8 @@ namespace galaxy {
         void RenameFile(const std::string& old_path, const std::string& new_path);
         std::string Read(const std::string& path);
         void Write(const std::string& path, const std::string& data, const std::string& mode="w");
+        std::string ReadLarge(const std::string& path);
+        void WriteLarge(const std::string& path, const std::string& data, const std::string& mode="w");
         std::string GetAttr(const std::string& path);
     }  // namespace client
 } // namespace galaxy

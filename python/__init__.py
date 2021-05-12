@@ -39,6 +39,16 @@ class gclient_ext:
             gclient.write(to_path, data)
 
     @classmethod
+    def cp_file_large(cls, from_path, to_path):
+        if not gclient.file_or_die(from_path):
+            return
+
+        gclient.create_file_if_not_exist(to_path)
+        data = gclient.read_large(from_path)
+        if data:
+            gclient.write_large(to_path, data)
+
+    @classmethod
     def mv_file(cls, from_path, to_path):
         if not gclient.file_or_die(from_path):
             return
@@ -47,6 +57,18 @@ class gclient_ext:
         data = gclient.read(from_path)
         if data:
             gclient.write(to_path, data)
+
+        gclient.rm_file(from_path)
+
+    @classmethod
+    def mv_file_large(cls, from_path, to_path):
+        if not gclient.file_or_die(from_path):
+            return
+
+        gclient.create_file_if_not_exist(to_path)
+        data = gclient.read_large(from_path)
+        if data:
+            gclient.write_large(to_path, data)
 
         gclient.rm_file(from_path)
 
@@ -60,6 +82,15 @@ class gclient_ext:
             new_file = old_file.replace(from_path, to_path)
             cls.cp_file(old_file, new_file)
 
+    @classmethod
+    def cp_folder_large(cls, from_path, to_path):
+        if not gclient.dir_or_die(from_path):
+            return
+
+        all_files = gclient.list_files_in_dir_recursive(from_path)
+        for old_file in all_files:
+            new_file = old_file.replace(from_path, to_path)
+            cls.cp_file_large(old_file, new_file)
 
     @classmethod
     def mv_folder(cls, from_path, to_path):
@@ -70,6 +101,17 @@ class gclient_ext:
         for old_file in all_files:
             new_file = old_file.replace(from_path, to_path)
             cls.mv_file(old_file, new_file)
+        gclient.rm_dir_recursive(from_path)
+
+    @classmethod
+    def mv_folder_large(cls, from_path, to_path):
+        if not gclient.dir_or_die(from_path):
+            return
+
+        all_files = gclient.list_files_in_dir_recursive(from_path)
+        for old_file in all_files:
+            new_file = old_file.replace(from_path, to_path)
+            cls.mv_file_large(old_file, new_file)
         gclient.rm_dir_recursive(from_path)
 
 

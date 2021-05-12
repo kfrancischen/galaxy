@@ -32,6 +32,8 @@ namespace galaxy {
         // void LockFile(const std::string& lock_name);
         // void UnLockFile(const std::string& lock_name);
         constexpr absl::Duration kLockRetry = absl::Milliseconds(1);
+        void Lock(const std::string& path);
+        void Unlock(const std::string& path);
         absl::Status CreateDirIfNotExist(const std::string& path, mode_t mode);
         absl::Status DieDirIfNotExist(const std::string& path, std::string& out_path);
 
@@ -47,7 +49,7 @@ namespace galaxy {
         absl::Status RmFile(const std::string& path, bool require_lock);
         absl::Status RenameFile(const std::string& old_path, const std::string& new_path);
         absl::Status Read(const std::string& path, std::string& data);
-        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode);
+        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode, bool require_lock);
         absl::Status GetAttr(const std::string& path, struct stat *statbuf);
     }
 }

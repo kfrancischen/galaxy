@@ -32,7 +32,10 @@ int main(int argc, char* argv[]) {
     if (!absl::GetFlag(FLAGS_createfile_test).empty()) {
         galaxy::client::CreateFileIfNotExist(absl::GetFlag(FLAGS_createfile_test));
         galaxy::client::Write(absl::GetFlag(FLAGS_createfile_test), "hello world");
-        std::cout << galaxy::client::Read(absl::GetFlag(FLAGS_createfile_test)) << std::endl;
+        // std::cout << galaxy::client::Read(absl::GetFlag(FLAGS_createfile_test)) << std::endl;
+        std::cout << galaxy::client::ReadLarge(absl::GetFlag(FLAGS_createfile_test)) << std::endl;
+        std::string data = galaxy::client::ReadLarge("/galaxy/aa-d/Downloads/historical_stock_data/market/Stocks/BABA.txt");
+        galaxy::client::WriteLarge("/galaxy/aa-d/Downloads/large_test.txt", data);
         std::cout << galaxy::client::Read("/galaxy/aa-d/some_random_file") << std::endl;
     }
     if (!absl::GetFlag(FLAGS_proto_test).empty()) {

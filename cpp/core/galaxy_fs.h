@@ -19,6 +19,8 @@ namespace galaxy
 
         void SetRootDir(const std::string& path);
 
+        void Lock(const std::string& path);
+        void Unlock(const std::string& path);
         absl::Status CreateDirIfNotExist(const std::string& path, mode_t mode=0777);
         absl::Status DieDirIfNotExist(const std::string& path, std::string& out_path);
 
@@ -37,7 +39,7 @@ namespace galaxy
         absl::Status RenameFile(const std::string& old_path, const std::string& new_path);
 
         absl::Status Read(const std::string& path, std::string& data);
-        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode);
+        absl::Status Write(const std::string& path, const std::string& data, const std::string& mode="w", bool require_lock=true);
         absl::Status GetAttr(const std::string& path, struct stat *statbuf);
 
     private:

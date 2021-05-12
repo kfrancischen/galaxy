@@ -35,6 +35,7 @@ cc_library(
     deps= [
         ":galaxy_fs_lib",
         "//schema:fileserver_cc_grpc",
+        "//cpp/internal:galaxy_const_lib",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/status:status",
     ]

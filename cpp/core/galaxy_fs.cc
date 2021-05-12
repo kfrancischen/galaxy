@@ -86,13 +86,23 @@ namespace galaxy {
         return galaxy::impl::Read(abs_path, data);
     }
 
-    absl::Status GalaxyFs::Write(const std::string& path, const std::string& data, const std::string& mode) {
+    absl::Status GalaxyFs::Write(const std::string& path, const std::string& data, const std::string& mode, bool require_lock) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::Write(abs_path, data, mode);
+        return galaxy::impl::Write(abs_path, data, mode, require_lock);
     }
 
     absl::Status GalaxyFs::GetAttr(const std::string& path, struct stat *statbuf) {
         std::string abs_path = internal::JoinPath(root_, path);
         return galaxy::impl::GetAttr(abs_path, statbuf);
+    }
+
+    void GalaxyFs::Lock(const std::string& path) {
+        std::string abs_path = internal::JoinPath(root_, path);
+        return galaxy::impl::Lock(abs_path);
+    }
+
+    void GalaxyFs::Unlock(const std::string& path) {
+        std::string abs_path = internal::JoinPath(root_, path);
+        return galaxy::impl::Unlock(abs_path);
     }
 }

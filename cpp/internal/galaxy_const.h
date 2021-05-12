@@ -7,6 +7,7 @@ namespace galaxy {
         constexpr char kCellSuffix[] = "-d";
         constexpr char kCellPrefix[] = "/galaxy";
         constexpr char kLockNameTemplate[] = ".$0.lock";
+        constexpr int kChunkSize = 1048576;  // 1024 * 1024
     }  // namespace const
 }  // namespace galaxy
 

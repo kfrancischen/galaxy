@@ -15,10 +15,10 @@ def main():
                         "/galaxy/aa-d/Downloads/test_from_python/test3.txt")
     print(gclient.list_dirs_in_dir_recursive("/galaxy/aa-d/Downloads/historical_stock_data"))
     print(gclient.list_files_in_dir_recursive("/galaxy/aa-d/Downloads/historical_stock_data"))
-    # gclient_ext.cp_folder("/galaxy/aa-d/Downloads/historical_stock_data",
-    #                       "/galaxy/aa-d/Downloads/historical_stock_data_copy")
-    gclient_ext.mv_folder("/galaxy/aa-d/Downloads/historical_stock_data_copy",
-                          "/galaxy/aa-d/Downloads/historical_stock_data_copy1")
+    gclient_ext.cp_folder_large("/galaxy/aa-d/Downloads/historical_stock_data",
+                                "/galaxy/aa-d/Downloads/historical_stock_data_copy")
+    # gclient_ext.mv_folder("/galaxy/aa-d/Downloads/historical_stock_data_copy",
+    #                       "/galaxy/aa-d/Downloads/historical_stock_data_copy1")
 
 if __name__ == "__main__":
     main()

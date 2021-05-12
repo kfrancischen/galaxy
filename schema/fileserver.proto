@@ -22,6 +22,10 @@ service FileSystem {
     rpc RenameFile( RenameFileRequest ) returns ( RenameFileResponse ) {}
     rpc Read( ReadRequest ) returns ( ReadResponse ) {}
     rpc Write( WriteRequest ) returns ( WriteResponse ) {}
+
+    // Large file handling
+    rpc ReadLarge( ReadRequest ) returns (stream ReadResponse) {}
+    rpc WriteLarge( stream WriteRequest ) returns ( WriteResponse ){}
 }
 
 message FileSystemStatus {

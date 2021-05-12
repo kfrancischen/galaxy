@@ -25,6 +25,8 @@ namespace galaxy
         galaxy_schema::RenameFileResponse RenameFile(const galaxy_schema::RenameFileRequest &request);
         galaxy_schema::ReadResponse Read(const galaxy_schema::ReadRequest &request);
         galaxy_schema::WriteResponse Write(const galaxy_schema::WriteRequest &request);
+        galaxy_schema::ReadResponse ReadLarge(const galaxy_schema::ReadRequest &request);
+        galaxy_schema::WriteResponse WriteLarge(const galaxy_schema::WriteRequest &request);
 
     private:
         std::unique_ptr<galaxy_schema::FileSystem::Stub> stub_;
