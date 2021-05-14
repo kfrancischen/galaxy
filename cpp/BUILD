@@ -14,6 +14,7 @@ cc_binary(
         "@com_google_absl//absl/flags:parse",
         "@google_glog//:glog",
         "@com_github_grpc_grpc//:grpc++_reflection",
+        "@com_github_grpc_grpc//:grpcpp_channelz",
     ]
 )
 

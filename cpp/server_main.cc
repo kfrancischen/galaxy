@@ -4,6 +4,7 @@
 #include <string>
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include <grpcpp/ext/channelz_service_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 #include "cpp/core/galaxy_server.h"
 #include "cpp/core/galaxy_flag.h"
@@ -25,11 +26,13 @@ void RunGalaxyServer()
 
     grpc::EnableDefaultHealthCheckService(true);
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+    grpc::channelz::experimental::InitChannelzService();
     ServerBuilder builder;
     grpc::ResourceQuota rq;
     rq.SetMaxThreads(absl::GetFlag(FLAGS_fs_num_thread));
     builder.SetResourceQuota(rq);
     builder.SetMaxMessageSize(absl::GetFlag(FLAGS_fs_max_msg_size) * 1024 * 1024);
+    builder.AddChannelArgument(GRPC_ARG_ENABLE_CHANNELZ, 1);
 
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
