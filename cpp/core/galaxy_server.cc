@@ -494,7 +494,7 @@ namespace galaxy
                 return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Write.");
             }
 
-            absl::Status fs_status = GalaxyFs::Instance()->Write(write_request.to_name(), write_request.data(), "w", false);
+            absl::Status fs_status = GalaxyFs::Instance()->Write(write_request.to_name(), write_request.data(), "a", false);
             if (!fs_status.ok()) {
                 LOG(ERROR) << "Write failed during function call Write with error " << fs_status;
                 GalaxyFs::Instance()->Unlock(write_request.to_name());

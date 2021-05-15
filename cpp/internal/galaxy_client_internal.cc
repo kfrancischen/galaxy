@@ -285,6 +285,7 @@ namespace galaxy
                 break;
             }
         }
+        writer->WritesDone();
         Status status = writer->Finish();
         if (status.ok()) {
             return reply;

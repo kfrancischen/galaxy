@@ -52,6 +52,33 @@ namespace galaxy
         }
     }
 
+    DownloadResponse impl::GalaxyFileutil::CopyFile(const DownloadRequest &request)
+    {
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        std::unique_ptr<ClientReader<DownloadResponse>> reader(stub_->DownloadFile(&context, request));
+
+        DownloadResponse reply;
+        while (reader->Read(&reply))
+        {
+            client::Write(request.to_name(), reply.data(), "a");
+        }
+        Status status = reader->Finish();
+        if (status.ok())
+        {
+            DownloadResponse response;
+            FileSystemStatus status;
+            status.set_return_code(1);
+            response.mutable_status()->CopyFrom(status);
+            return response;
+        }
+        else
+        {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
     UploadResponse impl::GalaxyFileutil::UploadFile(const UploadRequest &request)
     {
         ClientContext context;
@@ -76,6 +103,7 @@ namespace galaxy
             }
         }
         infile.close();
+        writer->WritesDone();
         Status status = writer->Finish();
         if (status.ok())
         {
@@ -114,6 +142,7 @@ namespace galaxy
         catch (std::string errorMsg)
         {
             LOG(ERROR) << errorMsg;
+            throw errorMsg;
         }
     }
 
@@ -134,6 +163,7 @@ namespace galaxy
         catch (std::string errorMsg)
         {
             LOG(ERROR) << errorMsg;
+            throw errorMsg;
         }
     }
 
@@ -149,8 +179,30 @@ namespace galaxy
     }
 
     void CopyFileCmd(const std::string& from_path, const std::string& to_path) {
+        try {
+            // Needs to firstly clear the from path;
+            client::RmFile(to_path);
+            absl::StatusOr<std::string> from_path_or = galaxy::util::InitClient(from_path);
+            absl::StatusOr<std::string> to_path_or = galaxy::util::InitClient(to_path);
+            CHECK(from_path_or.ok() && to_path_or.ok()) << "Please make sure the paths are remote.";
+            auto client = GetFileutilClient();
+            DownloadRequest request;
+            request.set_from_name(*from_path_or);
+            request.set_to_name(to_path);
+            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            DownloadResponse response = client.CopyFile(request);
+            FileSystemStatus status = response.status();
+            CHECK_EQ(status.return_code(), 1) << "Fail to call Copy cmd.";
+        }
+        catch (std::string errorMsg)
+        {
+            LOG(ERROR) << errorMsg;
+            throw errorMsg;
+        }
     }
 
-    void MvFileCmd(const std::string& from_path, const std::string& to_path) {
+    void MoveFileCmd(const std::string& from_path, const std::string& to_path) {
+        CopyFileCmd(from_path, to_path);
+        client::RmFile(from_path);
     }
 }

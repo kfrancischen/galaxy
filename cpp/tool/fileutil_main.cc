@@ -24,6 +24,14 @@ int main(int argc, char* argv[]) {
     } else if (strcmp(argv[1], "ls") == 0) {
         CHECK_EQ(argc,  3) << "Need 2 arguments for ls cmd.";
         galaxy::LsCmd(argv[2]);
+    } else if (strcmp(argv[1], "cp") == 0) {
+        CHECK_EQ(argc,  4) << "Need 3 arguments for cp cmd.";
+        galaxy::CopyFileCmd(argv[2], argv[3]);
+    } else if (strcmp(argv[1], "mv") == 0) {
+        CHECK_EQ(argc,  4) << "Need 3 arguments for mv cmd.";
+        galaxy::MoveFileCmd(argv[2], argv[3]);
+    } else {
+        LOG(FATAL) << "Wrong cmd.";
     }
 
 }
