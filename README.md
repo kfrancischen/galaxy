@@ -214,7 +214,32 @@ mv_folder(from_path, to_path)
     2. to_path: the path to the moved folder
 
 #### Fileutil tool
-TO BE ADDED
+fileutil is an entry point for file operations across different cells. The entry point is located at [fileutil_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/tool/fileutil_main.cc). The following cmds are supported:
+
+```shell
+fileutil ls ${DIR_NAME}
+```
+* Description: list all the contents in the remote directory.
+
+```shell
+fileutil get ${REMOTE_FILE} ${LOCAL_FILE}
+```
+* Description: download remote file to local file.
+
+```shell
+fileutil upload ${LOCAL_FILE} ${REMOTE_FILE}
+```
+* Description: upload local file to remote file.
+
+```shell
+fileutil cp ${REMOTE_FILE1} ${REMOTE_FILE2}
+```
+* Description: copy one remote file to another remote file. They can be at different cells.
+
+```shell
+fileutil mv ${REMOTE_FILE1} ${REMOTE_FILE2}
+```
+* Description: move one remote file to another remote file. They can be at different cells.
 
 #### Flags
 galaxy allows users to set following flags to customize server (mainly) and the client. These flags are defined in [galaxy_flag,h](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.h), and their definitions are at [galaxy_flag.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.cc). For servers the flags of `fs_root`, `fs_address`, `fs_password` must be specified, and the values of these flags are usually put in the global configuration file. Besides using the configuration file or using the cmd line fashion [abseil](https://abseil.io/docs/cpp/quickstart) supports, one can also specify the flags by using `GALAXY_${FLAG_NAME}` environment variable. For instance, setting `GALAXY_fs_root=/home` is equivalent to parsing `fs_root=/home` as cmd line argument.
