@@ -31,7 +31,6 @@ namespace galaxy {
     namespace impl {
         // void LockFile(const std::string& lock_name);
         // void UnLockFile(const std::string& lock_name);
-        constexpr absl::Duration kLockRetry = absl::Milliseconds(1);
         void Lock(const std::string& path);
         void Unlock(const std::string& path);
         absl::Status CreateDirIfNotExist(const std::string& path, mode_t mode);

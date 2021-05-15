@@ -18,6 +18,7 @@ ABSL_FLAG(std::string, mkdir_test, "", "The directory for mkdir test.");
 ABSL_FLAG(std::string, rmdir_test, "", "The directory for rmdir test.");
 ABSL_FLAG(std::string, createfile_test, "", "The directory for createfile test.");
 ABSL_FLAG(std::string, proto_test, "", "The directory for createfile test.");
+ABSL_FLAG(std::string, readlarge_test, "", "The directory for createfile test.");
 
 int main(int argc, char* argv[]) {
     absl::ParseCommandLine(argc, argv);
@@ -48,6 +49,9 @@ int main(int argc, char* argv[]) {
         galaxy_schema::Credential result_cred;
         result_cred.ParseFromString(result);
         std::cout << result_cred.DebugString() << std::endl;
+    }
+    if (!absl::GetFlag(FLAGS_readlarge_test).empty()) {
+        std::cout << galaxy::client::ReadLarge(absl::GetFlag(FLAGS_readlarge_test));
     }
 
     return 0;

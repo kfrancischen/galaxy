@@ -364,7 +364,7 @@ namespace galaxy {
 
         void LockFile(const std::string& lock_name) {
             while (internal::ExistFile(lock_name)) {
-                absl::SleepFor(kLockRetry);
+                absl::SleepFor(absl::Milliseconds(galaxy::constant::kLockRetrySec));
             }
             CHECK(CreateFileIfNotExist(lock_name, 0777).ok()) << "Creating lock for " + lock_name + " failed.";
         }

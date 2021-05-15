@@ -24,7 +24,5 @@ PYBIND11_MODULE(_gclient, m)
     m.def("rename_file", &galaxy::client::RenameFile, "Wrapper for RenameFile", py::arg("old_path"), py::arg("new_path"));
     m.def("read", &galaxy::client::Read, "Wrapper for Read", py::arg("path"));
     m.def("write", &galaxy::client::Write, "Wrapper for Write", py::arg("path"), py::arg("data"), py::arg("mode") = "w");
-    m.def("read_large", &galaxy::client::ReadLarge, "Wrapper for ReadLarge", py::arg("path"));
-    m.def("write_large", &galaxy::client::WriteLarge, "Wrapper for WriteLarge", py::arg("path"), py::arg("data"), py::arg("mode") = "w");
     m.def("get_attr", &galaxy::client::GetAttr, "Wrapper for GetAttr", py::arg("path"));
 }

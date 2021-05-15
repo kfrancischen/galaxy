@@ -194,13 +194,13 @@ message ReadRequest {
 }
 
 message ReadResponse {
-    string data = 1;
+    bytes data = 1;
     FileSystemStatus status = 2;
 }
 
 message WriteRequest {
     string name = 1;
-    string data = 2;
+    bytes data = 2;
     WriteMode mode = 3;
     Credential cred = 4;
 }

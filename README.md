@@ -213,8 +213,6 @@ mv_folder(from_path, to_path)
     1. from_path: the path to the folder
     2. to_path: the path to the moved folder
 
-There are a few functions that enables transfer for large files with gRPC streaming: `cp_file_large`, `mv_file_large`, `cp_folder_large` and `mv_folder_large`. But it is highly recommend to use the [fileutil](#fileutil-tool) tool for better performance.
-
 #### Fileutil tool
 TO BE ADDED
 

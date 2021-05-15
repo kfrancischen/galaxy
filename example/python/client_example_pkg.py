@@ -18,10 +18,7 @@ def main():
     # gclient_ext.cp_folder_large("/galaxy/aa-d/Downloads/historical_stock_data",
     #                             "/galaxy/aa-d/Downloads/historical_stock_data_copy")
     t = time.time()
-    gclient.read_large("/galaxy/aa-d/Downloads/large_test.txt")
-    print(time.time() - t)
-    t = time.time()
-    gclient.read("/galaxy/aa-d/Downloads/large_test.txt")
+    gclient.read("/galaxy/aa-d/Downloads/small_test.txt")
     print(time.time() - t)
     # gclient_ext.mv_folder("/galaxy/aa-d/Downloads/historical_stock_data_copy",
     #                       "/galaxy/aa-d/Downloads/historical_stock_data_copy1")

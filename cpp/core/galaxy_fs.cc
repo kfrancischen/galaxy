@@ -21,88 +21,88 @@ namespace galaxy {
 
     absl::Status GalaxyFs::CreateDirIfNotExist(const std::string& path, mode_t mode) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::CreateDirIfNotExist(abs_path, mode);
+        return impl::CreateDirIfNotExist(abs_path, mode);
 
     }
     absl::Status GalaxyFs::DieDirIfNotExist(const std::string& path, std::string& out_path) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::DieDirIfNotExist(abs_path, out_path);
+        return impl::DieDirIfNotExist(abs_path, out_path);
     }
 
     absl::Status GalaxyFs::CreateFileIfNotExist(const std::string& path, mode_t mode) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::CreateFileIfNotExist(abs_path, mode);
+        return impl::CreateFileIfNotExist(abs_path, mode);
 
     }
     absl::Status GalaxyFs::DieFileIfNotExist(const std::string& path, std::string& out_path) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::DieFileIfNotExist(abs_path, out_path);
+        return impl::DieFileIfNotExist(abs_path, out_path);
 
     }
 
     absl::Status GalaxyFs::ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::ListDirsInDir(abs_path, sub_dirs);
+        return impl::ListDirsInDir(abs_path, sub_dirs);
     }
 
     absl::Status GalaxyFs::ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::ListFilesInDir(abs_path, sub_files);
+        return impl::ListFilesInDir(abs_path, sub_files);
     }
 
     absl::Status GalaxyFs::ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
             std::vector<std::string>& sub_files) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::ListAllInDirRecursive(abs_path, sub_dirs, sub_files);
+        return impl::ListAllInDirRecursive(abs_path, sub_dirs, sub_files);
     }
 
     absl::Status GalaxyFs::RmDir(const std::string& path) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::RmDir(abs_path);
+        return impl::RmDir(abs_path);
 
     }
 
     absl::Status GalaxyFs::RmDirRecursive(const std::string& path) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::RmDirRecursive(abs_path);
+        return impl::RmDirRecursive(abs_path);
 
     }
 
     absl::Status GalaxyFs::RmFile(const std::string& path){
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::RmFile(abs_path, true);
+        return impl::RmFile(abs_path, true);
 
     }
 
     absl::Status GalaxyFs::RenameFile(const std::string& old_path, const std::string& new_path) {
         std::string abs_old_path = internal::JoinPath(root_, old_path);
         std::string abs_new_path = internal::JoinPath(root_, new_path);
-        return galaxy::impl::RenameFile(abs_old_path, abs_new_path);
+        return impl::RenameFile(abs_old_path, abs_new_path);
 
     }
 
     absl::Status GalaxyFs::Read(const std::string& path, std::string& data) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::Read(abs_path, data);
+        return impl::Read(abs_path, data);
     }
 
     absl::Status GalaxyFs::Write(const std::string& path, const std::string& data, const std::string& mode, bool require_lock) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::Write(abs_path, data, mode, require_lock);
+        return impl::Write(abs_path, data, mode, require_lock);
     }
 
     absl::Status GalaxyFs::GetAttr(const std::string& path, struct stat *statbuf) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::GetAttr(abs_path, statbuf);
+        return impl::GetAttr(abs_path, statbuf);
     }
 
     void GalaxyFs::Lock(const std::string& path) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::Lock(abs_path);
+        return impl::Lock(abs_path);
     }
 
     void GalaxyFs::Unlock(const std::string& path) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return galaxy::impl::Unlock(abs_path);
+        return impl::Unlock(abs_path);
     }
 }

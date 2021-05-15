@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -376,28 +378,30 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call ReadLarge.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ReadLarge.");
         }
-        ReadResponse read_response;
-        Status status = GalaxyServerImpl::Read(context, request, &read_response);
-        if (!status.ok()) {
-            LOG(ERROR) << "ReadLarge failed during function call ReadLarge with error " << status.error_message();
-            return status;
-        }
-        const std::string& data = read_response.data();
-        auto it = data.begin();
-        while (it < data.end()) {
-            int chunk_size = galaxy::constant::kChunkSize;
-            if (it + galaxy::constant::kChunkSize >= data.end()) {
-                chunk_size = std::distance(it, data.end());
+        std::string out_path;
+        absl::Status fs_status = GalaxyFs::Instance()->DieFileIfNotExist(request->name(), out_path);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "ReadLarge failed during function call ReadLarge with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
+        } else {
+            GalaxyFs::Instance()->Lock(request->name());
+            std::ifstream infile(out_path, std::ifstream::binary);
+            std::vector<char> buffer (galaxy::constant::kChunkSize + 1, 0);
+            while (infile) {
+                infile.read(buffer.data(), sizeof(buffer));
+                std::streamsize s = ((infile) ? galaxy::constant::kChunkSize : infile.gcount());
+                buffer[s] = 0;
+                ReadResponse response;
+                FileSystemStatus status;
+                status.set_return_code(1);
+                response.mutable_status()->CopyFrom(status);
+                response.set_data(std::string(buffer.data()));
+                reply->Write(response);
             }
-            ReadResponse response;
-            FileSystemStatus status;
-            status.set_return_code(1);
-            response.mutable_status()->CopyFrom(status);
-            response.set_data(std::string(it, it + chunk_size));
-            reply->Write(response);
-            it += galaxy::constant::kChunkSize;
+            GalaxyFs::Instance()->Unlock(request->name());
+            infile.close();
+            return Status::OK;
         }
-        return Status::OK;
     }
 
     Status GalaxyServerImpl::WriteLarge(ServerContext *context, ServerReader<WriteRequest> *request,
