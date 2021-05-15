@@ -58,6 +58,12 @@ namespace galaxy
         grpc::Status WriteLarge(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::WriteRequest> *request,
                            galaxy_schema::WriteResponse *reply) override;
 
+        grpc::Status DownloadFile(grpc::ServerContext *context, const galaxy_schema::DownloadRequest *request,
+                          grpc::ServerWriter<galaxy_schema::DownloadResponse> *reply) override;
+
+        grpc::Status UploadFile(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::UploadRequest> *request,
+                           galaxy_schema::UploadResponse *reply) override;
+
         void SetPassword(const std::string& password);
 
         absl::Status VerifyPassword(const galaxy_schema::Credential& cred);

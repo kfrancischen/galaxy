@@ -54,26 +54,6 @@ using galaxy_schema::WriteResponse;
 using galaxy::GalaxyClientInternal;
 using galaxy::GalaxyFs;
 
-absl::StatusOr<std::string> InitClient(const std::string& path) {
-    absl::StatusOr<std::pair<std::string, std::string>> cell_and_path = galaxy::util::GetCellAndPathFromPath(path);
-    if (!cell_and_path.ok()) {
-        return absl::InternalError("Wrong format of path.");
-    } else {
-        absl::SetFlag(&FLAGS_fs_cell, (*cell_and_path).first);
-        return (*cell_and_path).second;
-    }
-}
-
-std::string MapToCellPath(const std::string& path) {
-    std::string separator(1, galaxy::constant::kSeparator);
-    std::string cell_suffix(galaxy::constant::kCellSuffix);
-    std::string cell_prefix(galaxy::constant::kCellPrefix);
-    std::string path_prefix = cell_prefix + separator + absl::GetFlag(FLAGS_fs_cell) + cell_suffix;
-    std::string out_path(path);
-    out_path.replace(0, absl::GetFlag(FLAGS_fs_root).length(), path_prefix);
-    return out_path;
-}
-
 GalaxyClientInternal GetChannelClient() {
     absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
     CHECK(result.ok()) << "Fail to parse the global config.";
@@ -109,7 +89,7 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
         DirOrDieResponse response = client.DirOrDie(request);
         FileSystemStatus status = response.status();
         CHECK_EQ(status.return_code(), 1) << "Fail to call DirOrDie.";
-        return MapToCellPath(response.name());
+        return galaxy::util::MapToCellPath(response.name());
     }
     catch (std::string errorMsg)
     {
@@ -161,7 +141,7 @@ std::vector<std::string> galaxy::client::impl::RListDirsInDir(const std::string&
         CHECK_EQ(status.return_code(), 1) << "Fail to call ListDirsInDir.";
         std::vector<std::string> result(response.sub_dirs().begin(), response.sub_dirs().end());
         for (size_t i = 0; i < result.size(); i++) {
-            result[i] = MapToCellPath(result[i]);
+            result[i] = galaxy::util::MapToCellPath(result[i]);
         }
         return result;
     }
@@ -183,7 +163,7 @@ std::vector<std::string> galaxy::client::impl::RListFilesInDir(const std::string
         CHECK_EQ(status.return_code(), 1) << "Fail to call ListFilesInDir.";
         std::vector<std::string> result(response.sub_files().begin(), response.sub_files().end());
         for (size_t i = 0; i < result.size(); i++) {
-            result[i] = MapToCellPath(result[i]);
+            result[i] = galaxy::util::MapToCellPath(result[i]);
         }
         return result;
     }
@@ -205,7 +185,7 @@ std::vector<std::string> galaxy::client::impl::RListDirsInDirRecursive(const std
         CHECK_EQ(status.return_code(), 1) << "Fail to call RListDirsInDirRecursive.";
         std::vector<std::string> result(response.sub_dirs().begin(), response.sub_dirs().end());
         for (size_t i = 0; i < result.size(); i++) {
-            result[i] = MapToCellPath(result[i]);
+            result[i] = galaxy::util::MapToCellPath(result[i]);
         }
         return result;
     }
@@ -227,7 +207,7 @@ std::vector<std::string> galaxy::client::impl::RListFilesInDirRecursive(const st
         CHECK_EQ(status.return_code(), 1) << "Fail to call RListFilesInDirRecursive.";
         std::vector<std::string> result(response.sub_files().begin(), response.sub_files().end());
         for (size_t i = 0; i < result.size(); i++) {
-            result[i] = MapToCellPath(result[i]);
+            result[i] = galaxy::util::MapToCellPath(result[i]);
         }
         return result;
     }
@@ -264,7 +244,7 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
         FileOrDieResponse response = client.FileOrDie(request);
         FileSystemStatus status = response.status();
         CHECK_EQ(status.return_code(), 1) << "Fail to call FileOrDie.";
-        return MapToCellPath(response.name());
+        return galaxy::util::MapToCellPath(response.name());
     }
     catch (std::string errorMsg)
     {
@@ -653,7 +633,7 @@ std::string galaxy::client::impl::LGetAttr(const std::string& path) {
 
 // actual functions calls
 void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RCreateDirIfNotExist(*path_or, mode);
@@ -664,7 +644,7 @@ void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode
 }
 
 std::string galaxy::client::DirOrDie(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RDirOrDie(*path_or);
@@ -675,7 +655,7 @@ std::string galaxy::client::DirOrDie(const std::string& path) {
 }
 
 void galaxy::client::RmDir(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RRmDir(*path_or);
@@ -686,7 +666,7 @@ void galaxy::client::RmDir(const std::string& path) {
 }
 
 void galaxy::client::RmDirRecursive(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RRmDirRecursive(*path_or);
@@ -697,7 +677,7 @@ void galaxy::client::RmDirRecursive(const std::string& path) {
 }
 
 std::vector<std::string> galaxy::client::ListDirsInDir(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListDirsInDir(*path_or);
@@ -708,7 +688,7 @@ std::vector<std::string> galaxy::client::ListDirsInDir(const std::string& path) 
 }
 
 std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListFilesInDir(*path_or);
@@ -719,7 +699,7 @@ std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path)
 }
 
 std::vector<std::string> galaxy::client::ListDirsInDirRecursive(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListDirsInDirRecursive(*path_or);
@@ -730,7 +710,7 @@ std::vector<std::string> galaxy::client::ListDirsInDirRecursive(const std::strin
 }
 
 std::vector<std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListFilesInDirRecursive(*path_or);
@@ -741,7 +721,7 @@ std::vector<std::string> galaxy::client::ListFilesInDirRecursive(const std::stri
 }
 
 void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mode) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RCreateFileIfNotExist(*path_or, mode);
@@ -752,7 +732,7 @@ void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mod
 }
 
 std::string galaxy::client::FileOrDie(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RFileOrDie(*path_or);
@@ -763,7 +743,7 @@ std::string galaxy::client::FileOrDie(const std::string& path) {
 }
 
 void galaxy::client::RmFile(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RRmFile(*path_or);
@@ -774,9 +754,9 @@ void galaxy::client::RmFile(const std::string& path) {
 }
 
 void galaxy::client::RenameFile(const std::string& old_path, const std::string& new_path) {
-    absl::StatusOr<std::string> old_path_or = InitClient(old_path);
+    absl::StatusOr<std::string> old_path_or = galaxy::util::InitClient(old_path);
     std::string old_cell = absl::GetFlag(FLAGS_fs_cell);
-    absl::StatusOr<std::string> new_path_or = InitClient(new_path);
+    absl::StatusOr<std::string> new_path_or = galaxy::util::InitClient(new_path);
     std::string new_cell = absl::GetFlag(FLAGS_fs_cell);
     if (old_path_or.ok() && new_path_or.ok()) {
         VLOG(2) << "Using remote mode";
@@ -790,7 +770,7 @@ void galaxy::client::RenameFile(const std::string& old_path, const std::string& 
 }
 
 std::string galaxy::client::Read(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RRead(*path_or);
@@ -801,7 +781,7 @@ std::string galaxy::client::Read(const std::string& path) {
 }
 
 void galaxy::client::Write(const std::string& path, const std::string& data, const std::string& mode) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RWrite(*path_or, data, mode);
@@ -812,7 +792,7 @@ void galaxy::client::Write(const std::string& path, const std::string& data, con
 }
 
 std::string galaxy::client::ReadLarge(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RReadLarge(*path_or);
@@ -823,7 +803,7 @@ std::string galaxy::client::ReadLarge(const std::string& path) {
 }
 
 void galaxy::client::WriteLarge(const std::string& path, const std::string& data, const std::string& mode) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RWriteLarge(*path_or, data, mode);
@@ -834,7 +814,7 @@ void galaxy::client::WriteLarge(const std::string& path, const std::string& data
 }
 
 std::string galaxy::client::GetAttr(const std::string& path) {
-    absl::StatusOr<std::string> path_or = InitClient(path);
+    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RGetAttr(*path_or);

@@ -26,6 +26,10 @@ service FileSystem {
     // Large file handling
     rpc ReadLarge( ReadRequest ) returns (stream ReadResponse) {}
     rpc WriteLarge( stream WriteRequest ) returns ( WriteResponse ){}
+
+    // Download/upload file
+    rpc DownloadFile( DownloadRequest ) returns (stream DownloadResponse) {}
+    rpc UploadFile( stream UploadRequest ) returns ( UploadResponse) {}
 }
 
 message FileSystemStatus {
@@ -205,6 +209,28 @@ message WriteRequest {
     Credential cred = 4;
 }
 
+message DownloadRequest {
+    string from_name = 1;
+    string to_name = 2;
+    Credential cred = 3;
+}
+
+message UploadRequest {
+    string from_name = 1;
+    string to_name = 2;
+    bytes data = 3;
+    Credential cred = 4;
+}
+
 message WriteResponse {
+    FileSystemStatus status = 1;
+}
+
+message DownloadResponse {
+    bytes data = 1;
+    FileSystemStatus status = 2;
+}
+
+message UploadResponse {
     FileSystemStatus status = 1;
 }

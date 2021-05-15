@@ -469,9 +469,9 @@ namespace galaxy {
             }
             std::ofstream outfile;
             if (mode == "a") {
-                outfile.open(path, std::ios_base::app);
+                outfile.open(path, std::ofstream::app | std::ofstream::binary);
             } else {
-                outfile.open(path);
+                outfile.open(path, std::ofstream::binary);
             }
             outfile << data;
             outfile.close();

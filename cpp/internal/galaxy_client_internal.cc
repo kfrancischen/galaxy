@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include <string>
 #include "cpp/internal/galaxy_client_internal.h"
 #include "cpp/core/galaxy_flag.h"

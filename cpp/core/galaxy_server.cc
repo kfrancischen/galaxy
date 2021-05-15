@@ -49,6 +49,10 @@ using galaxy_schema::RmFileRequest;
 using galaxy_schema::RmFileResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
+using galaxy_schema::DownloadRequest;
+using galaxy_schema::DownloadResponse;
+using galaxy_schema::UploadRequest;
+using galaxy_schema::UploadResponse;
 
 namespace galaxy
 {
@@ -433,6 +437,72 @@ namespace galaxy
 
         }
         GalaxyFs::Instance()->Unlock(write_request.name());
+        FileSystemStatus status;
+        status.set_return_code(1);
+        reply->mutable_status()->CopyFrom(status);
+        return Status::OK;
+    }
+
+    Status GalaxyServerImpl::DownloadFile(ServerContext *context, const DownloadRequest *request,
+                                       ServerWriter<DownloadResponse> *reply)
+    {
+        if (!VerifyPassword(request->cred()).ok())
+        {
+            LOG(ERROR) << "Wrong password from client during function call DownloadFile.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call DownloadFile.");
+        }
+        std::string out_path;
+        absl::Status fs_status = GalaxyFs::Instance()->DieFileIfNotExist(request->from_name(), out_path);
+        if (!fs_status.ok()) {
+            LOG(ERROR) << "DownloadFile failed during function call DownloadFile with error " << fs_status;
+            return Status(StatusCode::INTERNAL, fs_status.ToString());
+        } else {
+            GalaxyFs::Instance()->Lock(request->from_name());
+            std::ifstream infile(out_path, std::ifstream::binary);
+            std::vector<char> buffer (galaxy::constant::kChunkSize + 1, 0);
+            while (infile) {
+                infile.read(buffer.data(), sizeof(buffer));
+                std::streamsize s = ((infile) ? galaxy::constant::kChunkSize : infile.gcount());
+                buffer[s] = 0;
+                DownloadResponse response;
+                FileSystemStatus status;
+                status.set_return_code(1);
+                response.mutable_status()->CopyFrom(status);
+                response.set_data(std::string(buffer.data()));
+                reply->Write(response);
+            }
+            GalaxyFs::Instance()->Unlock(request->from_name());
+            infile.close();
+            return Status::OK;
+        }
+    }
+
+    Status GalaxyServerImpl::UploadFile(ServerContext *context, ServerReader<UploadRequest> *request,
+                                        UploadResponse *reply)
+    {
+        UploadRequest write_request;
+        bool is_locked = false;
+        while (request->Read(&write_request)) {
+            if (!is_locked) {
+                GalaxyFs::Instance()->Lock(write_request.to_name());
+                is_locked = true;
+            }
+
+            if (!VerifyPassword(write_request.cred()).ok()) {
+                LOG(ERROR) << "Wrong password from client during function call Write.";
+                GalaxyFs::Instance()->Unlock(write_request.to_name());
+                return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Write.");
+            }
+
+            absl::Status fs_status = GalaxyFs::Instance()->Write(write_request.to_name(), write_request.data(), "w", false);
+            if (!fs_status.ok()) {
+                LOG(ERROR) << "Write failed during function call Write with error " << fs_status;
+                GalaxyFs::Instance()->Unlock(write_request.to_name());
+                return Status(StatusCode::INTERNAL, fs_status.ToString());
+            }
+
+        }
+        GalaxyFs::Instance()->Unlock(write_request.to_name());
         FileSystemStatus status;
         status.set_return_code(1);
         reply->mutable_status()->CopyFrom(status);

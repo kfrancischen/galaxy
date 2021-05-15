@@ -93,3 +93,23 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
     std::string file_path = absl::StrJoin(v, separator);
     return std::make_pair(cell, file_path);
 }
+
+absl::StatusOr<std::string> galaxy::util::InitClient(const std::string& path) {
+    absl::StatusOr<std::pair<std::string, std::string>> cell_and_path = galaxy::util::GetCellAndPathFromPath(path);
+    if (!cell_and_path.ok()) {
+        return absl::InternalError("Wrong format of path.");
+    } else {
+        absl::SetFlag(&FLAGS_fs_cell, (*cell_and_path).first);
+        return (*cell_and_path).second;
+    }
+}
+
+std::string galaxy::util::MapToCellPath(const std::string& path) {
+    std::string separator(1, galaxy::constant::kSeparator);
+    std::string cell_suffix(galaxy::constant::kCellSuffix);
+    std::string cell_prefix(galaxy::constant::kCellPrefix);
+    std::string path_prefix = cell_prefix + separator + absl::GetFlag(FLAGS_fs_cell) + cell_suffix;
+    std::string out_path(path);
+    out_path.replace(0, absl::GetFlag(FLAGS_fs_root).length(), path_prefix);
+    return out_path;
+}

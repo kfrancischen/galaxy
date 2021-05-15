@@ -30,6 +30,8 @@ class gclient_ext:
 
     @classmethod
     def cp_file(cls, from_path, to_path):
+        import warnings
+        warnings.warn("Please consider using fileutil binary for better performance.", DeprecationWarning)
         if not gclient.file_or_die(from_path):
             return
 
@@ -40,6 +42,8 @@ class gclient_ext:
 
     @classmethod
     def mv_file(cls, from_path, to_path):
+        import warnings
+        warnings.warn("Please consider using fileutil binary for better performance.", DeprecationWarning)
         if not gclient.file_or_die(from_path):
             return
 
@@ -52,6 +56,8 @@ class gclient_ext:
 
     @classmethod
     def cp_folder(cls, from_path, to_path):
+        import warnings
+        warnings.warn("Please consider using fileutil binary for better performance.", DeprecationWarning)
         if not gclient.dir_or_die(from_path):
             return
 
@@ -62,6 +68,8 @@ class gclient_ext:
 
     @classmethod
     def mv_folder(cls, from_path, to_path):
+        import warnings
+        warnings.warn("Please consider using fileutil binary for better performance.", DeprecationWarning)
         if not gclient.dir_or_die(from_path):
             return
 
