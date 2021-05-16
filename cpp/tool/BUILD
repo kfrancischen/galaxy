@@ -15,7 +15,8 @@ cc_library(
         "@com_google_absl//absl/flags:flag",
         "@google_glog//:glog",
         "@com_github_grpc_grpc//:grpc++",
-    ]
+    ],
+    linkopts = ["-lpthread"],
 )
 
 cc_binary(

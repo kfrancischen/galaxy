@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <thread>
 
 #include "cpp/tool/fileutil.h"
 #include "cpp/core/galaxy_flag.h"
@@ -138,6 +139,7 @@ namespace galaxy
             DownloadResponse response = client.DownloadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Get cmd.";
+            LOG(INFO) << "Done getting file from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
@@ -159,6 +161,7 @@ namespace galaxy
             UploadResponse response = client.UploadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Upload cmd.";
+            LOG(INFO) << "Done uploading file from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
@@ -188,13 +191,18 @@ namespace galaxy
         } else {
             client::RmDir(path);
         }
+        LOG(INFO) << "\tDone removing " << path;
     }
 
-    void CopyFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+    void CopyCmdHelper(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
-            // Needs to firstly clear the from path;
+            if (client::FileOrDie(from_path) == "") {
+                LOG(WARNING) << from_path << " does not exist.";
+                return;
+            }
             if (!overwrite && client::FileOrDie(to_path) != "") {
-                LOG(FATAL) << "File already exists. Pleaset use --f to overwrite.";
+                LOG(FATAL) << "File already exists. Please use --f to overwrite.";
+                return;
             }
 
             absl::StatusOr<std::string> from_path_or = galaxy::util::InitClient(from_path);
@@ -205,9 +213,11 @@ namespace galaxy
             request.set_from_name(*from_path_or);
             request.set_to_name(to_path);
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            client::RmFile(to_path);
             DownloadResponse response = client.CopyFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Copy cmd.";
+            LOG(INFO) << "Done copying from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
@@ -216,10 +226,22 @@ namespace galaxy
         }
     }
 
-    void MoveFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+    void CopyCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
-            CopyFileCmd(from_path, to_path, overwrite);
-            client::RmFile(from_path);
+            std::vector<std::string> all_files = client::ListFilesInDirRecursive(from_path);
+            // Needs to push back from_path in case from_path is a file name.
+            all_files.push_back(from_path);
+            std::vector<std::thread> threads;
+            for (auto& file : all_files) {
+                std::string new_file(file);
+                new_file.replace(0, from_path.length(), to_path);
+                threads.push_back(std::thread(CopyCmdHelper, file, new_file, overwrite));
+            }
+
+            for (auto& th : threads) {
+                th.join();
+            }
+            LOG(INFO) << "Done copying from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
@@ -228,11 +250,16 @@ namespace galaxy
         }
     }
 
-    void CopyFolderCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
-
-    }
-
-    void MoveFolderCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
-
+    void MoveCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+        try {
+            CopyCmd(from_path, to_path, overwrite);
+            client::RmDirRecursive(from_path);
+            LOG(INFO) << "Done moving from " << from_path << " to " << to_path << std::endl;
+        }
+        catch (std::string errorMsg)
+        {
+            LOG(ERROR) << errorMsg;
+            throw errorMsg;
+        }
     }
 }

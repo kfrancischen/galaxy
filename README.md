@@ -41,7 +41,7 @@ dir_or_die(path)
 ```python
 rm_dir(path)
 ```
-* Decription: remove an empty directory.
+* Decription: remove a directory and the files in the directory.
 * Args:
     1. path: the path to the directory
 
@@ -216,19 +216,19 @@ fileutil upload ${LOCAL_FILE} ${REMOTE_FILE}
 * Description: upload local file to remote file.
 
 ```shell
-fileutil cp ${REMOTE_FILE1} ${REMOTE_FILE2} [--f]
+fileutil cp ${REMOTE_FILE1/REMOTE_DIR1} ${REMOTE_FILE2/REMOTE_DIR2} [--f]
 ```
-* Description: copy one remote file to another remote file. They can be at different cells. Overwrite if `--f` is set.
+* Description: copy one remote file/directory to another remote file/directory. They can be at different cells. Overwrite if `--f` is set.
 
 ```shell
-fileutil mv ${REMOTE_FILE1} ${REMOTE_FILE2} [--f]
+fileutil mv ${REMOTE_FILE1/REMOTE_DIR1} ${REMOTE_FILE2/REMOTE_DIR2} [--f]
 ```
-* Description: move one remote file to another remote file. They can be at different cells. Overwrite if `--f` is set.
+* Description: move one remote file/directory to another remote file/directory. They can be at different cells. Overwrite if `--f` is set.
 
 ```shell
-fileutil rm ${REMOTE_DIR} [--r]
+fileutil rm ${REMOTE_DIR/REMOTE_FILE} [--r]
 ```
-* Description: delete remote directory (recursively if `--r` is set).
+* Description: delete remote file/directory (recursively if `--r` is set).
 
 #### Flags
 galaxy allows users to set following flags to customize server (mainly) and the client. These flags are defined in [galaxy_flag,h](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.h), and their definitions are at [galaxy_flag.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.cc). For servers the flags of `fs_root`, `fs_address`, `fs_password` must be specified, and the values of these flags are usually put in the global configuration file. Besides using the configuration file or using the cmd line fashion [abseil](https://abseil.io/docs/cpp/quickstart) supports, one can also specify the flags by using `GALAXY_${FLAG_NAME}` environment variable. For instance, setting `GALAXY_fs_root=/home` is equivalent to parsing `fs_root=/home` as cmd line argument.

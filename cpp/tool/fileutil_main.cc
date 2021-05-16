@@ -30,14 +30,14 @@ int main(int argc, char* argv[]) {
         if (argc == 5 && strcmp(argv[4], "--f") == 0) {
             overwrite = true;
         }
-        galaxy::CopyFileCmd(argv[2], argv[3], overwrite);
+        galaxy::CopyCmd(argv[2], argv[3], overwrite);
     } else if (strcmp(argv[1], "mv") == 0) {
         CHECK_GE(argc,  4) << "Need at least 3 arguments for mv cmd.";
         bool overwrite = false;
         if (argc == 5 && strcmp(argv[4], "--f") == 0) {
             overwrite = true;
         }
-        galaxy::MoveFileCmd(argv[2], argv[3], overwrite);
+        galaxy::MoveCmd(argv[2], argv[3], overwrite);
     } else if (strcmp(argv[1], "rm") == 0) {
         CHECK_GE(argc,  3) << "Need at least 2 arguments for cp cmd.";
         galaxy::RmFileCmd(argv[2]);
