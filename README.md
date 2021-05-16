@@ -127,22 +127,6 @@ write(path, data, mode="w")
     3. mode: `w` means overwrite and `a` means append.
 
 ```python
-read_large(path)
-```
-* Decription: read a large file.
-* Args:
-    1. path: the path to the file
-
-```python
-write_large(path, data, mode="w")
-```
-* Decription: write large data to a file.
-* Args:
-    1. path: the path to the file
-    2. data: the data in string format
-    3. mode: `w` means overwrite and `a` means append.
-
-```python
 get_attr(path)
 ```
 * Decription: get attribute information of a file or a directory.
@@ -232,14 +216,19 @@ fileutil upload ${LOCAL_FILE} ${REMOTE_FILE}
 * Description: upload local file to remote file.
 
 ```shell
-fileutil cp ${REMOTE_FILE1} ${REMOTE_FILE2}
+fileutil cp ${REMOTE_FILE1} ${REMOTE_FILE2} [--f]
 ```
-* Description: copy one remote file to another remote file. They can be at different cells.
+* Description: copy one remote file to another remote file. They can be at different cells. Overwrite if `--f` is set.
 
 ```shell
-fileutil mv ${REMOTE_FILE1} ${REMOTE_FILE2}
+fileutil mv ${REMOTE_FILE1} ${REMOTE_FILE2} [--f]
 ```
-* Description: move one remote file to another remote file. They can be at different cells.
+* Description: move one remote file to another remote file. They can be at different cells. Overwrite if `--f` is set.
+
+```shell
+fileutil rm ${REMOTE_DIR} [--r]
+```
+* Description: delete remote directory (recursively if `--r` is set).
 
 #### Flags
 galaxy allows users to set following flags to customize server (mainly) and the client. These flags are defined in [galaxy_flag,h](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.h), and their definitions are at [galaxy_flag.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.cc). For servers the flags of `fs_root`, `fs_address`, `fs_password` must be specified, and the values of these flags are usually put in the global configuration file. Besides using the configuration file or using the cmd line fashion [abseil](https://abseil.io/docs/cpp/quickstart) supports, one can also specify the flags by using `GALAXY_${FLAG_NAME}` environment variable. For instance, setting `GALAXY_fs_root=/home` is equivalent to parsing `fs_root=/home` as cmd line argument.

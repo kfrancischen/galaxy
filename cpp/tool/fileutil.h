@@ -24,9 +24,14 @@ namespace galaxy
 
     void LsCmd(const std::string& path);
     void GetFileCmd(const std::string& from_path, const std::string& to_path);
-    void CopyFileCmd(const std::string& from_path, const std::string& to_path);
-    void MoveFileCmd(const std::string& from_path, const std::string& to_path);
+    void CopyFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
+    void MoveFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
     void UploadFileCmd(const std::string& from_path, const std::string& to_path);
+    void RmFileCmd(const std::string& path);
+    void RmDirCmd(const std::string& path, bool recursive);
+
+    void CopyFolderCmd((const std::string& from_path, const std::string& to_path, bool overwrite);
+    void MoveFolderCmd((const std::string& from_path, const std::string& to_path, bool overwrite);
 
 } // namespace galaxy
 

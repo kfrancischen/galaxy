@@ -178,10 +178,25 @@ namespace galaxy
         }
     }
 
-    void CopyFileCmd(const std::string& from_path, const std::string& to_path) {
+    void RmFileCmd(const std::string& path) {
+        client::RmFile(path);
+    }
+
+    void RmDirCmd(const std::string& path, bool recursive) {
+        if (recursive) {
+            client::RmDirRecursive(path);
+        } else {
+            client::RmDir(path);
+        }
+    }
+
+    void CopyFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
             // Needs to firstly clear the from path;
-            client::RmFile(to_path);
+            if (!overwrite && client::FileOrDie(to_path) != "") {
+                LOG(FATAL) << "File already exists. Pleaset use --f to overwrite.";
+            }
+
             absl::StatusOr<std::string> from_path_or = galaxy::util::InitClient(from_path);
             absl::StatusOr<std::string> to_path_or = galaxy::util::InitClient(to_path);
             CHECK(from_path_or.ok() && to_path_or.ok()) << "Please make sure the paths are remote.";
@@ -201,8 +216,23 @@ namespace galaxy
         }
     }
 
-    void MoveFileCmd(const std::string& from_path, const std::string& to_path) {
-        CopyFileCmd(from_path, to_path);
-        client::RmFile(from_path);
+    void MoveFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+        try {
+            CopyFileCmd(from_path, to_path, overwrite);
+            client::RmFile(from_path);
+        }
+        catch (std::string errorMsg)
+        {
+            LOG(ERROR) << errorMsg;
+            throw errorMsg;
+        }
+    }
+
+    void CopyFolderCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+
+    }
+
+    void MoveFolderCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+
     }
 }

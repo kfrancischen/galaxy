@@ -12,8 +12,6 @@ cc_library(
         "//cpp/internal:galaxy_const_lib",
         "//cpp/util:galaxy_util_lib",
         "//cpp:client",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
         "@com_google_absl//absl/flags:flag",
         "@google_glog//:glog",
         "@com_github_grpc_grpc//:grpc++",
