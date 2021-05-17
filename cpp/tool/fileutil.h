@@ -25,8 +25,7 @@ namespace galaxy
     void LsCmd(const std::string& path);
     void GetFileCmd(const std::string& from_path, const std::string& to_path);
     void UploadFileCmd(const std::string& from_path, const std::string& to_path);
-    void RmFileCmd(const std::string& path);
-    void RmDirCmd(const std::string& path, bool recursive);
+    void RmCmd(const std::string& path, bool recursive);
 
     void CopyCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
     void MoveCmd(const std::string& from_path, const std::string& to_path, bool overwrite);

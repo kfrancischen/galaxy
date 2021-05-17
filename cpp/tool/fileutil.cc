@@ -179,17 +179,14 @@ namespace galaxy
         }
     }
 
-    void RmFileCmd(const std::string& path) {
-        client::RmFile(path);
-    }
-
-    void RmDirCmd(const std::string& path, bool recursive) {
+    void RmCmd(const std::string& path, bool recursive) {
         if (recursive) {
             client::RmDirRecursive(path);
         } else {
             client::RmDir(path);
         }
-        std::cout << "\tDone removing " << path;
+        client::RmFile(path);
+        std::cout << "Done removing " << path << std::endl;
     }
 
     void CopyCmdHelper(const std::string& from_path, const std::string& to_path, bool overwrite) {

@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
         if (argc == 4 && strcmp(argv[3], "--r") == 0) {
             recursive = true;
         }
-        galaxy::RmDirCmd(argv[2], recursive);
+        galaxy::RmCmd(argv[2], recursive);
     } else {
         LOG(FATAL) << "Wrong cmd.";
     }

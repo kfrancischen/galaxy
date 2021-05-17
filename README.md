@@ -14,7 +14,7 @@ bazel run //cpp:galaxy_server -- \
 --fs_global_config=/home/pslx/galaxy/example/cpp/server_config_example.json \
 --fs_cell=aa
 ```
-With the above cmd, the machine is added as cell `aa` with configurations specified in the `json` file.
+With the above cmd, the machine is added as cell `aa` with configurations specified in the `server_config_example.json` file.
 
 #### Client Python API
 galaxy provides unified API for client to access both local and remote files, to build the python modules, please following the cmd of
@@ -215,7 +215,12 @@ mv_folder(from_path, to_path)
     2. to_path: the path to the moved folder
 
 #### Fileutil tool
-fileutil is an entry point for file operations across different cells. The entry point is located at [fileutil_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/tool/fileutil_main.cc). The following cmds are supported:
+fileutil is an entry point for file operations across different cells. The entry point is located at [fileutil_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/tool/fileutil_main.cc). To build the binary, the bazel cmd is
+```shellscript
+bazel build -c opt //cpp/tool:fileutil
+```
+
+The following cmds are supported:
 
 ```shellscript
 fileutil ls ${DIR_NAME}
