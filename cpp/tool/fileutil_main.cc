@@ -7,7 +7,8 @@
 int main(int argc, char* argv[]) {
     FLAGS_colorlogtostderr = true;
     FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
-    FLAGS_alsologtostderr = true;
+    FLAGS_alsologtostderr = absl::GetFlag(FLAGS_fs_alsologtostderr);
+    FLAGS_stderrthreshold = 3;
     google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
     google::InitGoogleLogging(argv[0]);
     CHECK_GT(argc, 2) << "Need more than 1 arguments";
@@ -40,7 +41,6 @@ int main(int argc, char* argv[]) {
         galaxy::MoveCmd(argv[2], argv[3], overwrite);
     } else if (strcmp(argv[1], "rm") == 0) {
         CHECK_GE(argc,  3) << "Need at least 2 arguments for cp cmd.";
-        galaxy::RmFileCmd(argv[2]);
         bool recursive = false;
         if (argc == 4 && strcmp(argv[3], "--r") == 0) {
             recursive = true;
@@ -49,5 +49,4 @@ int main(int argc, char* argv[]) {
     } else {
         LOG(FATAL) << "Wrong cmd.";
     }
-
 }

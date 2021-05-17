@@ -139,12 +139,11 @@ namespace galaxy
             DownloadResponse response = client.DownloadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Get cmd.";
-            LOG(INFO) << "Done getting file from " << from_path << " to " << to_path << std::endl;
+            std::cout << "Done getting file from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
-            LOG(ERROR) << errorMsg;
-            throw errorMsg;
+            LOG(FATAL) << errorMsg;
         }
     }
 
@@ -161,12 +160,11 @@ namespace galaxy
             UploadResponse response = client.UploadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Upload cmd.";
-            LOG(INFO) << "Done uploading file from " << from_path << " to " << to_path << std::endl;
+            std::cout << "Done uploading file from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
-            LOG(ERROR) << errorMsg;
-            throw errorMsg;
+            LOG(FATAL) << errorMsg;
         }
     }
 
@@ -191,15 +189,12 @@ namespace galaxy
         } else {
             client::RmDir(path);
         }
-        LOG(INFO) << "\tDone removing " << path;
+        std::cout << "\tDone removing " << path;
     }
 
     void CopyCmdHelper(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
-            if (client::FileOrDie(from_path) == "") {
-                LOG(WARNING) << from_path << " does not exist.";
-                return;
-            }
+            CHECK_NE(client::FileOrDie(from_path), "") << from_path << " is an empty dir or does not exist.";
             if (!overwrite && client::FileOrDie(to_path) != "") {
                 LOG(FATAL) << "File already exists. Please use --f to overwrite.";
                 return;
@@ -217,7 +212,7 @@ namespace galaxy
             DownloadResponse response = client.CopyFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Copy cmd.";
-            LOG(INFO) << "Done copying from " << from_path << " to " << to_path << std::endl;
+            std::cout << "Done copying from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
@@ -230,9 +225,12 @@ namespace galaxy
         try {
             std::vector<std::string> all_files = client::ListFilesInDirRecursive(from_path);
             // Needs to push back from_path in case from_path is a file name.
-            all_files.push_back(from_path);
+            if (all_files.empty()) {
+                all_files.push_back(from_path);
+            }
             std::vector<std::thread> threads;
             for (auto& file : all_files) {
+                std::cout <<file << std::endl;
                 std::string new_file(file);
                 new_file.replace(0, from_path.length(), to_path);
                 threads.push_back(std::thread(CopyCmdHelper, file, new_file, overwrite));
@@ -241,12 +239,10 @@ namespace galaxy
             for (auto& th : threads) {
                 th.join();
             }
-            LOG(INFO) << "Done copying from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
-            LOG(ERROR) << errorMsg;
-            throw errorMsg;
+            LOG(FATAL) << errorMsg;
         }
     }
 
@@ -254,12 +250,12 @@ namespace galaxy
         try {
             CopyCmd(from_path, to_path, overwrite);
             client::RmDirRecursive(from_path);
-            LOG(INFO) << "Done moving from " << from_path << " to " << to_path << std::endl;
+            client::RmFile(from_path);
+            std::cout << "Done moving from " << from_path << " to " << to_path << std::endl;
         }
         catch (std::string errorMsg)
         {
-            LOG(ERROR) << errorMsg;
-            throw errorMsg;
+            LOG(FATAL) << errorMsg;
         }
     }
 }
