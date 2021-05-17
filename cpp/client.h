@@ -2,6 +2,7 @@
 #define CPP_GALAXY_CLIENT_H
 #include <string>
 #include <vector>
+#include <map>
 
 
 namespace galaxy {
@@ -21,9 +22,8 @@ namespace galaxy {
             void RRmFile(const std::string& path);
             void RRenameFile(const std::string& old_path, const std::string& new_path);
             std::string RRead(const std::string& path);
+            std::map<std::string, std::string> RReadMultiple(const std::vector<std::string>& paths);
             void RWrite(const std::string& path, const std::string& data, const std::string& mode="w");
-            std::string RReadLarge(const std::string& path);
-            void RWriteLarge(const std::string& path, const std::string& data, const std::string& mode="w");
             std::string RGetAttr(const std::string& path);
 
             // Local clients
@@ -40,9 +40,8 @@ namespace galaxy {
             void LRmFile(const std::string& path);
             void LRenameFile(const std::string& old_path, const std::string& new_path);
             std::string LRead(const std::string& path);
+            std::map<std::string, std::string> LReadMultiple(const std::vector<std::string>& paths);
             void LWrite(const std::string& path, const std::string& data, const std::string& mode="w");
-            std::string LReadLarge(const std::string& path);
-            void LWriteLarge(const std::string& path, const std::string& data, const std::string& mode="w");
             std::string LGetAttr(const std::string& path);
         }
         void CreateDirIfNotExist(const std::string& path, const int mode=0777);
@@ -58,9 +57,8 @@ namespace galaxy {
         void RmFile(const std::string& path);
         void RenameFile(const std::string& old_path, const std::string& new_path);
         std::string Read(const std::string& path);
+        std::map<std::string, std::string> ReadMultiple(const std::vector<std::string>& paths);
         void Write(const std::string& path, const std::string& data, const std::string& mode="w");
-        std::string ReadLarge(const std::string& path);
-        void WriteLarge(const std::string& path, const std::string& data, const std::string& mode="w");
         std::string GetAttr(const std::string& path);
     }  // namespace client
 } // namespace galaxy

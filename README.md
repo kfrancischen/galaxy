@@ -9,7 +9,7 @@ This is a toy-version of distributed file system developed based on gRPC, and it
 
 #### Server Entry Points
 The entry point for galaxy filesystem server is located at [server_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/server_main.cc). To run the binary, one can use the following cmd
-```shell script
+```shellscript
 bazel run //cpp:galaxy_server -- \
 --fs_global_config=/home/pslx/galaxy/example/cpp/server_config_example.json \
 --fs_cell=aa
@@ -18,7 +18,7 @@ With the above cmd, the machine is added as cell `aa` with configurations specif
 
 #### Client Python API
 galaxy provides unified API for client to access both local and remote files, to build the python modules, please following the cmd of
-```shell script
+```shellscript
 python setup.py install
 ```
 
@@ -118,6 +118,14 @@ read(path)
     1. path: the path to the file
 
 ```python
+read_multiple(paths)
+```
+* Decription: read a list of files.
+* Args:
+    1. paths: the paths to the files
+
+
+```python
 write(path, data, mode="w")
 ```
 * Decription: write data to a file.
@@ -145,11 +153,20 @@ write_proto_message(path, data, mode="w")
     3. mode: "w" means overwrite and "a" means append.
 
 ```python
-read_proto_message(path)
+read_proto_message(path, message_type)
 ```
 * Decription: read a protobuf message file.
 * Args:
     1. path: the path to the protobuf message file
+    2. message_type: the protobuf type of the message
+
+```python
+read_proto_messages(paths, message_type)
+```
+* Decription: read a list of protobuf message files.
+* Args:
+    1. paths: the paths to the protobuf message files
+    2. message_type: the protobuf type of the message
 
 ```python
 list_all_in_dir(path)
@@ -200,32 +217,32 @@ mv_folder(from_path, to_path)
 #### Fileutil tool
 fileutil is an entry point for file operations across different cells. The entry point is located at [fileutil_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/tool/fileutil_main.cc). The following cmds are supported:
 
-```shell
+```shellscript
 fileutil ls ${DIR_NAME}
 ```
 * Description: list all the contents in the remote directory.
 
-```shell
+```shellscript
 fileutil get ${REMOTE_FILE} ${LOCAL_FILE}
 ```
 * Description: download remote file to local file.
 
-```shell
+```shellscript
 fileutil upload ${LOCAL_FILE} ${REMOTE_FILE}
 ```
 * Description: upload local file to remote file.
 
-```shell
+```shellscript
 fileutil cp ${REMOTE_FILE1/REMOTE_DIR1} ${REMOTE_FILE2/REMOTE_DIR2} [--f]
 ```
 * Description: copy one remote file/directory to another remote file/directory. They can be at different cells. Overwrite if `--f` is set.
 
-```shell
+```shellscript
 fileutil mv ${REMOTE_FILE1/REMOTE_DIR1} ${REMOTE_FILE2/REMOTE_DIR2} [--f]
 ```
 * Description: move one remote file/directory to another remote file/directory. They can be at different cells. Overwrite if `--f` is set.
 
-```shell
+```shellscript
 fileutil rm ${REMOTE_DIR/REMOTE_FILE} [--r]
 ```
 * Description: delete remote file/directory (recursively if `--r` is set).
@@ -236,8 +253,8 @@ galaxy allows users to set following flags to customize server (mainly) and the 
 #### Examples
 The examples are at folder [example](https://github.com/kfrancischen/galaxy/tree/master/example), and the following is a Python example
 ```python
-
 from galaxy_py import gclient, gclient_ext
+import time
 
 
 def main():
@@ -254,11 +271,72 @@ def main():
                         "/galaxy/aa-d/Downloads/test_from_python/test3.txt")
     print(gclient.list_dirs_in_dir_recursive("/galaxy/aa-d/Downloads/historical_stock_data"))
     print(gclient.list_files_in_dir_recursive("/galaxy/aa-d/Downloads/historical_stock_data"))
-    gclient_ext.cp_folder("/galaxy/aa-d/Downloads/historical_stock_data",
-                          "/galaxy/aa-d/Downloads/historical_stock_data_copy")
-    gclient_ext.mv_folder("/galaxy/aa-d/Downloads/historical_stock_data_copy",
-                          "/galaxy/aa-d/Downloads/historical_stock_data_copy1")
+
+    t = time.time()
+    gclient.read("/galaxy/aa-d/Downloads/large_test.txt")
+    print(time.time() - t)
+
+    data = gclient.read_multiple(["/galaxy/aa-d/Downloads/test_3.txt", "/galaxy/aa-d/Downloads/test_1.txt"])
+    for key, val in data.items():
+        print(key, val)
+
 
 if __name__ == "__main__":
     main()
+
 ```
+The following is a C++ example:
+```cpp
+/* Example cmd
+* GALAXY_fs_global_config=/home/pslx/galaxy/example/cpp/server_config_example.json \
+* bazel run -c opt //example/cpp:client_example -- --proto_test=/galaxy/aa-d/Downloads/test1/test.pb
+*/
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "cpp/client.h"
+#include "cpp/core/galaxy_flag.h"
+#include "glog/logging.h"
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
+#include "schema/fileserver.pb.h"
+
+ABSL_FLAG(std::string, mkdir_test, "", "The directory for mkdir test.");
+ABSL_FLAG(std::string, rmdir_test, "", "The directory for rmdir test.");
+ABSL_FLAG(std::string, createfile_test, "", "The directory for createfile test.");
+ABSL_FLAG(std::string, proto_test, "", "The directory for createfile test.");
+
+int main(int argc, char* argv[]) {
+    absl::ParseCommandLine(argc, argv);
+    FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
+    google::InitGoogleLogging(argv[0]);
+    if (!absl::GetFlag(FLAGS_mkdir_test).empty()) {
+        galaxy::client::CreateDirIfNotExist(absl::GetFlag(FLAGS_mkdir_test));
+    }
+    if (!absl::GetFlag(FLAGS_rmdir_test).empty()) {
+        galaxy::client::RmDir(absl::GetFlag(FLAGS_rmdir_test));
+    }
+    if (!absl::GetFlag(FLAGS_createfile_test).empty()) {
+        galaxy::client::CreateFileIfNotExist(absl::GetFlag(FLAGS_createfile_test));
+        galaxy::client::Write(absl::GetFlag(FLAGS_createfile_test), "hello world");
+        std::cout << galaxy::client::Read(absl::GetFlag(FLAGS_createfile_test)) << std::endl;
+        std::cout << galaxy::client::Read("/galaxy/aa-d/some_random_file") << std::endl;
+    }
+    if (!absl::GetFlag(FLAGS_proto_test).empty()) {
+        galaxy_schema::Credential cred;
+        cred.set_password("test");
+        std::string cred_str;
+        cred.SerializeToString(&cred_str);
+        galaxy::client::Write(absl::GetFlag(FLAGS_proto_test), cred_str);
+        std::string result = galaxy::client::Read(absl::GetFlag(FLAGS_proto_test));
+        galaxy_schema::Credential result_cred;
+        result_cred.ParseFromString(result);
+        std::cout << result_cred.DebugString() << std::endl;
+    }
+
+    return 0;
+}
+```
+`Python` apis are more recommended.

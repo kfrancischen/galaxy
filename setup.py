@@ -74,7 +74,7 @@ class BuildBazelExtension(build_ext.build_ext):
 
 setuptools.setup(
     name="galaxy_py",
-    version="0.0.4",
+    version="0.1.0",
     description="Simple distributed file system based on gRPC.",
     long_description="README.md",
     keywords="distributed system, gRPC",

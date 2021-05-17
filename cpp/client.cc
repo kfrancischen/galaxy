@@ -40,6 +40,8 @@ using galaxy_schema::ListAllInDirRecursiveRequest;
 using galaxy_schema::ListAllInDirRecursiveResponse;
 using galaxy_schema::ReadRequest;
 using galaxy_schema::ReadResponse;
+using galaxy_schema::ReadMultipleRequest;
+using galaxy_schema::ReadMultipleResponse;
 using galaxy_schema::RenameFileRequest;
 using galaxy_schema::RenameFileResponse;
 using galaxy_schema::RmDirRecursiveRequest;
@@ -304,6 +306,23 @@ std::string galaxy::client::impl::RRead(const std::string& path) {
     }
 }
 
+std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std::vector<std::string>& paths) {
+    GalaxyClientInternal client = GetChannelClient();
+    ReadMultipleRequest request;
+    std::map<std::string, std::string> result;
+    *request.mutable_names() = {paths.begin(), paths.end()};
+    request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+    ReadMultipleResponse response = client.ReadMultiple(request);
+    for (const auto& pair : response.data()) {
+        std::string path = galaxy::util::MapToCellPath(pair.first);
+        if (pair.second.status().return_code() != 1) {
+            LOG(ERROR) << "Failed to read data for file " << path;
+        }
+        result.insert({path, pair.second.data()});
+    }
+    return result;
+}
+
 void galaxy::client::impl::RWrite(const std::string& path, const std::string& data, const std::string& mode) {
     GalaxyClientInternal client = GetChannelClient();
     CHECK(mode == "a" || mode == "w");
@@ -529,6 +548,22 @@ std::string galaxy::client::impl::LRead(const std::string& path) {
     }
 }
 
+std::map<std::string, std::string> galaxy::client::impl::LReadMultiple(const std::vector<std::string>& paths) {
+    GalaxyFs fs("");
+    std::map<std::string, std::string> data_map;
+    for (const auto& path : paths) {
+        std::string data;
+        auto status = fs.Read(path, data);
+        if (!status.ok()) {
+            LOG(ERROR) << "Read " << path <<" failed with error " << status.ToString();
+            data_map.insert({path, ""});
+        } else {
+            data_map.insert({path, data});
+        }
+    }
+    return data_map;
+}
+
 void galaxy::client::impl::LWrite(const std::string& path, const std::string& data, const std::string& mode) {
     try {
         GalaxyFs fs("");
@@ -727,6 +762,31 @@ std::string galaxy::client::Read(const std::string& path) {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LRead(path);
     }
+}
+
+std::map<std::string, std::string> galaxy::client::ReadMultiple(const std::vector<std::string>& paths) {
+    std::vector<std::string> remote_paths, local_paths;
+    for (const auto& path : paths) {
+        absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
+        if (path_or.ok()) {
+            VLOG(2) << "Using remote mode for " << path;
+            remote_paths.push_back(*path_or);
+        } else {
+            VLOG(1) << "Using local mode for " << path;
+            local_paths.push_back(path);
+        }
+    }
+
+    std::map<std::string, std::string> result;
+    if (!remote_paths.empty()) {
+        std::map<std::string, std::string> remote_result = galaxy::client::impl::RReadMultiple(remote_paths);
+        result.insert(remote_result.begin(), remote_result.end());
+    }
+    if (!local_paths.empty()) {
+        std::map<std::string, std::string> local_result = galaxy::client::impl::LReadMultiple(local_paths);
+        result.insert(local_result.begin(), local_result.end());
+    }
+    return result;
 }
 
 void galaxy::client::Write(const std::string& path, const std::string& data, const std::string& mode) {

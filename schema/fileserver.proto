@@ -21,11 +21,8 @@ service FileSystem {
     rpc RmFile( RmFileRequest ) returns ( RmFileResponse ) {}
     rpc RenameFile( RenameFileRequest ) returns ( RenameFileResponse ) {}
     rpc Read( ReadRequest ) returns ( ReadResponse ) {}
+    rpc ReadMultiple( ReadMultipleRequest ) returns ( ReadMultipleResponse ) {}
     rpc Write( WriteRequest ) returns ( WriteResponse ) {}
-
-    // Large file handling
-    rpc ReadLarge( ReadRequest ) returns (stream ReadResponse) {}
-    rpc WriteLarge( stream WriteRequest ) returns ( WriteResponse ){}
 
     // Download/upload file
     rpc DownloadFile( DownloadRequest ) returns (stream DownloadResponse) {}
@@ -197,9 +194,18 @@ message ReadRequest {
     Credential cred = 2;
 }
 
+message ReadMultipleRequest {
+    repeated string names = 1;
+    Credential cred = 2;
+}
+
 message ReadResponse {
     bytes data = 1;
     FileSystemStatus status = 2;
+}
+
+message ReadMultipleResponse {
+    map<string, ReadResponse> data = 1;
 }
 
 message WriteRequest {

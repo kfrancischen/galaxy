@@ -21,6 +21,19 @@ class gclient_ext:
             return None
 
     @classmethod
+    def read_proto_messages(cls, paths, message_type):
+        data_map = gclient.read_multiple(paths)
+        result_map = {}
+        for key, val in data_map.items():
+            if val:
+                proto_message = message_type()
+                proto_message.ParseFromString(val)
+                result_map[key] = proto_message
+            else:
+                result_map[key] = None
+        return result_map
+
+    @classmethod
     def list_all_in_dir(cls, path):
         return gclient.list_dirs_in_dir(path) + gclient.list_files_in_dir(path)
 

@@ -49,13 +49,10 @@ namespace galaxy
         grpc::Status Read(grpc::ServerContext *context, const galaxy_schema::ReadRequest *request,
                           galaxy_schema::ReadResponse *reply) override;
 
+        grpc::Status ReadMultiple(grpc::ServerContext *context, const galaxy_schema::ReadMultipleRequest *request,
+                          galaxy_schema::ReadMultipleResponse *reply) override;
+
         grpc::Status Write(grpc::ServerContext *context, const galaxy_schema::WriteRequest *request,
-                           galaxy_schema::WriteResponse *reply) override;
-
-        grpc::Status ReadLarge(grpc::ServerContext *context, const galaxy_schema::ReadRequest *request,
-                          grpc::ServerWriter<galaxy_schema::ReadResponse> *reply) override;
-
-        grpc::Status WriteLarge(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::WriteRequest> *request,
                            galaxy_schema::WriteResponse *reply) override;
 
         grpc::Status DownloadFile(grpc::ServerContext *context, const galaxy_schema::DownloadRequest *request,

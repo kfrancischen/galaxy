@@ -31,6 +31,8 @@ using galaxy_schema::ListAllInDirRecursiveRequest;
 using galaxy_schema::ListAllInDirRecursiveResponse;
 using galaxy_schema::ReadRequest;
 using galaxy_schema::ReadResponse;
+using galaxy_schema::ReadMultipleRequest;
+using galaxy_schema::ReadMultipleResponse;
 using galaxy_schema::RenameFileRequest;
 using galaxy_schema::RenameFileResponse;
 using galaxy_schema::RmDirRecursiveRequest;
@@ -224,12 +226,12 @@ namespace galaxy
         }
     }
 
-    WriteResponse GalaxyClientInternal::Write(const WriteRequest &request)
+    ReadMultipleResponse GalaxyClientInternal::ReadMultiple(const ReadMultipleRequest &request)
     {
-        WriteResponse reply;
+        ReadMultipleResponse reply;
         ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
-        Status status = stub_->Write(&context, request, &reply);
+        Status status = stub_->ReadMultiple(&context, request, &reply);
         if (status.ok()) {
             return reply;
         } else {
@@ -238,55 +240,12 @@ namespace galaxy
         }
     }
 
-    ReadResponse GalaxyClientInternal::ReadLarge(const ReadRequest &request)
+    WriteResponse GalaxyClientInternal::Write(const WriteRequest &request)
     {
-        ClientContext context;
-        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
-        std::unique_ptr<ClientReader<ReadResponse>> reader(stub_->ReadLarge(&context, request));
-
-        ReadResponse reply;
-        std::string data = "";
-        while (reader->Read(&reply)) {
-            data += reply.data();
-        }
-        Status status = reader->Finish();
-        if (status.ok()) {
-            ReadResponse response;
-            FileSystemStatus status;
-            status.set_return_code(1);
-            response.mutable_status()->CopyFrom(status);
-            response.set_data(data);
-            return response;
-        } else {
-            LOG(ERROR) << status.error_code() << ": " << status.error_message();
-            throw status.error_message();
-        }
-    }
-
-    WriteResponse GalaxyClientInternal::WriteLarge(const WriteRequest &request)
-    {
-        ClientContext context;
         WriteResponse reply;
+        ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
-        std::unique_ptr<ClientWriter<WriteRequest>> writer(stub_->WriteLarge(&context, &reply));
-        const std::string& data = request.data();
-        auto it = data.begin();
-        while (it < data.end()) {
-            int chunk_size = galaxy::constant::kChunkSize;
-            if (it + galaxy::constant::kChunkSize >= data.end()) {
-                chunk_size = std::distance(it, data.end());
-            }
-            WriteRequest sub_request;
-            sub_request.set_mode(request.mode());
-            sub_request.set_name(request.name());
-            sub_request.mutable_cred()->set_password(request.cred().password());
-            sub_request.set_data(std::string(it, it + chunk_size));
-            if (!writer->Write(sub_request)) {
-                break;
-            }
-        }
-        writer->WritesDone();
-        Status status = writer->Finish();
+        Status status = stub_->Write(&context, request, &reply);
         if (status.ok()) {
             return reply;
         } else {

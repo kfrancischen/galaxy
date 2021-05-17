@@ -1,6 +1,7 @@
 from galaxy_py import gclient, gclient_ext
 import time
 
+
 def main():
     gclient.create_dir_if_not_exist("/galaxy/aa-d/Downloads/test_from_python")
     print(gclient.list_dirs_in_dir("/galaxy/aa-d/Downloads"))
@@ -19,8 +20,10 @@ def main():
     t = time.time()
     gclient.read("/galaxy/aa-d/Downloads/large_test.txt")
     print(time.time() - t)
-    # gclient_ext.mv_folder("/galaxy/aa-d/Downloads/historical_stock_data_copy",
-    #                       "/galaxy/aa-d/Downloads/historical_stock_data_copy1")
+
+    data = gclient.read_multiple(["/galaxy/aa-d/Downloads/test_3.txt", "/galaxy/aa-d/Downloads/test_1.txt"])
+    for key, val in data.items():
+        print(key, val)
 
 
 if __name__ == "__main__":

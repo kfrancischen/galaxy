@@ -39,6 +39,8 @@ using galaxy_schema::ListAllInDirRecursiveRequest;
 using galaxy_schema::ListAllInDirRecursiveResponse;
 using galaxy_schema::ReadRequest;
 using galaxy_schema::ReadResponse;
+using galaxy_schema::ReadMultipleRequest;
+using galaxy_schema::ReadMultipleResponse;
 using galaxy_schema::RenameFileRequest;
 using galaxy_schema::RenameFileResponse;
 using galaxy_schema::RmDirRecursiveRequest;
@@ -351,6 +353,31 @@ namespace galaxy
         }
     }
 
+    Status GalaxyServerImpl::ReadMultiple(ServerContext *context, const ReadMultipleRequest *request,
+                                          ReadMultipleResponse *reply)
+    {
+        if (!VerifyPassword(request->cred()).ok()) {
+            LOG(ERROR) << "Wrong password from client client during function call ReadMultiple.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ReadMultiple.");
+        }
+        for (const auto& path : request->names()) {
+            ReadResponse read_response;
+            std::string abs_path;
+            absl::Status absl_status = GalaxyFs::Instance()->DieFileIfNotExist(path, abs_path);
+            if (absl_status.ok()) {
+                ReadRequest read_request;
+                read_request.set_name(path);
+                read_request.mutable_cred()->CopyFrom(request->cred());
+                Status status = GalaxyServerImpl::Read(context, &read_request, &read_response);
+                if (!status.ok()) {
+                    LOG(ERROR) << "Fail to read " << path;
+                }
+            }
+            (*reply->mutable_data())[abs_path].CopyFrom(read_response);
+        }
+        return Status::OK;
+    }
+
     Status GalaxyServerImpl::Write(ServerContext *context, const WriteRequest *request,
                                    WriteResponse *reply)
     {
@@ -372,75 +399,6 @@ namespace galaxy
             reply->mutable_status()->CopyFrom(status);
             return Status::OK;
         }
-    }
-
-    Status GalaxyServerImpl::ReadLarge(ServerContext *context, const ReadRequest *request,
-                                       ServerWriter<ReadResponse> *reply)
-    {
-        if (!VerifyPassword(request->cred()).ok())
-        {
-            LOG(ERROR) << "Wrong password from client during function call ReadLarge.";
-            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ReadLarge.");
-        }
-        std::string out_path;
-        absl::Status fs_status = GalaxyFs::Instance()->DieFileIfNotExist(request->name(), out_path);
-        if (!fs_status.ok()) {
-            LOG(ERROR) << "ReadLarge failed during function call ReadLarge with error " << fs_status;
-            return Status(StatusCode::INTERNAL, fs_status.ToString());
-        } else {
-            GalaxyFs::Instance()->Lock(request->name());
-            std::ifstream infile(out_path, std::ifstream::binary);
-            std::vector<char> buffer (galaxy::constant::kChunkSize + 1, 0);
-            while (infile) {
-                infile.read(buffer.data(), sizeof(buffer));
-                std::streamsize s = ((infile) ? galaxy::constant::kChunkSize : infile.gcount());
-                buffer[s] = 0;
-                ReadResponse response;
-                FileSystemStatus status;
-                status.set_return_code(1);
-                response.mutable_status()->CopyFrom(status);
-                response.set_data(std::string(buffer.data()));
-                reply->Write(response);
-            }
-            GalaxyFs::Instance()->Unlock(request->name());
-            infile.close();
-            return Status::OK;
-        }
-    }
-
-    Status GalaxyServerImpl::WriteLarge(ServerContext *context, ServerReader<WriteRequest> *request,
-                                        WriteResponse *reply)
-    {
-        WriteRequest write_request;
-        bool is_locked = false;
-        while (request->Read(&write_request)) {
-            if (!is_locked) {
-                GalaxyFs::Instance()->Lock(write_request.name());
-                is_locked = true;
-            }
-
-            if (!VerifyPassword(write_request.cred()).ok()) {
-                LOG(ERROR) << "Wrong password from client during function call Write.";
-                GalaxyFs::Instance()->Unlock(write_request.name());
-                return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Write.");
-            }
-            std::string mode = "w";
-            if (write_request.mode() == WriteMode::APPEND) {
-                mode = "a";
-            }
-            absl::Status fs_status = GalaxyFs::Instance()->Write(write_request.name(), write_request.data(), mode, false);
-            if (!fs_status.ok()) {
-                LOG(ERROR) << "Write failed during function call Write with error " << fs_status;
-                GalaxyFs::Instance()->Unlock(write_request.name());
-                return Status(StatusCode::INTERNAL, fs_status.ToString());
-            }
-
-        }
-        GalaxyFs::Instance()->Unlock(write_request.name());
-        FileSystemStatus status;
-        status.set_return_code(1);
-        reply->mutable_status()->CopyFrom(status);
-        return Status::OK;
     }
 
     Status GalaxyServerImpl::DownloadFile(ServerContext *context, const DownloadRequest *request,
