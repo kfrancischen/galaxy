@@ -50,18 +50,18 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
             absl::SetFlag(&FLAGS_fs_address, fs_ip + ":" + std::to_string(fs_port));
         }
 
-        if (cell_config.HasMember("fs_log_ttl") && is_server) {
+        if (cell_config.HasMember("fs_log_ttl")) {
             absl::SetFlag(&FLAGS_fs_log_ttl, cell_config["fs_log_ttl"].GetInt());
         }
-        if (cell_config.HasMember("fs_log_dir") && is_server) {
+        if (cell_config.HasMember("fs_log_dir")) {
             std::string log_dir = cell_config["fs_log_dir"].GetString();
             mkdir(log_dir.c_str(), 0777);
             absl::SetFlag(&FLAGS_fs_log_dir, log_dir);
         }
-        if (cell_config.HasMember("fs_verbose_level") && is_server) {
+        if (cell_config.HasMember("fs_verbose_level")) {
             absl::SetFlag(&FLAGS_fs_verbose_level, cell_config["fs_verbose_level"].GetInt());
         }
-        if (cell_config.HasMember("fs_alsologtostderr") && is_server) {
+        if (cell_config.HasMember("fs_alsologtostderr")) {
             absl::SetFlag(&FLAGS_fs_alsologtostderr, cell_config["fs_alsologtostderr"].GetBool());
         }
         if (cell_config.HasMember("fs_num_thread") && is_server) {

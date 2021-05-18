@@ -33,6 +33,11 @@ void RunGalaxyServer()
         std::make_shared<opencensus::exporters::stats::PrometheusExporter>();
     // Expose a Prometheus endpoint.
     prometheus::Exposer exposer(stats_address);
+    exposer.RegisterAuth(
+        [](const std::string &user, const std::string &password)
+        {
+            return user == "admin" && password == absl::GetFlag(FLAGS_fs_password);
+        });
     exposer.RegisterCollectable(exporter);
 
     // Init custom measure.
