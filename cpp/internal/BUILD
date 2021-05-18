@@ -44,3 +44,18 @@ cc_library(
         "@com_github_grpc_grpc//:grpc++",
     ]
 )
+
+cc_library(
+    name = "galaxy_stats_internal_lib",
+    visibility = ["//cpp:__subpackages__"],
+    srcs = [
+        "galaxy_stats_internal.h",
+        "galaxy_stats_internal.cc",
+    ],
+    deps= [
+        "@com_github_jupp0r_prometheus_cpp//pull",
+        "@io_opencensus_cpp//opencensus/stats",
+        "@io_opencensus_cpp//opencensus/tags",
+        "@com_google_absl//absl/strings",
+    ]
+)

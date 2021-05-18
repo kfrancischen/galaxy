@@ -1,17 +1,20 @@
-
-
 #include <iostream>
 #include <string>
+
+#include "cpp/core/galaxy_server.h"
+#include "cpp/core/galaxy_flag.h"
+#include "cpp/core/galaxy_stats.h"
+#include "cpp/util/galaxy_util.h"
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/ext/channelz_service_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
-#include "cpp/core/galaxy_server.h"
-#include "cpp/core/galaxy_flag.h"
-#include "cpp/util/galaxy_util.h"
+#include <grpcpp/opencensus.h>
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "glog/logging.h"
+#include "opencensus/exporters/stats/prometheus/prometheus_exporter.h"
+#include "prometheus/exposer.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -20,6 +23,23 @@ using galaxy::GalaxyServerImpl;
 
 void RunGalaxyServer()
 {
+    std::string stats_address(absl::GetFlag(FLAGS_fs_stats_address));
+    // Register the OpenCensus gRPC plugin to enable stats and tracing in gRPC.
+    grpc::RegisterOpenCensusPlugin();
+    // Register the gRPC views (latency, error count, etc).
+    grpc::RegisterOpenCensusViewsForExport();
+    // Keep a shared pointer to the Prometheus exporter.
+    auto exporter =
+        std::make_shared<opencensus::exporters::stats::PrometheusExporter>();
+    // Expose a Prometheus endpoint.
+    prometheus::Exposer exposer(stats_address);
+    exposer.RegisterCollectable(exporter);
+
+    // Init custom measure.
+    galaxy::stats::RegisterViews();
+    std::cout << "Stats are exposed to " << stats_address << std::endl;
+    LOG(INFO) << "Stats are exposed to " << stats_address << ".";
+
     std::string server_address(absl::GetFlag(FLAGS_fs_address));
     GalaxyServerImpl galaxy_service;
     galaxy_service.SetPassword(absl::GetFlag(FLAGS_fs_password));

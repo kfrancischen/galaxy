@@ -69,6 +69,11 @@ grpc_deps()
 load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
 grpc_extra_deps()
 
+http_archive(
+    name = "io_opencensus_cpp",
+    strip_prefix = "opencensus-cpp-master",
+    urls = ["https://github.com/census-instrumentation/opencensus-cpp/archive/master.zip"],
+)
 
 http_archive(
   name = "com_google_absl",
@@ -76,6 +81,16 @@ http_archive(
   strip_prefix = "abseil-cpp-98eb410c93ad059f9bba1bf43f5bb916fc92a5ea",
   sha256 = "aabf6c57e3834f8dc3873a927f37eaf69975d4b28117fc7427dfb1c661542a87",
 )
+
+# OpenCensus depends on jupp0r/prometheus-cpp
+http_archive(
+    name = "com_github_jupp0r_prometheus_cpp",
+    strip_prefix = "prometheus-cpp-master",
+    urls = ["https://github.com/jupp0r/prometheus-cpp/archive/master.zip"],
+)
+
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+prometheus_cpp_repositories()
 
 http_archive(
   name = "pybind11_bazel",

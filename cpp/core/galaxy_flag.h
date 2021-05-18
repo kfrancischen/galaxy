@@ -4,6 +4,7 @@
 
 ABSL_DECLARE_FLAG(std::string, fs_root);
 ABSL_DECLARE_FLAG(std::string, fs_address);
+ABSL_DECLARE_FLAG(std::string, fs_stats_address);
 ABSL_DECLARE_FLAG(std::string, fs_password);
 ABSL_DECLARE_FLAG(int, fs_log_ttl);
 ABSL_DECLARE_FLAG(std::string, fs_log_dir);

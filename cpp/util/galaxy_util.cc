@@ -35,15 +35,17 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
         rapidjson::StringBuffer sb;
         rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
         cell_config.Accept(writer);
-        if (!cell_config.HasMember("fs_root") || !cell_config.HasMember("fs_ip") || !cell_config.HasMember("fs_port") || !cell_config.HasMember("fs_password")) {
-            return absl::FailedPreconditionError("Imcomplete configuration file. The file should at least contain fs_root, fs_ip, fs_port and fs_password.");
+        if (!cell_config.HasMember("fs_root") || !cell_config.HasMember("fs_ip") || !cell_config.HasMember("fs_port") || !cell_config.HasMember("fs_password") || !cell_config.HasMember("fs_stats_port")) {
+            return absl::FailedPreconditionError("Imcomplete configuration file. The file should at least contain fs_root, fs_ip, fs_port, fs_stats_port and fs_password.");
         }
         absl::SetFlag(&FLAGS_fs_root, cell_config["fs_root"].GetString());
         absl::SetFlag(&FLAGS_fs_password, cell_config["fs_password"].GetString());
         std::string fs_ip = cell_config["fs_ip"].GetString();
         int fs_port = cell_config["fs_port"].GetInt();
+        int fs_stats_port = cell_config["fs_stats_port"].GetInt();
         if (is_server) {
             absl::SetFlag(&FLAGS_fs_address, "0.0.0.0:" + std::to_string(fs_port));
+            absl::SetFlag(&FLAGS_fs_stats_address, "0.0.0.0:" + std::to_string(fs_stats_port));
         } else {
             absl::SetFlag(&FLAGS_fs_address, fs_ip + ":" + std::to_string(fs_port));
         }

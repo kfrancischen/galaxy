@@ -22,6 +22,7 @@
 
 GALAXY_DEFINE_string(fs_root, "", "The root path of the file system.");
 GALAXY_DEFINE_string(fs_address, "", "The address of the file system.");
+GALAXY_DEFINE_string(fs_stats_address, "", "The address for the stats port of the file system.");
 GALAXY_DEFINE_string(fs_password, "", "The password contained in gRPC.");
 GALAXY_DEFINE_int(fs_log_ttl, 7, "The ttl for log files.");
 GALAXY_DEFINE_string(fs_log_dir, "/home/pslx/Downloads/galaxy_log", "The directory for log files.");

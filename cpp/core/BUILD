@@ -34,9 +34,21 @@ cc_library(
     ],
     deps= [
         ":galaxy_fs_lib",
+        ":galaxy_stats_lib",
         "//schema:fileserver_cc_grpc",
         "//cpp/internal:galaxy_const_lib",
         "@com_github_grpc_grpc//:grpc++",
-        "@com_google_absl//absl/status:status",
+    ]
+)
+
+cc_library(
+    name = "galaxy_stats_lib",
+    srcs = [
+        "galaxy_stats.h",
+        "galaxy_stats.cc",
+    ],
+    deps = [
+        "//cpp/internal:galaxy_stats_internal_lib",
+        "@google_glog//:glog"
     ]
 )

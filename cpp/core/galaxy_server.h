@@ -32,7 +32,7 @@ namespace galaxy
                                     galaxy_schema::ListFilesInDirResponse *reply) override;
 
         grpc::Status ListAllInDirRecursive(grpc::ServerContext *context, const galaxy_schema::ListAllInDirRecursiveRequest *request,
-                                    galaxy_schema::ListAllInDirRecursiveResponse *reply) override;
+                                           galaxy_schema::ListAllInDirRecursiveResponse *reply) override;
 
         grpc::Status CreateFileIfNotExist(grpc::ServerContext *context, const galaxy_schema::CreateFileRequest *request,
                                           galaxy_schema::CreateFileResponse *reply) override;
@@ -50,23 +50,73 @@ namespace galaxy
                           galaxy_schema::ReadResponse *reply) override;
 
         grpc::Status ReadMultiple(grpc::ServerContext *context, const galaxy_schema::ReadMultipleRequest *request,
-                          galaxy_schema::ReadMultipleResponse *reply) override;
+                                  galaxy_schema::ReadMultipleResponse *reply) override;
 
         grpc::Status Write(grpc::ServerContext *context, const galaxy_schema::WriteRequest *request,
                            galaxy_schema::WriteResponse *reply) override;
 
         grpc::Status DownloadFile(grpc::ServerContext *context, const galaxy_schema::DownloadRequest *request,
-                          grpc::ServerWriter<galaxy_schema::DownloadResponse> *reply) override;
+                                  grpc::ServerWriter<galaxy_schema::DownloadResponse> *reply) override;
 
         grpc::Status UploadFile(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::UploadRequest> *request,
-                           galaxy_schema::UploadResponse *reply) override;
+                                galaxy_schema::UploadResponse *reply) override;
 
-        void SetPassword(const std::string& password);
-
-        absl::Status VerifyPassword(const galaxy_schema::Credential& cred);
+        void SetPassword(const std::string &password);
 
     private:
         std::string password_;
+        absl::Status VerifyPassword(const galaxy_schema::Credential &cred);
+
+        grpc::Status GetAttrInternal(grpc::ServerContext *context, const galaxy_schema::GetAttrRequest *request,
+                                     galaxy_schema::GetAttrResponse *reply);
+
+        grpc::Status CreateDirIfNotExistInternal(grpc::ServerContext *context, const galaxy_schema::CreateDirRequest *request,
+                                                 galaxy_schema::CreateDirResponse *reply);
+
+        grpc::Status DirOrDieInternal(grpc::ServerContext *context, const galaxy_schema::DirOrDieRequest *request,
+                                      galaxy_schema::DirOrDieResponse *reply);
+
+        grpc::Status RmDirInternal(grpc::ServerContext *context, const galaxy_schema::RmDirRequest *request,
+                                   galaxy_schema::RmDirResponse *reply);
+
+        grpc::Status RmDirRecursiveInternal(grpc::ServerContext *context, const galaxy_schema::RmDirRecursiveRequest *request,
+                                            galaxy_schema::RmDirRecursiveResponse *reply);
+
+        grpc::Status ListDirsInDirInternal(grpc::ServerContext *context, const galaxy_schema::ListDirsInDirRequest *request,
+                                           galaxy_schema::ListDirsInDirResponse *reply);
+
+        grpc::Status ListFilesInDirInternal(grpc::ServerContext *context, const galaxy_schema::ListFilesInDirRequest *request,
+                                            galaxy_schema::ListFilesInDirResponse *reply);
+
+        grpc::Status ListAllInDirRecursiveInternal(grpc::ServerContext *context, const galaxy_schema::ListAllInDirRecursiveRequest *request,
+                                                   galaxy_schema::ListAllInDirRecursiveResponse *reply);
+
+        grpc::Status CreateFileIfNotExistInternal(grpc::ServerContext *context, const galaxy_schema::CreateFileRequest *request,
+                                                  galaxy_schema::CreateFileResponse *reply);
+
+        grpc::Status FileOrDieInternal(grpc::ServerContext *context, const galaxy_schema::FileOrDieRequest *request,
+                                       galaxy_schema::FileOrDieResponse *reply);
+
+        grpc::Status RmFileInternal(grpc::ServerContext *context, const galaxy_schema::RmFileRequest *request,
+                                    galaxy_schema::RmFileResponse *reply);
+
+        grpc::Status RenameFileInternal(grpc::ServerContext *context, const galaxy_schema::RenameFileRequest *request,
+                                        galaxy_schema::RenameFileResponse *reply);
+
+        grpc::Status ReadInternal(grpc::ServerContext *context, const galaxy_schema::ReadRequest *request,
+                                  galaxy_schema::ReadResponse *reply);
+
+        grpc::Status ReadMultipleInternal(grpc::ServerContext *context, const galaxy_schema::ReadMultipleRequest *request,
+                                          galaxy_schema::ReadMultipleResponse *reply);
+
+        grpc::Status WriteInternal(grpc::ServerContext *context, const galaxy_schema::WriteRequest *request,
+                                   galaxy_schema::WriteResponse *reply);
+
+        grpc::Status DownloadFileInternal(grpc::ServerContext *context, const galaxy_schema::DownloadRequest *request,
+                                          grpc::ServerWriter<galaxy_schema::DownloadResponse> *reply);
+
+        grpc::Status UploadFileInternal(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::UploadRequest> *request,
+                                        galaxy_schema::UploadResponse *reply);
     };
 } // namespace galaxy
 

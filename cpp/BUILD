@@ -10,11 +10,15 @@ cc_binary(
         "//cpp/core:galaxy_server_impl_lib",
         "//cpp/core:galaxy_flag_lib",
         "//cpp/util:galaxy_util_lib",
+        "//cpp/core:galaxy_stats_lib",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@google_glog//:glog",
         "@com_github_grpc_grpc//:grpc++_reflection",
         "@com_github_grpc_grpc//:grpcpp_channelz",
+        "@com_github_grpc_grpc//:grpc_opencensus_plugin",
+        "@com_github_jupp0r_prometheus_cpp//pull",
+        "@io_opencensus_cpp//opencensus/exporters/stats/prometheus:prometheus_exporter",
     ]
 )
 
