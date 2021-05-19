@@ -3,7 +3,8 @@
 
 namespace galaxy {
     namespace stats {
-        void RegisterViews();
+        void RegisterServerViews();
+        void RegisterClientViews();
     }
 }
 

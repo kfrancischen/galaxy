@@ -5,6 +5,7 @@
         "fs_password": "test",
         "fs_log_ttl": 7,
         "fs_port": 50051,
+        "fs_stats_port": 5005,
         "fs_ip": "192.168.1.112",
         "fs_verbose_level": 1,
         "fs_alsologtostderr": true,
@@ -17,6 +18,7 @@
         "fs_password": "test",
         "fs_log_ttl": 7,
         "fs_port": 50051,
+        "fs_stats_port": 5005,
         "fs_ip": "192.168.1.111",
         "fs_verbose_level": 1,
         "fs_alsologtostderr": true

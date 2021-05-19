@@ -41,7 +41,7 @@ void RunGalaxyServer()
     exposer.RegisterCollectable(exporter);
 
     // Init custom measure.
-    galaxy::stats::RegisterViews();
+    galaxy::stats::RegisterServerViews();
     std::cout << "Stats are exposed to " << stats_address << std::endl;
     LOG(INFO) << "Stats are exposed to " << stats_address << ".";
 

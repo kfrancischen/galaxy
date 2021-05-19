@@ -34,10 +34,11 @@ cc_library(
     ],
     deps= [
         ":galaxy_fs_lib",
-        ":galaxy_stats_lib",
         "//schema:fileserver_cc_grpc",
         "//cpp/internal:galaxy_const_lib",
+        "//cpp/internal:galaxy_stats_internal_lib",
         "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/time:time",
     ]
 )
 

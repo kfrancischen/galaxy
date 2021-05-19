@@ -8,6 +8,8 @@
 #include "cpp/core/galaxy_server.h"
 #include "cpp/core/galaxy_fs.h"
 #include "cpp/internal/galaxy_const.h"
+#include "cpp/internal/galaxy_stats_internal.h"
+#include "absl/time/clock.h"
 
 using grpc::ServerContext;
 using grpc::ServerReader;
@@ -544,63 +546,108 @@ namespace galaxy
     Status GalaxyServerImpl::GetAttr(ServerContext *context, const GetAttrRequest *request,
                                      GetAttrResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::GetAttrInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "GetAttr"}});
         return status;
     }
 
     Status GalaxyServerImpl::CreateDirIfNotExist(ServerContext *context, const CreateDirRequest *request,
                                                  CreateDirResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::CreateDirIfNotExistInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "CreateDirIfNotExist"}});
         return status;
     }
 
     Status GalaxyServerImpl::DirOrDie(ServerContext *context, const DirOrDieRequest *request,
                                       DirOrDieResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::DirOrDieInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "DirOrDie"}});
         return status;
     }
 
     Status GalaxyServerImpl::RmDir(ServerContext *context, const RmDirRequest *request,
                                    RmDirResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::RmDirInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "RmDir"}});
         return status;
     }
 
     Status GalaxyServerImpl::RmDirRecursive(ServerContext *context, const RmDirRecursiveRequest *request,
                                             RmDirRecursiveResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::RmDirRecursiveInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "RmDirRecursive"}});
         return status;
     }
 
     Status GalaxyServerImpl::ListDirsInDir(ServerContext *context, const ListDirsInDirRequest *request,
                                            ListDirsInDirResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::ListDirsInDirInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "ListDirsInDir"}});
         return status;
     }
 
     Status GalaxyServerImpl::ListFilesInDir(ServerContext *context, const ListFilesInDirRequest *request,
                                             ListFilesInDirResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::ListFilesInDirInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "ListFilesInDir"}});
         return status;
     }
 
     Status GalaxyServerImpl::ListAllInDirRecursive(ServerContext *context, const ListAllInDirRecursiveRequest *request,
                                                    ListAllInDirRecursiveResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::ListAllInDirRecursiveInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "ListAllInDirRecursive"}});
         return status;
     }
 
     Status GalaxyServerImpl::CreateFileIfNotExist(ServerContext *context, const CreateFileRequest *request,
                                                   CreateFileResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::CreateFileIfNotExistInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "CreateFileIfNotExist"}});
         return status;
     }
 
@@ -608,35 +655,60 @@ namespace galaxy
     Status GalaxyServerImpl::FileOrDie(ServerContext *context, const FileOrDieRequest *request,
                                                   FileOrDieResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::FileOrDieInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "FileOrDie"}});
         return status;
     }
 
     Status GalaxyServerImpl::RmFile(ServerContext *context, const RmFileRequest *request,
                                                   RmFileResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::RmFileInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "RmFile"}});
         return status;
     }
 
     Status GalaxyServerImpl::RenameFile(ServerContext *context, const RenameFileRequest *request,
                                                   RenameFileResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::RenameFileInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "RenameFile"}});
         return status;
     }
 
     Status GalaxyServerImpl::Read(ServerContext *context, const ReadRequest *request,
                                                   ReadResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::ReadInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "Read"}});
         return status;
     }
 
     Status GalaxyServerImpl::ReadMultiple(ServerContext *context, const ReadMultipleRequest *request,
                                                   ReadMultipleResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::ReadMultipleInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "ReadMultiple"}});
         return status;
     }
 
@@ -644,21 +716,36 @@ namespace galaxy
     Status GalaxyServerImpl::Write(ServerContext *context, const WriteRequest *request,
                                                   WriteResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::WriteInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "Write"}});
         return status;
     }
 
     Status GalaxyServerImpl::DownloadFile(ServerContext *context, const DownloadRequest *request,
                                                   ServerWriter<DownloadResponse> *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::DownloadFileInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "DownloadFile"}});
         return status;
     }
 
     Status GalaxyServerImpl::UploadFile(ServerContext *context, ServerReader<UploadRequest> *request,
                                                   UploadResponse *reply)
     {
+        absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::UploadFileInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms}},
+                                  {{stats::internal::MethodKey(), "UploadFile"}});
         return status;
     }
 } // namespace galaxy

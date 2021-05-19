@@ -4,7 +4,7 @@ namespace galaxy {
     namespace stats {
         opencensus::stats::MeasureDouble internal::LatencyMsMeasure() {
             static const auto measure = opencensus::stats::MeasureDouble::Register(
-                internal::kLatencyMeasureName, "The server latency in milliseconds", "ms");
+                internal::kLatencyMeasureName, "The latency in milliseconds", "ms");
             return measure;
         }
 
@@ -13,5 +13,16 @@ namespace galaxy {
             return key;
         }
 
+        opencensus::tags::TagKey internal::ClientMethodTagKey() {
+            static const auto method_tag_key =
+                opencensus::tags::TagKey::Register("grpc_client_method");
+            return method_tag_key;
+        }
+
+        opencensus::tags::TagKey internal::ClientStatusTagKey() {
+            static const auto status_tag_key =
+                opencensus::tags::TagKey::Register("grpc_client_status");
+            return status_tag_key;
+        }
     }
 }
