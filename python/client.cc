@@ -10,7 +10,7 @@ PYBIND11_MODULE(_gclient, m)
     google::InitGoogleLogging("GALAXY_CLIENT");
     m.doc() = "galaxy client"; // optional module docstring
     m.def("create_dir_if_not_exist", &galaxy::client::CreateDirIfNotExist, "Wrapper for CreateDirIfNotExist",
-          py::arg("path"), py::arg("mode") = 0777);
+        py::arg("path"), py::arg("mode") = 0777);
     m.def("dir_or_die", &galaxy::client::DirOrDie, "Wrapper for DirOrDie", py::arg("path"));
     m.def("rm_dir", &galaxy::client::RmDir, "Wrapper for RmDir", py::arg("path"));
     m.def("rm_dir_recursive", &galaxy::client::RmDirRecursive, "Wrapper for RmDirRecursive", py::arg("path"));
@@ -18,7 +18,8 @@ PYBIND11_MODULE(_gclient, m)
     m.def("list_files_in_dir", &galaxy::client::ListFilesInDir, "Wrapper for ListFilesInDir", py::arg("path"));
     m.def("list_dirs_in_dir_recursive", &galaxy::client::ListDirsInDirRecursive, "Wrapper for ListDirsInDirRecursive", py::arg("path"));
     m.def("list_files_in_dir_recursive", &galaxy::client::ListFilesInDirRecursive, "Wrapper for ListFilesInDirRecursive", py::arg("path"));
-    m.def("create_file_if_not_exist", &galaxy::client::CreateFileIfNotExist, "Wrapper for CreateFileIfNotExist", py::arg("path"), py::arg("mode") = 0777);
+    m.def("create_file_if_not_exist", &galaxy::client::CreateFileIfNotExist, "Wrapper for CreateFileIfNotExist",
+        py::arg("path"), py::arg("mode") = 0777);
     m.def("file_or_die", &galaxy::client::FileOrDie, "Wrapper for FileOrDie", py::arg("path"));
     m.def("rm_file", &galaxy::client::RmFile, "Wrapper for RmFile", py::arg("path"));
     m.def("rename_file", &galaxy::client::RenameFile, "Wrapper for RenameFile", py::arg("old_path"), py::arg("new_path"));

@@ -12,17 +12,5 @@ namespace galaxy {
             static const auto key = opencensus::tags::TagKey::Register("method");
             return key;
         }
-
-        opencensus::tags::TagKey internal::ClientMethodTagKey() {
-            static const auto method_tag_key =
-                opencensus::tags::TagKey::Register("grpc_client_method");
-            return method_tag_key;
-        }
-
-        opencensus::tags::TagKey internal::ClientStatusTagKey() {
-            static const auto status_tag_key =
-                opencensus::tags::TagKey::Register("grpc_client_status");
-            return status_tag_key;
-        }
     }
 }

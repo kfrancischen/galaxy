@@ -9,14 +9,8 @@ namespace galaxy {
     namespace stats {
         namespace internal {
             ABSL_CONST_INIT const absl::string_view kLatencyMeasureName = "grpc/latency";
-            ABSL_CONST_INIT const absl::string_view kRpcClientRoundtripLatencyMeasureName =
-                "grpc.io/client/roundtrip_latency";
             opencensus::stats::MeasureDouble LatencyMsMeasure();
             opencensus::tags::TagKey MethodKey();
-
-            opencensus::tags::TagKey ClientMethodTagKey();
-
-            opencensus::tags::TagKey ClientStatusTagKey();
         }
     }
 }
