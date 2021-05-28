@@ -14,8 +14,8 @@ def main():
 
     gclient_ext.mv_file("/galaxy/aa-d/test_from_python/test.txt",
                         "/galaxy/aa-d/test_from_python/test3.txt")
-    print(gclient.list_dirs_in_dir_recursive("/galaxy/aa-d/historical_stock_data"))
-    print(gclient.list_files_in_dir_recursive("/galaxy/aa-d/historical_stock_data"))
+    print(gclient.list_dirs_in_dir_recursive("/galaxy/aa-d/test_from_python"))
+    print(gclient.list_files_in_dir_recursive("/galaxy/aa-d/test_from_python"))
 
     t = time.time()
     gclient.read("/galaxy/aa-d/large_test.txt")

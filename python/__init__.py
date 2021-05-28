@@ -35,11 +35,11 @@ class gclient_ext:
 
     @classmethod
     def list_all_in_dir(cls, path):
-        return gclient.list_dirs_in_dir(path) + gclient.list_files_in_dir(path)
+        return {**gclient.list_dirs_in_dir(path), **gclient.list_files_in_dir(path)}
 
     @classmethod
     def list_all_in_dir_recursive(cls, path):
-        return gclient.list_dirs_in_dir_recursive(path) + gclient.list_files_in_dir_recursive(path)
+        return {**gclient.list_dirs_in_dir_recursive(path), **gclient.list_files_in_dir_recursive(path)}
 
     @classmethod
     def cp_file(cls, from_path, to_path):

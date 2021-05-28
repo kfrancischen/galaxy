@@ -10,6 +10,7 @@
 #include "cpp/internal/galaxy_client_internal.h"
 #include "cpp/internal/galaxy_const.h"
 #include "absl/flags/flag.h"
+#include "absl/container/flat_hash_map.h"
 #include "glog/logging.h"
 
 #include "include/rapidjson/document.h"
@@ -63,6 +64,40 @@ GalaxyClientInternal GetChannelClient() {
     ch_args.SetMaxReceiveMessageSize(-1);
     GalaxyClientInternal client(grpc::CreateCustomChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials(), ch_args));
     return client;
+}
+
+std::string StatbufToString(const struct stat& statbuf) {
+    rapidjson::Document doc;
+    doc.SetObject();
+    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+    rapidjson::Value owner(rapidjson::kObjectType);
+    owner.AddMember("uid", statbuf.st_uid, allocator);
+    owner.AddMember("gid", statbuf.st_uid, allocator);
+    doc.AddMember("owner", owner, allocator);
+    doc.AddMember("dev", statbuf.st_dev, allocator);
+    doc.AddMember("ino", statbuf.st_ino, allocator);
+    doc.AddMember("mode", statbuf.st_mode, allocator);
+    doc.AddMember("nlink", statbuf.st_nlink, allocator);
+    doc.AddMember("rdev", statbuf.st_rdev, allocator);
+    doc.AddMember("size", statbuf.st_size, allocator);
+    doc.AddMember("blksize", statbuf.st_blksize, allocator);
+    doc.AddMember("blocks", statbuf.st_blocks, allocator);
+    doc.AddMember("atime", statbuf.st_atime, allocator);
+    doc.AddMember("mtime", statbuf.st_mtime, allocator);
+    doc.AddMember("ctime", statbuf.st_ctime, allocator);
+
+    rapidjson::StringBuffer sb;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
+    doc.Accept(writer);
+    return sb.GetString();
+}
+
+std::string AttributeToString(const Attribute& attr) {
+    std::string output_attr;
+    google::protobuf::util::JsonPrintOptions option;
+    option.add_whitespace = true;
+    google::protobuf::util::MessageToJsonString(attr, &output_attr, option);
+    return output_attr;
 }
 
 void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const int mode) {
@@ -132,7 +167,7 @@ void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
     }
 }
 
-std::vector<std::string> galaxy::client::impl::RListDirsInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const std::string& path) {
     GalaxyClientInternal client = GetChannelClient();
     try {
         ListDirsInDirRequest request;
@@ -141,20 +176,20 @@ std::vector<std::string> galaxy::client::impl::RListDirsInDir(const std::string&
         ListDirsInDirResponse response = client.ListDirsInDir(request);
         FileSystemStatus status = response.status();
         CHECK_EQ(status.return_code(), 1) << "Fail to call ListDirsInDir.";
-        std::vector<std::string> result(response.sub_dirs().begin(), response.sub_dirs().end());
-        for (size_t i = 0; i < result.size(); i++) {
-            result[i] = galaxy::util::MapToCellPath(result[i]);
+        std::map<std::string, std::string> result;
+        for (const auto& sub_dir : response.sub_dirs()) {
+            result.insert({galaxy::util::MapToCellPath(sub_dir.first), AttributeToString(sub_dir.second)});
         }
         return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
-std::vector<std::string> galaxy::client::impl::RListFilesInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const std::string& path) {
     GalaxyClientInternal client = GetChannelClient();
     try {
         ListFilesInDirRequest request;
@@ -163,20 +198,20 @@ std::vector<std::string> galaxy::client::impl::RListFilesInDir(const std::string
         ListFilesInDirResponse response = client.ListFilesInDir(request);
         FileSystemStatus status = response.status();
         CHECK_EQ(status.return_code(), 1) << "Fail to call ListFilesInDir.";
-        std::vector<std::string> result(response.sub_files().begin(), response.sub_files().end());
-        for (size_t i = 0; i < result.size(); i++) {
-            result[i] = galaxy::util::MapToCellPath(result[i]);
+        std::map<std::string, std::string> result;
+        for (const auto& sub_file : response.sub_files()) {
+            result.insert({galaxy::util::MapToCellPath(sub_file.first), AttributeToString(sub_file.second)});
         }
         return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
-std::vector<std::string> galaxy::client::impl::RListDirsInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive(const std::string& path) {
     GalaxyClientInternal client = GetChannelClient();
     try {
         ListAllInDirRecursiveRequest request;
@@ -185,20 +220,20 @@ std::vector<std::string> galaxy::client::impl::RListDirsInDirRecursive(const std
         ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
         FileSystemStatus status = response.status();
         CHECK_EQ(status.return_code(), 1) << "Fail to call RListDirsInDirRecursive.";
-        std::vector<std::string> result(response.sub_dirs().begin(), response.sub_dirs().end());
-        for (size_t i = 0; i < result.size(); i++) {
-            result[i] = galaxy::util::MapToCellPath(result[i]);
+        std::map<std::string, std::string> result;
+        for (const auto& sub_dir : response.sub_dirs()) {
+            result.insert({galaxy::util::MapToCellPath(sub_dir.first), AttributeToString(sub_dir.second)});
         }
         return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
-std::vector<std::string> galaxy::client::impl::RListFilesInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursive(const std::string& path) {
     GalaxyClientInternal client = GetChannelClient();
     try {
         ListAllInDirRecursiveRequest request;
@@ -207,16 +242,16 @@ std::vector<std::string> galaxy::client::impl::RListFilesInDirRecursive(const st
         ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
         FileSystemStatus status = response.status();
         CHECK_EQ(status.return_code(), 1) << "Fail to call RListFilesInDirRecursive.";
-        std::vector<std::string> result(response.sub_files().begin(), response.sub_files().end());
-        for (size_t i = 0; i < result.size(); i++) {
-            result[i] = galaxy::util::MapToCellPath(result[i]);
+        std::map<std::string, std::string> result;
+        for (const auto& sub_file : response.sub_files()) {
+            result.insert({galaxy::util::MapToCellPath(sub_file.first), AttributeToString(sub_file.second)});
         }
         return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
@@ -355,11 +390,7 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
         GetAttrResponse response = client.GetAttr(request);
         FileSystemStatus status = response.status();
         CHECK_EQ(status.return_code(), 1) << "Fail to call GetAttr.";
-        std::string output_attr;
-        google::protobuf::util::JsonPrintOptions option;
-        option.add_whitespace = true;
-        google::protobuf::util::MessageToJsonString(response.attr(), &output_attr, option);
-        return output_attr;
+        return AttributeToString(response.attr());
     }
     catch (std::string errorMsg)
     {
@@ -419,65 +450,81 @@ void galaxy::client::impl::LRmDirRecursive(const std::string& path) {
     }
 }
 
-std::vector<std::string> galaxy::client::impl::LListDirsInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListDirsInDir(const std::string& path) {
     try {
-        std::vector<std::string> sub_dirs;
+        absl::flat_hash_map<std::string, struct stat> sub_dirs;
         GalaxyFs fs("");
         auto status = fs.ListDirsInDir(path, sub_dirs);
         CHECK(status.ok()) << "ListDirsInDir failed with error " << status.ToString();
-        return sub_dirs;
+        std::map<std::string, std::string> result;
+        for (const auto& sub_dir : sub_dirs) {
+            result.insert({sub_dir.first, StatbufToString(sub_dir.second)});
+        }
+        return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
-std::vector<std::string> galaxy::client::impl::LListFilesInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListFilesInDir(const std::string& path) {
     try {
-        std::vector<std::string> sub_files;
+        absl::flat_hash_map<std::string, struct stat> sub_files;
         GalaxyFs fs("");
         auto status = fs.ListFilesInDir(path, sub_files);
         CHECK(status.ok()) << "ListFilesInDir failed with error " << status.ToString();
-        return sub_files;
+        std::map<std::string, std::string> result;
+        for (const auto& sub_file : sub_files) {
+            result.insert({sub_file.first, StatbufToString(sub_file.second)});
+        }
+        return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
-std::vector<std::string> galaxy::client::impl::LListDirsInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListDirsInDirRecursive(const std::string& path) {
     try {
-        std::vector<std::string> sub_files;
-        std::vector<std::string> sub_dirs;
+        absl::flat_hash_map<std::string, struct stat> sub_files;
+        absl::flat_hash_map<std::string, struct stat> sub_dirs;
         GalaxyFs fs("");
         auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files);
         CHECK(status.ok()) << "ListDirsInDirRecursive failed with error " << status.ToString();
-        return sub_dirs;
+        std::map<std::string, std::string> result;
+        for (const auto& sub_dir : sub_dirs) {
+            result.insert({sub_dir.first, StatbufToString(sub_dir.second)});
+        }
+        return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
-std::vector<std::string> galaxy::client::impl::LListFilesInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListFilesInDirRecursive(const std::string& path) {
     try {
-        std::vector<std::string> sub_files;
-        std::vector<std::string> sub_dirs;
+        absl::flat_hash_map<std::string, struct stat> sub_files;
+        absl::flat_hash_map<std::string, struct stat> sub_dirs;
         GalaxyFs fs("");
         auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files);
         CHECK(status.ok()) << "ListFilesInDirRecursive failed with error " << status.ToString();
-        return sub_files;
+        std::map<std::string, std::string> result;
+        for (const auto& sub_file : sub_files) {
+            result.insert({sub_file.first, StatbufToString(sub_file.second)});
+        }
+        return result;
     }
     catch (std::string errorMsg)
     {
         LOG(ERROR) << errorMsg;
-        return std::vector<std::string>();
+        return std::map<std::string, std::string>();
     }
 }
 
@@ -583,29 +630,7 @@ std::string galaxy::client::impl::LGetAttr(const std::string& path) {
         struct stat statbuf;
         auto status = fs.GetAttr(path, &statbuf);
         CHECK(status.ok()) << "GetAttr failed with error " << status.ToString();
-        rapidjson::Document doc;
-        doc.SetObject();
-        rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
-        rapidjson::Value owner(rapidjson::kObjectType);
-        owner.AddMember("uid", statbuf.st_uid, allocator);
-        owner.AddMember("gid", statbuf.st_uid, allocator);
-        doc.AddMember("owner", owner, allocator);
-        doc.AddMember("dev", statbuf.st_dev, allocator);
-        doc.AddMember("ino", statbuf.st_ino, allocator);
-        doc.AddMember("mode", statbuf.st_mode, allocator);
-        doc.AddMember("nlink", statbuf.st_nlink, allocator);
-        doc.AddMember("rdev", statbuf.st_rdev, allocator);
-        doc.AddMember("size", statbuf.st_size, allocator);
-        doc.AddMember("blksize", statbuf.st_blksize, allocator);
-        doc.AddMember("blocks", statbuf.st_blocks, allocator);
-        doc.AddMember("atime", statbuf.st_atime, allocator);
-        doc.AddMember("mtime", statbuf.st_mtime, allocator);
-        doc.AddMember("ctime", statbuf.st_ctime, allocator);
-
-        rapidjson::StringBuffer sb;
-        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
-        doc.Accept(writer);
-        return sb.GetString();
+        return StatbufToString(statbuf);
     }
     catch (std::string errorMsg)
     {
@@ -660,7 +685,7 @@ void galaxy::client::RmDirRecursive(const std::string& path) {
     }
 }
 
-std::vector<std::string> galaxy::client::ListDirsInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::ListDirsInDir(const std::string& path) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
@@ -671,7 +696,7 @@ std::vector<std::string> galaxy::client::ListDirsInDir(const std::string& path) 
     }
 }
 
-std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::ListFilesInDir(const std::string& path) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
@@ -682,7 +707,7 @@ std::vector<std::string> galaxy::client::ListFilesInDir(const std::string& path)
     }
 }
 
-std::vector<std::string> galaxy::client::ListDirsInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::ListDirsInDirRecursive(const std::string& path) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
@@ -693,7 +718,7 @@ std::vector<std::string> galaxy::client::ListDirsInDirRecursive(const std::strin
     }
 }
 
-std::vector<std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";

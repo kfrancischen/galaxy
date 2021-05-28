@@ -22,6 +22,7 @@ cc_library(
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/status:status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@google_glog//:glog"
     ]
 )

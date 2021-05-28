@@ -6,6 +6,7 @@
 #include "absl/time/time.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/container/flat_hash_map.h"
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -38,10 +39,10 @@ namespace galaxy {
 
         absl::Status CreateFileIfNotExist(const std::string& path, mode_t mode);
         absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path);
-        absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files);
-        absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs);
-        absl::Status ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
-            std::vector<std::string>& sub_files);
+        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files);
+        absl::Status ListDirsInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs);
+        absl::Status ListAllInDirRecursive(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs,
+            absl::flat_hash_map<std::string, struct stat>& sub_files);
 
         absl::Status RmDir(const std::string& path);
         absl::Status RmDirRecursive(const std::string& path);

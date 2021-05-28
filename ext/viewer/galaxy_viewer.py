@@ -1,14 +1,11 @@
-from flask import Flask, make_response, request, session, render_template, send_file, Response
+from flask import Flask, make_response, request, render_template, send_file, Response
 from flask.views import MethodView
-from werkzeug import secure_filename
 from datetime import datetime
-import humanize
 import os
 import re
 import stat
 import json
 import mimetypes
-import sys
 from pathlib2 import Path
 
 app = Flask(__name__, static_url_path='/assets', static_folder='assets')
@@ -21,7 +18,7 @@ icontypes = {'fa-music': 'm4a,mp3,oga,ogg,webma,wav', 'fa-archive': '7z,zip,rar,
 
 @app.template_filter('size_fmt')
 def size_fmt(size):
-    return humanize.naturalsize(size)
+    return size
 
 @app.template_filter('time_fmt')
 def time_desc(timestamp):
@@ -48,7 +45,7 @@ def icon_fmt(filename):
 @app.template_filter('humanize')
 def time_humanize(timestamp):
     mdate = datetime.utcfromtimestamp(timestamp)
-    return humanize.naturaltime(mdate)
+    return mdate
 
 def get_type(mode):
     if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
@@ -99,20 +96,18 @@ def get_range(request):
     else:
         return 0, None
 
+
 class PathView(MethodView):
     def get(self, p=''):
-        hide_dotfile = request.args.get('hide-dotfile', request.cookies.get('hide-dotfile', 'no'))
-
         path = os.path.join(root, p)
 
         if os.path.isdir(path):
             contents = []
             total = {'size': 0, 'dir': 0, 'file': 0}
             for filename in os.listdir(path):
-                if filename in ignored:
+                if filename in ignored or filename[0] == '.':
                     continue
-                if hide_dotfile == 'yes' and filename[0] == '.':
-                    continue
+
                 filepath = os.path.join(path, filename)
                 stat_res = os.stat(filepath)
                 info = {}
@@ -125,9 +120,9 @@ class PathView(MethodView):
                 info['size'] = sz
                 total['size'] += sz
                 contents.append(info)
-            page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile=hide_dotfile)
+            page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile="yes")
             res = make_response(page, 200)
-            res.set_cookie('hide-dotfile', hide_dotfile, max_age=16070400)
+            res.set_cookie('hide-dotfile', "yes", max_age=16070400)
         elif os.path.isfile(path):
             if 'Range' in request.headers:
                 start, end = get_range(request)
@@ -138,7 +133,7 @@ class PathView(MethodView):
         else:
             res = make_response('Not found', 404)
         return res
-    
+
     def put(self, p=''):
         if request.cookies.get('auth_cookie') == key:
             path = os.path.join(root, p)
@@ -148,7 +143,7 @@ class PathView(MethodView):
             info = {}
             if os.path.isdir(dir_path):
                 try:
-                    filename = secure_filename(os.path.basename(path))
+                    filename = os.path.basename(path)
                     with open(os.path.join(dir_path, filename), 'wb') as f:
                         f.write(request.stream.read())
                 except Exception as e:
@@ -163,7 +158,7 @@ class PathView(MethodView):
             res = make_response(json.JSONEncoder().encode(info), 201)
             res.headers.add('Content-type', 'application/json')
         else:
-            info = {} 
+            info = {}
             info['status'] = 'error'
             info['msg'] = 'Authentication failed'
             res = make_response(json.JSONEncoder().encode(info), 401)
@@ -180,7 +175,7 @@ class PathView(MethodView):
                 files = request.files.getlist('files[]')
                 for file in files:
                     try:
-                        filename = secure_filename(file.filename)
+                        filename = file.filename
                         file.save(os.path.join(path, filename))
                     except Exception as e:
                         info['status'] = 'error'
@@ -194,13 +189,13 @@ class PathView(MethodView):
             res = make_response(json.JSONEncoder().encode(info), 200)
             res.headers.add('Content-type', 'application/json')
         else:
-            info = {} 
+            info = {}
             info['status'] = 'error'
             info['msg'] = 'Authentication failed'
             res = make_response(json.JSONEncoder().encode(info), 401)
             res.headers.add('Content-type', 'application/json')
         return res
-    
+
     def delete(self, p=''):
         if request.cookies.get('auth_cookie') == key:
             path = os.path.join(root, p)
@@ -210,7 +205,7 @@ class PathView(MethodView):
             info = {}
             if os.path.isdir(dir_path):
                 try:
-                    filename = secure_filename(os.path.basename(path))
+                    filename = os.path.basename(path)
                     os.remove(os.path.join(dir_path, filename))
                     os.rmdir(dir_path)
                 except Exception as e:
@@ -232,6 +227,7 @@ class PathView(MethodView):
             res.headers.add('Content-type', 'application/json')
         return res
 
+
 path_view = PathView.as_view('path_view')
 app.add_url_rule('/', view_func=path_view)
 app.add_url_rule('/<path:p>', view_func=path_view)
@@ -239,6 +235,6 @@ app.add_url_rule('/<path:p>', view_func=path_view)
 if __name__ == '__main__':
     bind = os.getenv('FS_BIND', '0.0.0.0')
     port = os.getenv('FS_PORT', '8000')
-    root = os.path.normpath(os.getenv('FS_PATH', '/tmp'))
-    key = os.getenv('FS_KEY')
+    root = os.path.normpath(os.getenv('FS_PATH', '/home/pslx'))
+    key = os.getenv('FS_KEY', "mafia2018")
     app.run(bind, port, threaded=True, debug=False)

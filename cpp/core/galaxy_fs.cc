@@ -40,18 +40,18 @@ namespace galaxy {
 
     }
 
-    absl::Status GalaxyFs::ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs) {
+    absl::Status GalaxyFs::ListDirsInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs) {
         std::string abs_path = internal::JoinPath(root_, path);
         return impl::ListDirsInDir(abs_path, sub_dirs);
     }
 
-    absl::Status GalaxyFs::ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files) {
+    absl::Status GalaxyFs::ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files) {
         std::string abs_path = internal::JoinPath(root_, path);
         return impl::ListFilesInDir(abs_path, sub_files);
     }
 
-    absl::Status GalaxyFs::ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
-            std::vector<std::string>& sub_files) {
+    absl::Status GalaxyFs::ListAllInDirRecursive(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs,
+            absl::flat_hash_map<std::string, struct stat>& sub_files) {
         std::string abs_path = internal::JoinPath(root_, path);
         return impl::ListAllInDirRecursive(abs_path, sub_dirs, sub_files);
     }

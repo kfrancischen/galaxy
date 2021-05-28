@@ -28,16 +28,6 @@
             <input type="text" id="listr-search" class="form-control" placeholder="Search">
         </div>
       </div>
-      <div class="pull-sm-right">
-        <div class="btn-group">
-          <a data-toggle="modal" data-target="#uploader-modal" class="btn btn-secondary text-muted">Upload</a>
-          {% if hide_dotfile == 'yes' %}
-          <a href="?hide-dotfile=no" class="btn btn-secondary text-muted">Show Dotfiles</a>
-          {% else %}
-          <a href="?hide-dotfile=yes" class="btn btn-secondary text-muted">Hide Dotfiles</a>
-          {% endif %}
-        </div>
-      </div>
     </div>
     <div class="table-responsive">
       <table id="listr-table" class="table table-hover">
@@ -151,5 +141,3 @@
   <script type="text/javascript" src="{{url_for('static', filename='js/custom.js')}}"></script>
 </body>
 </html>
-
-

@@ -122,7 +122,7 @@ message ListDirsInDirRequest {
 }
 
 message ListDirsInDirResponse {
-    repeated string sub_dirs = 1;
+    map<string, Attribute> sub_dirs = 1;
     FileSystemStatus status = 2;
 }
 
@@ -133,7 +133,7 @@ message ListFilesInDirRequest {
 }
 
 message ListFilesInDirResponse {
-    repeated string sub_files = 1;
+    map<string, Attribute> sub_files = 1;
     FileSystemStatus status = 2;
 }
 
@@ -143,8 +143,8 @@ message ListAllInDirRecursiveRequest {
 }
 
 message ListAllInDirRecursiveResponse {
-    repeated string sub_files = 1;
-    repeated string sub_dirs = 2;
+    map<string, Attribute> sub_files = 1;
+    map<string, Attribute> sub_dirs = 2;
     FileSystemStatus status = 3;
 }
 

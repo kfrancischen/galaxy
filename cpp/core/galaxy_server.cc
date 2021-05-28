@@ -10,6 +10,7 @@
 #include "cpp/internal/galaxy_const.h"
 #include "cpp/internal/galaxy_stats_internal.h"
 #include "absl/time/clock.h"
+#include "absl/container/flat_hash_map.h"
 
 using grpc::ServerContext;
 using grpc::ServerReader;
@@ -60,6 +61,26 @@ using galaxy_schema::WriteResponse;
 
 namespace galaxy
 {
+    Attribute StatbufToAttribute(const struct stat& statbuf) {
+        Owner owner;
+        owner.set_uid(statbuf.st_uid);
+        owner.set_gid(statbuf.st_gid);
+
+        Attribute attribute;
+        attribute.set_dev(statbuf.st_dev);
+        attribute.set_ino(statbuf.st_ino);
+        attribute.set_mode(statbuf.st_mode);
+        attribute.set_nlink(statbuf.st_nlink);
+        attribute.mutable_owner()->CopyFrom(owner);
+        attribute.set_rdev(statbuf.st_rdev);
+        attribute.set_size(statbuf.st_size);
+        attribute.set_blksize(statbuf.st_blksize);
+        attribute.set_blocks(statbuf.st_blocks);
+        attribute.set_atime(statbuf.st_atime);
+        attribute.set_mtime(statbuf.st_mtime);
+        attribute.set_ctime(statbuf.st_ctime);
+        return attribute;
+    }
 
     void GalaxyServerImpl::SetPassword(const std::string &password)
     {
@@ -97,26 +118,8 @@ namespace galaxy
         else
         {
             FileSystemStatus status;
-            Owner owner;
             status.set_return_code(1);
-            owner.set_uid(statbuf.st_uid);
-            owner.set_gid(statbuf.st_gid);
-
-            Attribute attributes;
-            attributes.set_dev(statbuf.st_dev);
-            attributes.set_ino(statbuf.st_ino);
-            attributes.set_mode(statbuf.st_mode);
-            attributes.set_nlink(statbuf.st_nlink);
-            attributes.mutable_owner()->CopyFrom(owner);
-            attributes.set_rdev(statbuf.st_rdev);
-            attributes.set_size(statbuf.st_size);
-            attributes.set_blksize(statbuf.st_blksize);
-            attributes.set_blocks(statbuf.st_blocks);
-            attributes.set_atime(statbuf.st_atime);
-            attributes.set_mtime(statbuf.st_mtime);
-            attributes.set_ctime(statbuf.st_ctime);
-
-            reply->mutable_attr()->CopyFrom(attributes);
+            reply->mutable_attr()->CopyFrom(StatbufToAttribute(statbuf));
             reply->mutable_status()->CopyFrom(status);
             return Status::OK;
         }
@@ -223,7 +226,7 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call ListDirsInDir.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ListDirsInDir.");
         }
-        std::vector<std::string> dirs;
+        absl::flat_hash_map<std::string, struct stat> dirs;
         absl::Status fs_status = GalaxyFs::Instance()->ListDirsInDir(request->name(), dirs);
         if (!fs_status.ok())
         {
@@ -235,7 +238,9 @@ namespace galaxy
             FileSystemStatus status;
             status.set_return_code(1);
             reply->mutable_status()->CopyFrom(status);
-            *reply->mutable_sub_dirs() = {dirs.begin(), dirs.end()};
+            for (const auto& dir : dirs) {
+                (*reply->mutable_sub_dirs())[dir.first].CopyFrom(StatbufToAttribute(dir.second));
+            }
             return Status::OK;
         }
     }
@@ -248,7 +253,7 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call ListFilesInDir.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ListFilesInDir.");
         }
-        std::vector<std::string> files;
+        absl::flat_hash_map<std::string, struct stat> files;
         absl::Status fs_status = GalaxyFs::Instance()->ListFilesInDir(request->name(), files);
         if (!fs_status.ok())
         {
@@ -260,7 +265,9 @@ namespace galaxy
             FileSystemStatus status;
             status.set_return_code(1);
             reply->mutable_status()->CopyFrom(status);
-            *reply->mutable_sub_files() = {files.begin(), files.end()};
+            for (const auto& file : files) {
+                (*reply->mutable_sub_files())[file.first].CopyFrom(StatbufToAttribute(file.second));
+            }
             return Status::OK;
         }
     }
@@ -273,8 +280,8 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call ListAllInDirRecursive.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ListAllInDirRecursive.");
         }
-        std::vector<std::string> files;
-        std::vector<std::string> dirs;
+        absl::flat_hash_map<std::string, struct stat> files;
+        absl::flat_hash_map<std::string, struct stat> dirs;
         absl::Status fs_status = GalaxyFs::Instance()->ListAllInDirRecursive(request->name(), dirs, files);
         if (!fs_status.ok())
         {
@@ -286,8 +293,13 @@ namespace galaxy
             FileSystemStatus status;
             status.set_return_code(1);
             reply->mutable_status()->CopyFrom(status);
-            *reply->mutable_sub_files() = {files.begin(), files.end()};
-            *reply->mutable_sub_dirs() = {dirs.begin(), dirs.end()};
+            for (const auto& dir : dirs) {
+                (*reply->mutable_sub_dirs())[dir.first].CopyFrom(StatbufToAttribute(dir.second));
+            }
+
+            for (const auto& file : files) {
+                (*reply->mutable_sub_files())[file.first].CopyFrom(StatbufToAttribute(file.second));
+            }
             return Status::OK;
         }
     }

@@ -272,7 +272,7 @@ namespace galaxy {
             }
         }
 
-        absl::Status ListDirsInDir(const std::string& path, std::vector<std::string>& sub_dirs) {
+        absl::Status ListDirsInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs) {
             if (!internal::ExistDir(path)) {
                 LOG(ERROR) << "Path " << path << " does not exist during function call ExistDir.";
                 return absl::NotFoundError("Path " + path + " does not exist for ListDirsInDir.");
@@ -281,13 +281,20 @@ namespace galaxy {
                 if (!dirs.ok()) {
                     return absl::NotFoundError("Input path is not directory or does not exist.");
                 }
-                sub_dirs.assign((*dirs).begin(), (*dirs).end());
+                for (const auto& dir : *dirs) {
+                    struct stat statbuf;
+                    absl::Status status = GetAttr(dir, &statbuf);
+                    if (!status.ok()) {
+                        LOG(ERROR) << "Directory " << dir << " failed to get stats.";
+                    }
+                    sub_dirs.insert({dir, statbuf});
+                }
                 return absl::OkStatus();
             }
         }
 
 
-        absl::Status ListFilesInDir(const std::string& path, std::vector<std::string>& sub_files) {
+        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files) {
             if (!internal::ExistDir(path)) {
                 LOG(ERROR) << "Path " << path << " does not exist during function call ListFilesInDir.";
                 return absl::NotFoundError("Path " + path + " does not exist for ListFilesInDir.");
@@ -296,14 +303,21 @@ namespace galaxy {
                 if (!files.ok()) {
                     return absl::NotFoundError("Input path is not directory or does not exist.");
                 }
-                sub_files.assign((*files).begin(), (*files).end());
+                for (const auto& file : *files) {
+                    struct stat statbuf;
+                    absl::Status status = GetAttr(file, &statbuf);
+                    if (!status.ok()) {
+                        LOG(ERROR) << "File " << file << " failed to get stats.";
+                    }
+                    sub_files.insert({file, statbuf});
+                }
                 return absl::OkStatus();
             }
         }
 
 
-        absl::Status ListAllInDirRecursive(const std::string& path, std::vector<std::string>& sub_dirs,
-            std::vector<std::string>& sub_files) {
+        absl::Status ListAllInDirRecursive(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs,
+            absl::flat_hash_map<std::string, struct stat>& sub_files) {
             if (!internal::ExistDir(path)) {
                 LOG(ERROR) << "Path " << path << " does not exist during function call ListDirsInDirRecursive.";
                 return absl::NotFoundError("Path " + path + " does not exist for ListDirsInDirRecursive.");
@@ -312,12 +326,26 @@ namespace galaxy {
                 if (!dirs.ok()) {
                     return absl::NotFoundError("Input path is not directory or does not exist.");
                 }
+                for (const auto& dir : *dirs) {
+                    struct stat statbuf;
+                    absl::Status status = GetAttr(dir, &statbuf);
+                    if (!status.ok()) {
+                        LOG(ERROR) << "Directory " << dir << " failed to get stats.";
+                    }
+                    sub_dirs.insert({dir, statbuf});
+                }
                 absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDirRecursive(path);
-                sub_dirs.assign((*dirs).begin(), (*dirs).end());
                 if (!files.ok()) {
                     return absl::NotFoundError("Input path is not directory or does not exist.");
                 }
-                sub_files.assign((*files).begin(), (*files).end());
+                for (const auto& file : *files) {
+                    struct stat statbuf;
+                    absl::Status status = GetAttr(file, &statbuf);
+                    if (!status.ok()) {
+                        LOG(ERROR) << "File " << file << " failed to get stats.";
+                    }
+                    sub_files.insert({file, statbuf});
+                }
                 return absl::OkStatus();
             }
         }
