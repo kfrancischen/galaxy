@@ -29,7 +29,7 @@ namespace galaxy
 
     void CopyCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
     void MoveCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
-
+    void ListCellsCmd();
 } // namespace galaxy
 
 #endif // CPP_LOCAL_FILEUTIL_H_

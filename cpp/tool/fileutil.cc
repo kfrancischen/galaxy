@@ -169,13 +169,13 @@ namespace galaxy
     }
 
     void LsCmd(const std::string& path) {
-        std::vector<std::string> sub_dirs = client::ListDirsInDir(path);
-        std::vector<std::string> sub_files = client::ListFilesInDir(path);
+        std::map<std::string, std::string> sub_dirs = client::ListDirsInDir(path);
+        std::map<std::string, std::string> sub_files = client::ListFilesInDir(path);
         for (const auto& dir : sub_dirs) {
-            std::cout << "\tDirectory Entry: " << dir << std::endl;
+            std::cout << "\tDirectory Entry: " << dir.first << std::endl;
         }
         for (const auto& file : sub_files) {
-            std::cout << "\tFile Entry:      " << file << std::endl;
+            std::cout << "\tFile Entry:      " << file.first << std::endl;
         }
     }
 
@@ -188,6 +188,15 @@ namespace galaxy
         client::RmFile(path);
         std::cout << "Done removing " << path << std::endl;
     }
+
+    void ListCellsCmd() {
+        std::vector<std::string> cells = client::ListCells();
+        std::cout << "In total " << cells.size() << " cells:" << std::endl;
+        for (const auto& cell : cells) {
+            std::cout << "\t[cell]: " << cell << std::endl;
+        }
+    }
+
 
     void CopyCmdHelper(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
@@ -220,14 +229,18 @@ namespace galaxy
 
     void CopyCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
-            std::vector<std::string> all_files = client::ListFilesInDirRecursive(from_path);
+            std::map<std::string, std::string> sub_files = client::ListFilesInDirRecursive(from_path);
             // Needs to push back from_path in case from_path is a file name.
+            std::vector<std::string> all_files;
+            for (const auto& sub_file : sub_files) {
+                all_files.push_back(sub_file.first);
+            }
             if (all_files.empty()) {
                 all_files.push_back(from_path);
             }
             std::vector<std::thread> threads;
             for (auto& file : all_files) {
-                std::cout <<file << std::endl;
+                std::cout << file << std::endl;
                 std::string new_file(file);
                 new_file.replace(0, from_path.length(), to_path);
                 threads.push_back(std::thread(CopyCmdHelper, file, new_file, overwrite));
