@@ -60,6 +60,7 @@ namespace galaxy {
         std::map<std::string, std::string> ReadMultiple(const std::vector<std::string>& paths);
         void Write(const std::string& path, const std::string& data, const std::string& mode="w");
         std::string GetAttr(const std::string& path);
+        std::vector<std::string> ListCells();
     }  // namespace client
 } // namespace galaxy
 

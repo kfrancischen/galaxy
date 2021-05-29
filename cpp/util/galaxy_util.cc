@@ -25,11 +25,14 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
         rapidjson::IStreamWrapper isw(infile);
         rapidjson::Document doc;
         if (doc.ParseStream(isw).HasParseError()) {
+            infile.close();
             return absl::InternalError("Configuration json cannot be parsed.");
         }
         if (!doc.HasMember(cell.c_str())) {
+            infile.close();
             return absl::InternalError("Cell configuration cannot be found.");
         }
+        infile.close();
         const rapidjson::Value& cell_config = doc[cell.c_str()];
 
         rapidjson::StringBuffer sb;
@@ -114,4 +117,26 @@ std::string galaxy::util::MapToCellPath(const std::string& path) {
     std::string out_path(path);
     out_path.replace(0, absl::GetFlag(FLAGS_fs_root).length(), path_prefix);
     return out_path;
+}
+
+absl::StatusOr<std::vector<std::string>> galaxy::util::ParseGlobalConfigAndGetCells() {
+    std::string config_path = absl::GetFlag(FLAGS_fs_global_config);
+    std::ifstream infile;
+    infile.open(config_path);
+    if (infile) {
+        rapidjson::IStreamWrapper isw(infile);
+        rapidjson::Document doc;
+        if (doc.ParseStream(isw).HasParseError()) {
+            infile.close();
+            return absl::InternalError("Configuration json cannot be parsed.");
+        }
+        infile.close();
+        std::vector<std::string> cells;
+        for (auto it = doc.MemberBegin(); it != doc.MemberEnd(); it++) {
+            cells.push_back(it->name.GetString());
+        }
+        return cells;
+    } else {
+        return absl::NotFoundError(config_path + " does not exist.");
+    }
 }

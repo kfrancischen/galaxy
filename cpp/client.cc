@@ -835,3 +835,14 @@ std::string galaxy::client::GetAttr(const std::string& path) {
         return galaxy::client::impl::LGetAttr(path);
     }
 }
+
+
+std::vector<std::string> galaxy::client::ListCells() {
+    absl::StatusOr<std::vector<std::string>> cells_ok = galaxy::util::ParseGlobalConfigAndGetCells();
+    if (cells_ok.ok()) {
+        return *cells_ok;
+    } else {
+        VLOG(1) << "Failed to list the cells.";
+        return std::vector<std::string>();
+    }
+}

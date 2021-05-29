@@ -27,4 +27,5 @@ PYBIND11_MODULE(_gclient, m)
     m.def("read_multiple", &galaxy::client::ReadMultiple, "Wrapper for ReadMultiple", py::arg("paths"));
     m.def("write", &galaxy::client::Write, "Wrapper for Write", py::arg("path"), py::arg("data"), py::arg("mode") = "w");
     m.def("get_attr", &galaxy::client::GetAttr, "Wrapper for GetAttr", py::arg("path"));
+    m.def("list_cells", &galaxy::client::ListCells, "Wrapper for ListCells");
 }

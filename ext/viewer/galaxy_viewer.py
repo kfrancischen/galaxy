@@ -1,51 +1,130 @@
-from flask import Flask, make_response, request, render_template, send_file, Response
+from flask import Flask, make_response, request, render_template, send_file, Response, redirect, url_for, abort, session
 from flask.views import MethodView
-from datetime import datetime
+from flask_login import login_user, logout_user, UserMixin, LoginManager, login_required
+
+from datetime import datetime, timedelta
 import os
 import re
 import stat
-import json
 import mimetypes
-from pathlib2 import Path
 
-app = Flask(__name__, static_url_path='/assets', static_folder='assets')
+galaxy_viewer_app = Flask("galaxy_viewer", static_url_path='/assets', static_folder='assets')
+galaxy_viewer_app.config.update(
+    SECRET_KEY="galaxy_viewer"
+)
 root = os.path.normpath("/tmp")
 key = ""
 
-ignored = ['.bzr', '$RECYCLE.BIN', '.DAV', '.DS_Store', '.git', '.hg', '.htaccess', '.htpasswd', '.Spotlight-V100', '.svn', '__MACOSX', 'ehthumbs.db', 'robots.txt', 'Thumbs.db', 'thumbs.tps']
-datatypes = {'audio': 'm4a,mp3,oga,ogg,webma,wav', 'archive': '7z,zip,rar,gz,tar', 'image': 'gif,ico,jpe,jpeg,jpg,png,svg,webp', 'pdf': 'pdf', 'quicktime': '3g2,3gp,3gp2,3gpp,mov,qt', 'source': 'atom,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml,plist', 'text': 'txt', 'video': 'mp4,m4v,ogv,webm', 'website': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
-icontypes = {'fa-music': 'm4a,mp3,oga,ogg,webma,wav', 'fa-archive': '7z,zip,rar,gz,tar', 'fa-picture-o': 'gif,ico,jpe,jpeg,jpg,png,svg,webp', 'fa-file-text': 'pdf', 'fa-film': '3g2,3gp,3gp2,3gpp,mov,qt', 'fa-code': 'atom,plist,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml', 'fa-file-text-o': 'txt', 'fa-film': 'mp4,m4v,ogv,webm', 'fa-globe': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
+ignored = ['.bzr', '$RECYCLE.BIN', '.DAV', '.DS_Store', '.git', '.hg', '.htaccess', '.htpasswd', '.Spotlight-V100',
+           '.svn', '__MACOSX', 'ehthumbs.db', 'robots.txt', 'Thumbs.db', 'thumbs.tps']
+datatypes = {
+    'audio': 'm4a,mp3,oga,ogg,webma,wav',
+    'archive': '7z,zip,rar,gz,tar',
+    'image': 'gif,ico,jpe,jpeg,jpg,png,svg,webp',
+    'pdf': 'pdf',
+    'quicktime': '3g2,3gp,3gp2,3gpp,mov,qt',
+    'source': 'atom,bat,bash,c,cc,h,cmd,coffee,css,hml,js,json,yaml,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,'
+              'swift,scss,sh,xml,yml,plist,ipynb,BUILD,WORKSPACE',
+    'text': 'txt,pbtxt',
+    'video': 'mp4,m4v,ogv,webm',
+    'website': 'htm,html,mhtm,mhtml,xhtm,xhtml',
+}
+icontypes = {
+    'fa-music': 'm4a,mp3,oga,ogg,webma,wav',
+    'fa-archive': '7z,zip,rar,gz,tar',
+    'fa-picture-o': 'gif,ico,jpe,jpeg,jpg,png,svg,webp',
+    'fa-file-text': 'pdf',
+    'fa-film': '3g2,3gp,3gp2,3gpp,mov,qt,mp4,m4v,ogv,webm',
+    'fa-code': 'atom,plist,bat,bash,c,cc,h,cmd,coffee,css,hml,js,json,yaml,java,less,markdown,md,php,pl,py,rb,rss,sass,'
+               'scpt,swift,scss,sh,xml,yml,BUILD,WORKSPACE',
+    'fa-file-text-o': 'txt,pbtxt',
+    'fa-globe': 'htm,html,mhtm,mhtml,xhtm,xhtml',
+}
 
-@app.template_filter('size_fmt')
+login_manager = LoginManager()
+login_manager.init_app(galaxy_viewer_app)
+login_manager.login_view = "login"
+
+
+class User(UserMixin):
+
+    def get_id(self):
+        return "galaxy_viewer".encode('utf-8')
+
+
+@galaxy_viewer_app.before_request
+def make_session_permanent():
+    session.permanent = True
+    galaxy_viewer_app.permanent_session_lifetime = timedelta(minutes=30)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    try:
+        return User()
+    except Exception as err:
+        # pslx_frontend_logger.error("Load user with error message: " + str(err) + '.')
+        return None
+
+
+@galaxy_viewer_app.route('/login', methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        # galaxy_viewer_app.info('Index logging in with ' + str(dict(request.form)) + " from ip [" +
+        #                           request.remote_addr + '].')
+        if request.form['username'] == os.getenv('GALAXY_fs_viewer_username') and \
+                request.form['password'] == os.getenv('GALAXY_fs_viewer_password'):
+            user = User()
+            login_user(user)
+            return redirect(request.args.get('next'))
+        else:
+            abort(401)
+    else:
+        return render_template('login.html')
+
+
+@galaxy_viewer_app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
+@galaxy_viewer_app.template_filter('size_fmt')
 def size_fmt(size):
     return size
 
-@app.template_filter('time_fmt')
+
+@galaxy_viewer_app.template_filter('time_fmt')
 def time_desc(timestamp):
     mdate = datetime.fromtimestamp(timestamp)
     str = mdate.strftime('%Y-%m-%d %H:%M:%S')
     return str
 
-@app.template_filter('data_fmt')
+
+@galaxy_viewer_app.template_filter('data_fmt')
 def data_fmt(filename):
     t = 'unknown'
     for type, exts in datatypes.items():
-        if filename.split('.')[-1] in exts:
+        if filename.split('.')[-1] in exts.split(','):
             t = type
     return t
 
-@app.template_filter('icon_fmt')
+
+@galaxy_viewer_app.template_filter('icon_fmt')
 def icon_fmt(filename):
     i = 'fa-file-o'
     for icon, exts in icontypes.items():
-        if filename.split('.')[-1] in exts:
+        if filename.split('.')[-1] in exts.split(','):
             i = icon
     return i
 
-@app.template_filter('humanize')
+
+@galaxy_viewer_app.template_filter('humanize')
 def time_humanize(timestamp):
     mdate = datetime.utcfromtimestamp(timestamp)
     return mdate
+
 
 def get_type(mode):
     if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
@@ -53,6 +132,7 @@ def get_type(mode):
     else:
         type = 'file'
     return type
+
 
 def partial_response(path, start, end=None):
     file_size = os.path.getsize(path)
@@ -83,6 +163,7 @@ def partial_response(path, start, end=None):
     )
     return response
 
+
 def get_range(request):
     range = request.headers.get('Range')
     m = re.match('bytes=(?P<start>\d+)-(?P<end>\d+)?', range)
@@ -98,9 +179,9 @@ def get_range(request):
 
 
 class PathView(MethodView):
+    @login_required
     def get(self, p=''):
         path = os.path.join(root, p)
-
         if os.path.isdir(path):
             contents = []
             total = {'size': 0, 'dir': 0, 'file': 0}
@@ -122,7 +203,6 @@ class PathView(MethodView):
                 contents.append(info)
             page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile="yes")
             res = make_response(page, 200)
-            res.set_cookie('hide-dotfile', "yes", max_age=16070400)
         elif os.path.isfile(path):
             if 'Range' in request.headers:
                 start, end = get_range(request)
@@ -134,107 +214,21 @@ class PathView(MethodView):
             res = make_response('Not found', 404)
         return res
 
-    def put(self, p=''):
-        if request.cookies.get('auth_cookie') == key:
-            path = os.path.join(root, p)
-            dir_path = os.path.dirname(path)
-            Path(dir_path).mkdir(parents=True, exist_ok=True)
-
-            info = {}
-            if os.path.isdir(dir_path):
-                try:
-                    filename = os.path.basename(path)
-                    with open(os.path.join(dir_path, filename), 'wb') as f:
-                        f.write(request.stream.read())
-                except Exception as e:
-                    info['status'] = 'error'
-                    info['msg'] = str(e)
-                else:
-                    info['status'] = 'success'
-                    info['msg'] = 'File Saved'
-            else:
-                info['status'] = 'error'
-                info['msg'] = 'Invalid Operation'
-            res = make_response(json.JSONEncoder().encode(info), 201)
-            res.headers.add('Content-type', 'application/json')
-        else:
-            info = {}
-            info['status'] = 'error'
-            info['msg'] = 'Authentication failed'
-            res = make_response(json.JSONEncoder().encode(info), 401)
-            res.headers.add('Content-type', 'application/json')
-        return res
-
+    @login_required
     def post(self, p=''):
-        if request.cookies.get('auth_cookie') == key:
-            path = os.path.join(root, p)
-            Path(path).mkdir(parents=True, exist_ok=True)
-
-            info = {}
-            if os.path.isdir(path):
-                files = request.files.getlist('files[]')
-                for file in files:
-                    try:
-                        filename = file.filename
-                        file.save(os.path.join(path, filename))
-                    except Exception as e:
-                        info['status'] = 'error'
-                        info['msg'] = str(e)
-                    else:
-                        info['status'] = 'success'
-                        info['msg'] = 'File Saved'
-            else:
-                info['status'] = 'error'
-                info['msg'] = 'Invalid Operation'
-            res = make_response(json.JSONEncoder().encode(info), 200)
-            res.headers.add('Content-type', 'application/json')
-        else:
-            info = {}
-            info['status'] = 'error'
-            info['msg'] = 'Authentication failed'
-            res = make_response(json.JSONEncoder().encode(info), 401)
-            res.headers.add('Content-type', 'application/json')
-        return res
-
-    def delete(self, p=''):
-        if request.cookies.get('auth_cookie') == key:
-            path = os.path.join(root, p)
-            dir_path = os.path.dirname(path)
-            Path(dir_path).mkdir(parents=True, exist_ok=True)
-
-            info = {}
-            if os.path.isdir(dir_path):
-                try:
-                    filename = os.path.basename(path)
-                    os.remove(os.path.join(dir_path, filename))
-                    os.rmdir(dir_path)
-                except Exception as e:
-                    info['status'] = 'error'
-                    info['msg'] = str(e)
-                else:
-                    info['status'] = 'success'
-                    info['msg'] = 'File Deleted'
-            else:
-                info['status'] = 'error'
-                info['msg'] = 'Invalid Operation'
-            res = make_response(json.JSONEncoder().encode(info), 204)
-            res.headers.add('Content-type', 'application/json')
-        else:
-            info = {}
-            info['status'] = 'error'
-            info['msg'] = 'Authentication failed'
-            res = make_response(json.JSONEncoder().encode(info), 401)
-            res.headers.add('Content-type', 'application/json')
-        return res
+        path = request.form.get('search_path').rstrip('/')
+        return redirect(url_for('path_view', p=path + '/'))
 
 
 path_view = PathView.as_view('path_view')
-app.add_url_rule('/', view_func=path_view)
-app.add_url_rule('/<path:p>', view_func=path_view)
+galaxy_viewer_app.add_url_rule('/', view_func=path_view)
+galaxy_viewer_app.add_url_rule('/index.html', view_func=path_view)
+galaxy_viewer_app.add_url_rule('/<path:p>', view_func=path_view)
+galaxy_viewer_app.add_url_rule('/search', view_func=path_view)
 
 if __name__ == '__main__':
     bind = os.getenv('FS_BIND', '0.0.0.0')
     port = os.getenv('FS_PORT', '8000')
     root = os.path.normpath(os.getenv('FS_PATH', '/home/pslx'))
     key = os.getenv('FS_KEY', "mafia2018")
-    app.run(bind, port, threaded=True, debug=False)
+    galaxy_viewer_app.run(bind, port, threaded=True, debug=True)

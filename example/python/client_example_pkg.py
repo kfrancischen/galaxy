@@ -25,6 +25,8 @@ def main():
     for key, val in data.items():
         print(key, val)
 
+    print(gclient.list_cells())
+
 
 if __name__ == "__main__":
     main()
