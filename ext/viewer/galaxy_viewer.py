@@ -108,8 +108,7 @@ def size_fmt(size):
 @galaxy_viewer.template_filter('time_fmt')
 def time_desc(timestamp):
     mdate = datetime.fromtimestamp(timestamp)
-    str = mdate.strftime('%Y-%m-%d %H:%M:%S')
-    return str
+    return mdate.strftime('%Y-%m-%d %H:%M:%S')
 
 
 @galaxy_viewer.template_filter('data_fmt')
