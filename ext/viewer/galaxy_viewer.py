@@ -1,19 +1,21 @@
-from flask import Flask, make_response, request, render_template, send_file, Response, redirect, url_for, abort, session
+from galaxy_py import gclient, gclient_ext
+from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort, session
 from flask.views import MethodView
 from flask_login import login_user, logout_user, UserMixin, LoginManager, login_required
 
 from datetime import datetime, timedelta
 import os
-import re
+import json
 import stat
 import mimetypes
 
-galaxy_viewer_app = Flask("galaxy_viewer", static_url_path='/assets', static_folder='assets')
-galaxy_viewer_app.config.update(
-    SECRET_KEY="galaxy_viewer"
+ROOT = '/galaxy/'
+APP_NAME = 'galaxy_viewer'
+
+galaxy_viewer = Flask(APP_NAME, static_url_path='/assets', static_folder='assets')
+galaxy_viewer.config.update(
+    SECRET_KEY=APP_NAME
 )
-root = os.path.normpath("/tmp")
-key = ""
 
 ignored = ['.bzr', '$RECYCLE.BIN', '.DAV', '.DS_Store', '.git', '.hg', '.htaccess', '.htpasswd', '.Spotlight-V100',
            '.svn', '__MACOSX', 'ehthumbs.db', 'robots.txt', 'Thumbs.db', 'thumbs.tps']
@@ -42,20 +44,20 @@ icontypes = {
 }
 
 login_manager = LoginManager()
-login_manager.init_app(galaxy_viewer_app)
+login_manager.init_app(galaxy_viewer)
 login_manager.login_view = "login"
 
 
 class User(UserMixin):
 
     def get_id(self):
-        return "galaxy_viewer".encode('utf-8')
+        return APP_NAME.encode('utf-8')
 
 
-@galaxy_viewer_app.before_request
+@galaxy_viewer.before_request
 def make_session_permanent():
     session.permanent = True
-    galaxy_viewer_app.permanent_session_lifetime = timedelta(minutes=30)
+    galaxy_viewer.permanent_session_lifetime = timedelta(minutes=30)
 
 
 @login_manager.user_loader
@@ -67,10 +69,10 @@ def load_user(user_id):
         return None
 
 
-@galaxy_viewer_app.route('/login', methods=['POST', 'GET'])
+@galaxy_viewer.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
-        # galaxy_viewer_app.info('Index logging in with ' + str(dict(request.form)) + " from ip [" +
+        # galaxy_viewer.info('Index logging in with ' + str(dict(request.form)) + " from ip [" +
         #                           request.remote_addr + '].')
         if request.form['username'] == os.getenv('GALAXY_fs_viewer_username') and \
                 request.form['password'] == os.getenv('GALAXY_fs_viewer_password'):
@@ -83,26 +85,26 @@ def login():
         return render_template('login.html')
 
 
-@galaxy_viewer_app.route('/logout')
+@galaxy_viewer.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
 
-@galaxy_viewer_app.template_filter('size_fmt')
+@galaxy_viewer.template_filter('size_fmt')
 def size_fmt(size):
     return size
 
 
-@galaxy_viewer_app.template_filter('time_fmt')
+@galaxy_viewer.template_filter('time_fmt')
 def time_desc(timestamp):
     mdate = datetime.fromtimestamp(timestamp)
     str = mdate.strftime('%Y-%m-%d %H:%M:%S')
     return str
 
 
-@galaxy_viewer_app.template_filter('data_fmt')
+@galaxy_viewer.template_filter('data_fmt')
 def data_fmt(filename):
     t = 'unknown'
     for type, exts in datatypes.items():
@@ -111,7 +113,7 @@ def data_fmt(filename):
     return t
 
 
-@galaxy_viewer_app.template_filter('icon_fmt')
+@galaxy_viewer.template_filter('icon_fmt')
 def icon_fmt(filename):
     i = 'fa-file-o'
     for icon, exts in icontypes.items():
@@ -120,9 +122,9 @@ def icon_fmt(filename):
     return i
 
 
-@galaxy_viewer_app.template_filter('humanize')
+@galaxy_viewer.template_filter('humanize')
 def time_humanize(timestamp):
-    mdate = datetime.utcfromtimestamp(timestamp)
+    mdate = datetime.fromtimestamp(timestamp)
     return mdate
 
 
@@ -134,101 +136,83 @@ def get_type(mode):
     return type
 
 
-def partial_response(path, start, end=None):
-    file_size = os.path.getsize(path)
-
-    if end is None:
-        end = file_size - start - 1
-    end = min(end, file_size - 1)
-    length = end - start + 1
-
-    with open(path, 'rb') as fd:
-        fd.seek(start)
-        bytes = fd.read(length)
-    assert len(bytes) == length
+def file_response(path):
+    data = gclient.read(path)
 
     response = Response(
-        bytes,
-        206,
+        data,
         mimetype=mimetypes.guess_type(path)[0],
         direct_passthrough=True,
     )
     response.headers.add(
-        'Content-Range', 'bytes {0}-{1}/{2}'.format(
-            start, end, file_size,
-        ),
-    )
-    response.headers.add(
         'Accept-Ranges', 'bytes'
     )
+    response.headers.add('Content-Disposition', 'attachment')
     return response
 
 
-def get_range(request):
-    range = request.headers.get('Range')
-    m = re.match('bytes=(?P<start>\d+)-(?P<end>\d+)?', range)
-    if m:
-        start = m.group('start')
-        end = m.group('end')
-        start = int(start)
-        if end is not None:
-            end = int(end)
-        return start, end
-    else:
-        return 0, None
-
-
-class PathView(MethodView):
+class GalaxyPathView(MethodView):
     @login_required
     def get(self, p=''):
-        path = os.path.join(root, p)
-        if os.path.isdir(path):
-            contents = []
-            total = {'size': 0, 'dir': 0, 'file': 0}
-            for filename in os.listdir(path):
-                if filename in ignored or filename[0] == '.':
-                    continue
-
-                filepath = os.path.join(path, filename)
-                stat_res = os.stat(filepath)
-                info = {}
-                info['name'] = filename
-                info['mtime'] = stat_res.st_mtime
-                ft = get_type(stat_res.st_mode)
-                info['type'] = ft
-                total[ft] += 1
-                sz = stat_res.st_size
-                info['size'] = sz
-                total['size'] += sz
+        if p and p[0] != '/':
+            p = '/' + p
+        total = {'size': 0, 'dir': 0, 'file': 0}
+        contents = []
+        if p == ROOT or not p:
+            cells = gclient.list_cells()
+            for cell in cells:
+                info = {
+                    'name': os.path.join(ROOT, cell + '-d'),
+                    'mtime': 0,
+                    'type': 'dir',
+                    'size': 0
+                }
+                total['dir'] += 1
                 contents.append(info)
-            page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile="yes")
+            page = render_template('index.html', path=ROOT, contents=contents, total=total, hide_dotfile="yes")
             res = make_response(page, 200)
-        elif os.path.isfile(path):
-            if 'Range' in request.headers:
-                start, end = get_range(request)
-                res = partial_response(path, start, end)
-            else:
-                res = send_file(path)
-                res.headers.add('Content-Disposition', 'attachment')
         else:
-            res = make_response('Not found', 404)
+            if gclient.dir_or_die(p):
+                contents = []
+                total = {'size': 0, 'dir': 0, 'file': 0}
+                for filename, statbuf in gclient_ext.list_all_in_dir(p).items():
+                    if filename in ignored or filename[0] == '.':
+                        continue
+
+                    stat_res = json.loads(statbuf)
+                    info = {}
+                    info['name'] = filename
+                    info['mtime'] = int(stat_res['mtime'])
+                    ft = get_type(int(stat_res['mode']))
+                    info['type'] = ft
+                    total[ft] += 1
+                    sz = int(stat_res['size']) if 'size' in stat_res else 0
+                    info['size'] = sz
+                    total['size'] += sz
+                    contents.append(info)
+                page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile="yes")
+                res = make_response(page, 200)
+            elif gclient.file_or_die(p):
+                res = file_response(p)
+            else:
+                res = make_response('Not found', 404)
         return res
 
     @login_required
     def post(self, p=''):
         path = request.form.get('search_path').rstrip('/')
-        return redirect(url_for('path_view', p=path + '/'))
+        return redirect(url_for('path_view', p=path))
 
 
-path_view = PathView.as_view('path_view')
-galaxy_viewer_app.add_url_rule('/', view_func=path_view)
-galaxy_viewer_app.add_url_rule('/index.html', view_func=path_view)
-galaxy_viewer_app.add_url_rule('/<path:p>', view_func=path_view)
-galaxy_viewer_app.add_url_rule('/search', view_func=path_view)
+path_view = GalaxyPathView.as_view('path_view')
+galaxy_viewer.add_url_rule('/', view_func=path_view)
+galaxy_viewer.add_url_rule('/index.html', view_func=path_view)
+galaxy_viewer.add_url_rule('/<path:p>', view_func=path_view)
+galaxy_viewer.add_url_rule('/search', view_func=path_view)
 
 if __name__ == '__main__':
     bind = os.getenv('FS_BIND', '0.0.0.0')
     port = os.getenv('FS_PORT', '8000')
-    root = os.path.normpath(os.getenv('FS_PATH', '/home/pslx'))
+    root = os.path.normpath(os.getenv('FS_PATH', ''))
     key = os.getenv('FS_KEY', "mafia2018")
-    galaxy_viewer_app.run(bind, port, threaded=True, debug=True)
+    galaxy_viewer.run(bind, port, threaded=True, debug=True)
