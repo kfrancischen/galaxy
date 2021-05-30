@@ -255,6 +255,15 @@ fileutil rm ${REMOTE_DIR/REMOTE_FILE} [--r]
 #### Flags
 galaxy allows users to set following flags to customize server (mainly) and the client. These flags are defined in [galaxy_flag,h](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.h), and their definitions are at [galaxy_flag.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.cc). For servers the flags of `fs_root`, `fs_address`, `fs_password` must be specified, and the values of these flags are usually put in the global configuration file. Besides using the configuration file or using the cmd line fashion [abseil](https://abseil.io/docs/cpp/quickstart) supports, one can also specify the flags by using `GALAXY_${FLAG_NAME}` environment variable. For instance, setting `GALAXY_fs_root=/home` is equivalent to parsing `fs_root=/home` as cmd line argument.
 
+#### Extensions
+A file browser extension is also implemented under [ext/viewer](https://github.com/kfrancischen/galaxy/tree/master/ext/viewer), which uses the Galaxy Python API and flask. The viewer can be launched with the following cmd
+
+```python
+python galaxy_viewer.py --username=test --password=test --port=8000
+```
+and the viewer is hosted at `0.0.0.0:8000` with the preset username and password for login.
+
+
 #### Examples
 The examples are at folder [example](https://github.com/kfrancischen/galaxy/tree/master/example), and the following is a Python example
 ```python
@@ -344,4 +353,4 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 ```
-`Python` apis are more recommended.
+`Python` APIs are more recommended.

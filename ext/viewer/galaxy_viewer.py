@@ -1,3 +1,4 @@
+from absl import flags, app, logging
 from galaxy_py import gclient, gclient_ext
 from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort, session
 from flask.views import MethodView
@@ -8,6 +9,14 @@ import os
 import json
 import stat
 import mimetypes
+
+FLAGS = flags.FLAGS
+
+flags.DEFINE_string("username", None, "The username for the viewer")
+flags.DEFINE_string("password", None, "The password for the viewer")
+flags.DEFINE_string("ip", "0.0.0.0", "The ip for the viewer")
+flags.DEFINE_integer("port", None, "The port for the viewer")
+flags.DEFINE_boolean("debug", False, "Whether to use debug mode")
 
 ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
@@ -65,17 +74,16 @@ def load_user(user_id):
     try:
         return User()
     except Exception as err:
-        # pslx_frontend_logger.error("Load user with error message: " + str(err) + '.')
+        logging.error("Load user with error message: " + str(err) + '.')
         return None
 
 
 @galaxy_viewer.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
-        # galaxy_viewer.info('Index logging in with ' + str(dict(request.form)) + " from ip [" +
-        #                           request.remote_addr + '].')
-        if request.form['username'] == os.getenv('GALAXY_fs_viewer_username') and \
-                request.form['password'] == os.getenv('GALAXY_fs_viewer_password'):
+        logging.info('Getting login request from ip [' + request.remote_addr + '].')
+        if request.form['username'] == galaxy_viewer.config['username'] and \
+                request.form['password'] == galaxy_viewer.config['password']:
             user = User()
             login_user(user)
             return redirect(request.args.get('next'))
@@ -154,6 +162,7 @@ def file_response(path):
 class GalaxyPathView(MethodView):
     @login_required
     def get(self, p=''):
+        logging.info('Getting GET request from ip [' + request.remote_addr + '].')
         if p and p[0] != '/':
             p = '/' + p
         total = {'size': 0, 'dir': 0, 'file': 0}
@@ -200,6 +209,7 @@ class GalaxyPathView(MethodView):
 
     @login_required
     def post(self, p=''):
+        logging.info('Getting POST request from ip [' + request.remote_addr + '].')
         path = request.form.get('search_path').rstrip('/')
         return redirect(url_for('path_view', p=path))
 
@@ -210,9 +220,15 @@ galaxy_viewer.add_url_rule('/index.html', view_func=path_view)
 galaxy_viewer.add_url_rule('/<path:p>', view_func=path_view)
 galaxy_viewer.add_url_rule('/search', view_func=path_view)
 
+
+def main(argv):
+    flags.mark_flag_as_required('username')
+    flags.mark_flag_as_required('password')
+    flags.mark_flag_as_required('port')
+    galaxy_viewer.config['username'] = FLAGS.username
+    galaxy_viewer.config['password'] = FLAGS.password
+    galaxy_viewer.run(FLAGS.ip, FLAGS.port, threaded=True, debug=FLAGS.debug)
+
+
 if __name__ == '__main__':
-    bind = os.getenv('FS_BIND', '0.0.0.0')
-    port = os.getenv('FS_PORT', '8000')
-    root = os.path.normpath(os.getenv('FS_PATH', ''))
-    key = os.getenv('FS_KEY', "mafia2018")
-    galaxy_viewer.run(bind, port, threaded=True, debug=True)
+    app.run(main)
