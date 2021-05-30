@@ -170,9 +170,11 @@ class GalaxyPathView(MethodView):
         if p == ROOT or not p:
             cells = gclient.list_cells()
             for cell in cells:
+                path_name = os.path.join(ROOT, cell + '-d')
+                attr = json.loads(gclient.get_attr(path_name))
                 info = {
-                    'name': os.path.join(ROOT, cell + '-d'),
-                    'mtime': 0,
+                    'name': path_name,
+                    'mtime': int(attr['mtime']),
                     'type': 'dir',
                     'size': 0
                 }

@@ -59,6 +59,9 @@ using galaxy::GalaxyFs;
 
 GalaxyClientInternal GetChannelClient() {
     absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    FLAGS_colorlogtostderr = true;
+    FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
+    google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
     CHECK(result.ok()) << "Fail to parse the global config.";
     grpc::ChannelArguments ch_args;
     ch_args.SetMaxReceiveMessageSize(-1);
