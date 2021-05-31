@@ -258,7 +258,7 @@ galaxy allows users to set following flags to customize server (mainly) and the 
 #### Extensions
 A file browser extension is also implemented under [ext/viewer](https://github.com/kfrancischen/galaxy/tree/master/ext/viewer), which uses the Galaxy Python API and flask. The viewer can be launched with the following cmd
 
-```python
+```shellscript
 python galaxy_viewer.py --username=test --password=test --port=8000
 ```
 and the viewer is hosted at `0.0.0.0:8000` with the preset username and password for login.
