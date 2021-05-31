@@ -39,3 +39,4 @@ build/*
 dist/*
 python/*egg-info/*
 python/__pycache__/*
+example/python/__pycache__/*

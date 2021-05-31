@@ -7,15 +7,15 @@ except ImportError:
 class gclient_ext:
 
     @classmethod
-    def write_proto_message(cls, path, data, mode):
-        gclient.write(path=path, data=data.SerializeToString(), mode=mode)
+    def write_proto_message(cls, path, data):
+        gclient.write(path=path, data=data.SerializeToString())
 
     @classmethod
     def read_proto_message(cls, path, message_type):
         data = gclient.read(path)
         if data:
             proto_message = message_type()
-            proto_message.ParseFromString(data)
+            proto_message.ParseFromString(data.encode('UTF-8'))
             return proto_message
         else:
             return None
@@ -27,7 +27,7 @@ class gclient_ext:
         for key, val in data_map.items():
             if val:
                 proto_message = message_type()
-                proto_message.ParseFromString(val)
+                proto_message.ParseFromString(val.encode('UTF-8'))
                 result_map[key] = proto_message
             else:
                 result_map[key] = None
