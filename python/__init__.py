@@ -15,8 +15,16 @@ class gclient_ext:
         data = gclient.read(path)
         if data:
             proto_message = message_type()
-            proto_message.ParseFromString(data.encode('UTF-8'))
+            proto_message.ParseFromString(data)
             return proto_message
+        else:
+            return None
+
+    @classmethod
+    def read_txt(cls, path):
+        data = gclient.read(path)
+        if data:
+            return data.decode('UTF-8')
         else:
             return None
 
@@ -27,8 +35,19 @@ class gclient_ext:
         for key, val in data_map.items():
             if val:
                 proto_message = message_type()
-                proto_message.ParseFromString(val.encode('UTF-8'))
+                proto_message.ParseFromString(val)
                 result_map[key] = proto_message
+            else:
+                result_map[key] = None
+        return result_map
+
+    @classmethod
+    def read_txts(cls, paths):
+        data_map = gclient.read_multiple(paths)
+        result_map = {}
+        for key, val in data_map.items():
+            if val:
+                result_map[key] = val.decode('UTF-8')
             else:
                 result_map[key] = None
         return result_map

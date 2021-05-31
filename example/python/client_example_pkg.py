@@ -28,6 +28,7 @@ def main():
 
     print(gclient.list_cells())
     print(gclient.read('/galaxy/aa-d/test.pb'))
+    print(gclient_ext.read_txt('/galaxy/aa-d/test.pb'))
     message = TestMessage()
     message.name = "test"
     gclient_ext.write_proto_message('/galaxy/aa-d/test1.pb', message)

@@ -23,7 +23,10 @@ PYBIND11_MODULE(_gclient, m)
     m.def("file_or_die", &galaxy::client::FileOrDie, "Wrapper for FileOrDie", py::arg("path"));
     m.def("rm_file", &galaxy::client::RmFile, "Wrapper for RmFile", py::arg("path"));
     m.def("rename_file", &galaxy::client::RenameFile, "Wrapper for RenameFile", py::arg("old_path"), py::arg("new_path"));
-    m.def("read", &galaxy::client::Read, "Wrapper for Read", py::arg("path"));
+    m.def("read", [](const std::string path) {
+        std::string data = galaxy::client::Read(path);
+        return py::bytes(data);
+    },  "Wrapper for Read", py::arg("path"));
     m.def("read_multiple", &galaxy::client::ReadMultiple, "Wrapper for ReadMultiple", py::arg("paths"));
     m.def("write", &galaxy::client::Write, "Wrapper for Write", py::arg("path"), py::arg("data"), py::arg("mode") = "w");
     m.def("get_attr", &galaxy::client::GetAttr, "Wrapper for GetAttr", py::arg("path"));
