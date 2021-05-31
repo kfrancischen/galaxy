@@ -120,7 +120,7 @@ read(path)
 ```python
 read_multiple(paths)
 ```
-* Decription: read a list of files.
+* Decription: read a list of files (Note: the return is in the form of raw bytes).
 * Args:
     1. paths: the paths to the files
 

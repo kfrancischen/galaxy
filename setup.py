@@ -2,7 +2,6 @@ import os
 import posixpath
 import re
 import shutil
-import sys
 
 from distutils import sysconfig
 import setuptools
@@ -72,9 +71,10 @@ class BuildBazelExtension(build_ext.build_ext):
             "python/__init__.py", os.path.join(package_dir, "__init__.py")
         )
 
+
 setuptools.setup(
     name="galaxy_py",
-    version="0.1.0",
+    version="0.2.0",
     description="Simple distributed file system based on gRPC.",
     long_description="README.md",
     keywords="distributed system, gRPC",
@@ -82,6 +82,7 @@ setuptools.setup(
     python_requires=">=3.6",
     package_dir={"": "python"},
     cmdclass=dict(build_ext=BuildBazelExtension),
+    packages=setuptools.find_packages(where="python"),
     include_package_data=True,
     ext_modules=[
         BazelExtension("gclient", "//python:gclient",)
@@ -93,7 +94,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Software Development :: Distributed File System"
+        "Topic :: System :: Distributed Computing"
     ],
     install_requires=[],
     license="Apache 2.0",
