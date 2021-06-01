@@ -102,7 +102,14 @@ def logout():
 
 @galaxy_viewer.template_filter('size_fmt')
 def size_fmt(size):
-    return size
+    if 0 <= size < 1024:
+        return str(size) + ' B'
+    elif 1024 <= size < 1024 ** 2:
+        return str(round(size / 1024., 3)) + ' KB'
+    elif 1024 ** 2 <= size < 1024 ** 3:
+        return str(round(size / 1024. ** 2, 3)) + ' MB'
+    else:
+        return str(round(size / 1024. ** 3, 3)) + ' GB'
 
 
 @galaxy_viewer.template_filter('time_fmt')
@@ -127,13 +134,6 @@ def icon_fmt(filename):
         if filename.split('.')[-1] in exts.split(','):
             i = icon
     return i
-
-
-@galaxy_viewer.template_filter('humanize')
-def time_humanize(timestamp):
-    mdate = datetime.fromtimestamp(timestamp)
-    return mdate
-
 
 def get_type(mode):
     if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
