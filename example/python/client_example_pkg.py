@@ -22,7 +22,11 @@ def main():
     gclient.read("/galaxy/aa-d/large_test.txt")
     print(time.time() - t)
 
-    data = gclient.read_multiple(["/galaxy/aa-d/test_3.txt", "/galaxy/aa-d/test_1.txt"])
+    data = gclient.read_multiple(["/galaxy/aa-d/test_from_python/test1.txt", "/galaxy/aa-d/test3.txt"])
+    for key, val in data.items():
+        print(key, val)
+
+    data = gclient_ext.read_txts(["/galaxy/aa-d/test_from_python/test1.txt", "/galaxy/aa-d/test3.txt"])
     for key, val in data.items():
         print(key, val)
 

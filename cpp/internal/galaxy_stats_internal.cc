@@ -8,6 +8,12 @@ namespace galaxy {
             return measure;
         }
 
+        opencensus::stats::MeasureInt64 internal::QueryCountMeasure() {
+            static const auto measure = opencensus::stats::MeasureInt64::Register(
+                kCountMeasureName, "The number of queries", "By");
+            return measure;
+        }
+
         opencensus::tags::TagKey internal::MethodKey() {
             static const auto key = opencensus::tags::TagKey::Register("method");
             return key;

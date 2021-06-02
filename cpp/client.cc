@@ -380,9 +380,10 @@ std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std
     for (const auto& pair : response.data()) {
         std::string path = galaxy::util::MapToCellPath(pair.first);
         if (pair.second.status().return_code() != 1) {
-            throw "Failed to read data for file " + path + '.';
+            LOG(ERROR) << "Failed to read data for file " << path;
+        } else {
+            result.insert({path, pair.second.data()});
         }
-        result.insert({path, pair.second.data()});
     }
     return result;
 }
@@ -873,6 +874,11 @@ std::map<std::string, std::string> galaxy::client::ReadMultiple(const std::vecto
     if (!local_paths.empty()) {
         std::map<std::string, std::string> local_result = galaxy::client::impl::LReadMultiple(local_paths);
         result.insert(local_result.begin(), local_result.end());
+    }
+    for (const auto& path : paths) {
+        if (result.find(path) == result.end()) {
+            result.insert({path, ""});
+        }
     }
     return result;
 }

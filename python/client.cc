@@ -1,3 +1,5 @@
+#include <map>
+#include <vector>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "cpp/client.h"
@@ -27,7 +29,14 @@ PYBIND11_MODULE(_gclient, m)
         std::string data = galaxy::client::Read(path);
         return py::bytes(data);
     },  "Wrapper for Read", py::arg("path"));
-    m.def("read_multiple", &galaxy::client::ReadMultiple, "Wrapper for ReadMultiple", py::arg("paths"));
+    m.def("read_multiple", [](const std::vector<std::string> paths) {
+        std::map<std::string, std::string> data = galaxy::client::ReadMultiple(paths);
+        std::map<std::string, py::bytes> result;
+        for (const auto& val : data) {
+            result.insert({val.first, py::bytes(val.second)});
+        }
+        return result;
+    }, "Wrapper for ReadMultiple", py::arg("paths"));
     m.def("write", &galaxy::client::Write, "Wrapper for Write", py::arg("path"), py::arg("data"), py::arg("mode") = "w");
     m.def("get_attr", &galaxy::client::GetAttr, "Wrapper for GetAttr", py::arg("path"));
     m.def("list_cells", &galaxy::client::ListCells, "Wrapper for ListCells");

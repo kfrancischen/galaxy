@@ -9,7 +9,9 @@ namespace galaxy {
     namespace stats {
         namespace internal {
             ABSL_CONST_INIT const absl::string_view kLatencyMeasureName = "grpc/latency";
+            ABSL_CONST_INIT const absl::string_view kCountMeasureName = "grpc/count";
             opencensus::stats::MeasureDouble LatencyMsMeasure();
+            opencensus::stats::MeasureInt64 QueryCountMeasure();
             opencensus::tags::TagKey MethodKey();
         }
     }

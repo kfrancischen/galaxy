@@ -135,6 +135,7 @@ def icon_fmt(filename):
             i = icon
     return i
 
+
 def get_type(mode):
     if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
         type = 'dir'
@@ -170,7 +171,11 @@ class GalaxyPathView(MethodView):
             cells = gclient.list_cells()
             for cell in cells:
                 path_name = os.path.join(ROOT, cell + '-d')
-                attr = json.loads(gclient.get_attr(path_name))
+                try:
+                    attr = json.loads(gclient.get_attr(path_name))
+                except Exception as err:
+                    logging.error('Getting attribute of ' + path_name + ' failed with error ' + str(err) + '.')
+                    continue
                 info = {
                     'name': path_name,
                     'mtime': int(attr['mtime']),
