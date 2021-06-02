@@ -121,9 +121,11 @@ def time_desc(timestamp):
 @galaxy_viewer.template_filter('data_fmt')
 def data_fmt(filename):
     t = 'unknown'
-    for type, exts in datatypes.items():
+    for datatype, exts in datatypes.items():
         if filename.split('.')[-1] in exts.split(','):
-            t = type
+            t = datatype
+        elif '.log.' in filename:
+            t = 'text'
     return t
 
 
@@ -133,6 +135,8 @@ def icon_fmt(filename):
     for icon, exts in icontypes.items():
         if filename.split('.')[-1] in exts.split(','):
             i = icon
+        elif '.log.' in filename:
+            i = 'fa-file-text-o'
     return i
 
 
