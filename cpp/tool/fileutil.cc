@@ -58,11 +58,12 @@ namespace galaxy
         ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         std::unique_ptr<ClientReader<DownloadResponse>> reader(stub_->DownloadFile(&context, request));
-
         DownloadResponse reply;
+        std::string from_cell = absl::GetFlag(FLAGS_fs_cell);
         while (reader->Read(&reply))
         {
             client::Write(request.to_name(), reply.data(), "a");
+            absl::SetFlag(&FLAGS_fs_cell, from_cell);
         }
         Status status = reader->Finish();
         if (status.ok())
@@ -205,9 +206,8 @@ namespace galaxy
                 LOG(FATAL) << "File already exists. Please use --f to overwrite.";
                 return;
             }
-
-            absl::StatusOr<std::string> from_path_or = galaxy::util::InitClient(from_path);
             absl::StatusOr<std::string> to_path_or = galaxy::util::InitClient(to_path);
+            absl::StatusOr<std::string> from_path_or = galaxy::util::InitClient(from_path);
             CHECK(from_path_or.ok() && to_path_or.ok()) << "Please make sure the paths are remote.";
             auto client = GetFileutilClient();
             DownloadRequest request;
