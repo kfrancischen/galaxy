@@ -499,17 +499,16 @@ namespace galaxy
         {
             GalaxyFs::Instance()->Lock(request->from_name());
             std::ifstream infile(out_path, std::ifstream::binary);
-            std::vector<char> buffer(galaxy::constant::kChunkSize + 1, 0);
-            while (infile)
+            std::vector<char> buffer(galaxy::constant::kChunkSize, 0);
+            while (!infile.eof())
             {
-                infile.read(buffer.data(), sizeof(buffer));
-                std::streamsize s = ((infile) ? galaxy::constant::kChunkSize : infile.gcount());
-                buffer[s] = 0;
+                infile.read(buffer.data(), buffer.size());
+                std::streamsize s = infile.gcount();
                 DownloadResponse response;
                 FileSystemStatus status;
                 status.set_return_code(1);
                 response.mutable_status()->CopyFrom(status);
-                response.set_data(std::string(buffer.data()));
+                response.set_data(std::string(buffer.begin(), buffer.begin() + s));
                 reply->Write(response);
             }
             GalaxyFs::Instance()->Unlock(request->from_name());

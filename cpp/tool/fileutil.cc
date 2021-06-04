@@ -31,7 +31,7 @@ namespace galaxy
         std::unique_ptr<ClientReader<DownloadResponse>> reader(stub_->DownloadFile(&context, request));
 
         DownloadResponse reply;
-        std::ofstream outfile(request.to_name(), std::ofstream::app | std::ofstream::binary);
+        std::ofstream outfile(request.to_name(), std::ofstream::binary);
         while (reader->Read(&reply))
         {
             outfile << reply.data();
@@ -88,17 +88,16 @@ namespace galaxy
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         std::unique_ptr<ClientWriter<UploadRequest>> writer(stub_->UploadFile(&context, &reply));
         std::ifstream infile(request.from_name(), std::ifstream::binary);
-        std::vector<char> buffer(galaxy::constant::kChunkSize + 1, 0);
-        while (infile)
+        std::vector<char> buffer(galaxy::constant::kChunkSize, 0);
+        while (!infile.eof())
         {
             infile.read(buffer.data(), sizeof(buffer));
-            std::streamsize s = ((infile) ? galaxy::constant::kChunkSize : infile.gcount());
-            buffer[s] = 0;
+            std::streamsize s = infile.gcount();
             UploadRequest sub_request;
             sub_request.set_from_name(request.from_name());
             sub_request.set_to_name(request.to_name());
             sub_request.mutable_cred()->set_password(request.cred().password());
-            sub_request.set_data(std::string(buffer.data()));
+            sub_request.set_data(std::string(buffer.begin(), buffer.begin() + s));
             if (!writer->Write(sub_request))
             {
                 break;

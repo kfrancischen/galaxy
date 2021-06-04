@@ -472,7 +472,7 @@ namespace galaxy {
                 return absl::InternalError("Fail to create lock file.");
             }
             LockFile(*lock_name);
-            std::ifstream infile(path, std::ifstream::in | std::ifstream::binary);
+            std::ifstream infile(path, std::ifstream::binary);
             data = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
             UnlockFile(*lock_name);
             return absl::OkStatus();
@@ -496,7 +496,7 @@ namespace galaxy {
             }
             std::ofstream outfile;
             if (mode == "a") {
-                outfile.open(path, std::ofstream::app | std::ofstream::binary);
+                outfile.open(path, std::ofstream::app | std::ofstream::out | std::ofstream::binary);
             } else {
                 outfile.open(path, std::ofstream::binary);
             }
