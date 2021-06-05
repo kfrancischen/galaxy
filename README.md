@@ -1,4 +1,7 @@
 # galaxy
+
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
+
 Simple distributed file system based on gRPC.
 
 This is a toy-version of distributed file system developed based on gRPC, and it will be integrated with [pslx](https://github.com/kfrancischen/pslx) shortly. The core logic is developed with C++ and later wrapped with Python using [Pybind11](https://github.com/pybind/pybind11). The build system for the whole package is [bazel](https://bazel.build/). In addition, several public versions of Google internal tools are used: [abseil](https://abseil.io/docs/cpp/quickstart), [glog](https://github.com/google/glog). [rapidjson](https://rapidjson.org/) is used to parse the config files. [prometheus](https://prometheus.io/) and [opencensus](https://opencensus.io/) are integrated to monitor the server side rpc.
