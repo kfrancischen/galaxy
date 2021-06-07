@@ -37,6 +37,7 @@ def main():
     message.name = "test"
     gclient_ext.write_proto_message('/galaxy/aa-d/test1.pb', message)
     print(gclient_ext.read_proto_message('/galaxy/aa-d/test1.pb', TestMessage))
+    print(gclient.check_health("aa"))
 
 
 if __name__ == "__main__":

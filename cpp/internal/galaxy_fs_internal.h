@@ -9,6 +9,8 @@
 #include "absl/container/flat_hash_map.h"
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/sysinfo.h>
 #include <sys/types.h>
 
 namespace galaxy {
@@ -51,6 +53,8 @@ namespace galaxy {
         absl::Status Read(const std::string& path, std::string& data);
         absl::Status Write(const std::string& path, const std::string& data, const std::string& mode, bool require_lock);
         absl::Status GetAttr(const std::string& path, struct stat *statbuf);
+        absl::Status GetDiskUsage(struct statvfs *statvfsbuf);
+        absl::Status GetRamUsage(struct sysinfo *sysinfobuf);
     }
 }
 

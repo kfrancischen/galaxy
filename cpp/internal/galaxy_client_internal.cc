@@ -43,6 +43,8 @@ using galaxy_schema::RmFileRequest;
 using galaxy_schema::RmFileResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
+using galaxy_schema::HealthCheckRequest;
+using galaxy_schema::HealthCheckResponse;
 
 namespace galaxy
 {
@@ -246,6 +248,20 @@ namespace galaxy
         ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->Write(&context, request, &reply);
+        if (status.ok()) {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
+    HealthCheckResponse GalaxyClientInternal::CheckHealth(const HealthCheckRequest &request)
+    {
+        HealthCheckResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        Status status = stub_->CheckHealth(&context, request, &reply);
         if (status.ok()) {
             return reply;
         } else {

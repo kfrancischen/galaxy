@@ -515,5 +515,21 @@ namespace galaxy {
                 return absl::InvalidArgumentError("GetAttr failed for " + path + ".");
             }
         }
+
+        absl::Status GetDiskUsage(struct statvfs* statvfsbuf) {
+            if (statvfs("/", statvfsbuf) == 0) {
+                return absl::OkStatus();
+            } else {
+                return absl::InternalError("GetDiskUsage failed.");
+            }
+        }
+
+        absl::Status GetRamUsage(struct sysinfo *sysinfobuf) {
+            if (sysinfo(sysinfobuf) == 0) {
+                return absl::OkStatus();
+            } else {
+                return absl::InternalError("GetRamUsage failed.");
+            }
+        }
     }
 }

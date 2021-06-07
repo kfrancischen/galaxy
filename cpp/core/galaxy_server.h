@@ -61,6 +61,9 @@ namespace galaxy
         grpc::Status UploadFile(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::UploadRequest> *request,
                                 galaxy_schema::UploadResponse *reply) override;
 
+        grpc::Status CheckHealth(grpc::ServerContext *context, const galaxy_schema::HealthCheckRequest *request,
+                           galaxy_schema::HealthCheckResponse *reply) override;
+
         void SetPassword(const std::string &password);
 
     private:
@@ -117,6 +120,9 @@ namespace galaxy
 
         grpc::Status UploadFileInternal(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::UploadRequest> *request,
                                         galaxy_schema::UploadResponse *reply);
+
+        grpc::Status CheckHealthInternal(grpc::ServerContext *context, const galaxy_schema::HealthCheckRequest *request,
+                           galaxy_schema::HealthCheckResponse *reply);
     };
 } // namespace galaxy
 

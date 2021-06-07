@@ -26,6 +26,7 @@ namespace galaxy
         galaxy_schema::ReadResponse Read(const galaxy_schema::ReadRequest &request);
         galaxy_schema::ReadMultipleResponse ReadMultiple(const galaxy_schema::ReadMultipleRequest &request);
         galaxy_schema::WriteResponse Write(const galaxy_schema::WriteRequest &request);
+        galaxy_schema::HealthCheckResponse CheckHealth(const galaxy_schema::HealthCheckRequest& request);
 
     private:
         std::unique_ptr<galaxy_schema::FileSystem::Stub> stub_;

@@ -25,6 +25,7 @@ namespace galaxy {
             std::map<std::string, std::string> RReadMultiple(const std::vector<std::string>& paths);
             void RWrite(const std::string& path, const std::string& data, const std::string& mode="w");
             std::string RGetAttr(const std::string& path);
+            std::string RCheckHealth(const std::string& cell);
 
             // Local clients
             void LCreateDirIfNotExist(const std::string& path, const int mode=0777);
@@ -61,6 +62,7 @@ namespace galaxy {
         void Write(const std::string& path, const std::string& data, const std::string& mode="w");
         std::string GetAttr(const std::string& path);
         std::vector<std::string> ListCells();
+        std::string CheckHealth(const std::string& cell);
     }  // namespace client
 } // namespace galaxy
 

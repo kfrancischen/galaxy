@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <google/protobuf/util/json_util.h>
+#include <google/protobuf/message.h>
 
 #include "cpp/client.h"
 #include "cpp/core/galaxy_flag.h"
@@ -19,6 +20,7 @@
 
 using galaxy_schema::Owner;
 using galaxy_schema::FileSystemStatus;
+using galaxy_schema::FileSystemUsage;
 using galaxy_schema::Credential;
 using galaxy_schema::Attribute;
 using galaxy_schema::WriteMode;
@@ -53,9 +55,12 @@ using galaxy_schema::RmFileRequest;
 using galaxy_schema::RmFileResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
+using galaxy_schema::HealthCheckRequest;
+using galaxy_schema::HealthCheckResponse;
 
 using galaxy::GalaxyClientInternal;
 using galaxy::GalaxyFs;
+using google::protobuf::Message;
 
 GalaxyClientInternal GetChannelClient() {
     absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
@@ -95,12 +100,12 @@ std::string StatbufToString(const struct stat& statbuf) {
     return sb.GetString();
 }
 
-std::string AttributeToString(const Attribute& attr) {
-    std::string output_attr;
+std::string ProtoMessageToString(const Message& message) {
+    std::string output_str;
     google::protobuf::util::JsonPrintOptions option;
     option.add_whitespace = true;
-    google::protobuf::util::MessageToJsonString(attr, &output_attr, option);
-    return output_attr;
+    google::protobuf::util::MessageToJsonString(message, &output_str, option);
+    return output_str;
 }
 
 void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const int mode) {
@@ -191,7 +196,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const st
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_dir : response.sub_dirs()) {
-            result.insert({galaxy::util::MapToCellPath(sub_dir.first), AttributeToString(sub_dir.second)});
+            result.insert({galaxy::util::MapToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
         }
         return result;
     }
@@ -215,7 +220,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const s
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_file : response.sub_files()) {
-            result.insert({galaxy::util::MapToCellPath(sub_file.first), AttributeToString(sub_file.second)});
+            result.insert({galaxy::util::MapToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
         }
         return result;
     }
@@ -239,7 +244,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_dir : response.sub_dirs()) {
-            result.insert({galaxy::util::MapToCellPath(sub_dir.first), AttributeToString(sub_dir.second)});
+            result.insert({galaxy::util::MapToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
         }
         return result;
     }
@@ -263,7 +268,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursiv
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_file : response.sub_files()) {
-            result.insert({galaxy::util::MapToCellPath(sub_file.first), AttributeToString(sub_file.second)});
+            result.insert({galaxy::util::MapToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
         }
         return result;
     }
@@ -424,10 +429,35 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
         if (status.return_code() != 1) {
             throw "Fail to call GetAttr.";
         }
-        return AttributeToString(response.attr());
+        return ProtoMessageToString(response.attr());
     }
     catch (std::string errorMsg)
     {
+        LOG(ERROR) << errorMsg;
+        return "";
+    }
+}
+
+std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
+    GalaxyClientInternal client = GetChannelClient();
+    std::string cur_cell = absl::GetFlag(FLAGS_fs_cell);
+    if (cell != cur_cell) {
+        LOG(INFO) << "Switching from " <<cur_cell << " to cell " << cell << " in client's health check request.";
+        absl::SetFlag(&FLAGS_fs_cell, cell);
+    }
+    try {
+        HealthCheckRequest request;
+        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        HealthCheckResponse response = client.CheckHealth(request);
+        absl::SetFlag(&FLAGS_fs_cell, cur_cell);
+        if (!response.healthy()) {
+            throw "cell " + cell +" is unhealthy.";
+        }
+        return ProtoMessageToString(response);
+    }
+    catch (std::string errorMsg)
+    {
+        absl::SetFlag(&FLAGS_fs_cell, cur_cell);
         LOG(ERROR) << errorMsg;
         return "";
     }
@@ -913,5 +943,15 @@ std::vector<std::string> galaxy::client::ListCells() {
     } else {
         VLOG(1) << "Failed to list the cells.";
         return std::vector<std::string>();
+    }
+}
+
+std::string galaxy::client::CheckHealth(const std::string& cell) {
+    if (!cell.empty()) {
+        VLOG(2) << "Using remote mode";
+        return galaxy::client::impl::RCheckHealth(cell);
+    } else {
+        VLOG(1) << "Local mode doest not support health check.";
+        return "";
     }
 }

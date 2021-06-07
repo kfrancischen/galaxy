@@ -105,4 +105,12 @@ namespace galaxy {
         std::string abs_path = internal::JoinPath(root_, path);
         return impl::Unlock(abs_path);
     }
+
+    absl::Status GalaxyFs::GetDiskUsage(struct statvfs *statvfsbuf) {
+        return impl::GetDiskUsage(statvfsbuf);
+    }
+
+    absl::Status GalaxyFs::GetRamUsage(struct sysinfo *sysinfobuf) {
+        return impl::GetRamUsage(sysinfobuf);
+    }
 }

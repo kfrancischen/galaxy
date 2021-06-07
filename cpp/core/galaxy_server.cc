@@ -1,8 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/sysinfo.h>
 #include <sys/types.h>
 #include "glog/logging.h"
 #include "cpp/core/galaxy_server.h"
@@ -21,6 +24,7 @@ using grpc::StatusCode;
 using galaxy_schema::Attribute;
 using galaxy_schema::Credential;
 using galaxy_schema::FileSystemStatus;
+using galaxy_schema::FileSystemUsage;
 using galaxy_schema::Owner;
 using galaxy_schema::WriteMode;
 
@@ -58,6 +62,8 @@ using galaxy_schema::UploadRequest;
 using galaxy_schema::UploadResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
+using galaxy_schema::HealthCheckRequest;
+using galaxy_schema::HealthCheckResponse;
 
 namespace galaxy
 {
@@ -552,6 +558,51 @@ namespace galaxy
         return Status::OK;
     }
 
+    Status GalaxyServerImpl::CheckHealthInternal(ServerContext *context, const HealthCheckRequest *request,
+                                                 HealthCheckResponse *reply)
+    {
+        if (!GalaxyServerImpl::VerifyPassword(request->cred()).ok())
+        {
+            LOG(ERROR) << "Wrong password from client during function call CheckHealth.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call CheckHealth.");
+        }
+
+        struct statvfs statvfsbuf;
+        absl::Status disk_status = GalaxyFs::Instance()->GetDiskUsage(&statvfsbuf);
+
+        if (!disk_status.ok())
+        {
+            LOG(ERROR) << "CheckHealth failed during function call GetDiskUsage with error " << disk_status;
+            return Status(StatusCode::INTERNAL, disk_status.ToString());
+        }
+
+        struct sysinfo sysinfobuf;
+        absl::Status ram_status = GalaxyFs::Instance()->GetRamUsage(&sysinfobuf);
+        if (!ram_status.ok())
+        {
+            LOG(ERROR) << "CheckHealth failed during function call GetRamUsage with error " << ram_status;
+            return Status(StatusCode::INTERNAL, ram_status.ToString());
+        }
+        else
+        {
+            FileSystemUsage usage;
+            double total_disk = (double)(statvfsbuf.f_blocks * statvfsbuf.f_frsize) / (1024 * 1024);
+            usage.set_total_disk(total_disk);
+            double available_disk = (double)(statvfsbuf.f_bfree * statvfsbuf.f_frsize) / (1024 * 1024);
+            usage.set_used_disk(total_disk - available_disk);
+
+            double total_ram = (double)sysinfobuf.totalram / (1024 * 1024);
+            usage.set_total_ram(total_ram);
+            double available_ram = (double)sysinfobuf.freeram / (1024 * 1024);
+            usage.set_used_ram(total_ram - available_ram);
+            reply->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count());
+            reply->set_healthy(true);
+            reply->mutable_usage()->CopyFrom(usage);
+            return Status::OK;
+        }
+    }
+
     //***************************************************************************************//
     // external functions
     Status GalaxyServerImpl::GetAttr(ServerContext *context, const GetAttrRequest *request,
@@ -774,6 +825,19 @@ namespace galaxy
         opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
                                    {stats::internal::QueryCountMeasure(), 1}},
                                   {{stats::internal::MethodKey(), "UploadFile"}});
+        return status;
+    }
+
+    Status GalaxyServerImpl::CheckHealth(ServerContext *context, const HealthCheckRequest *request,
+                                         HealthCheckResponse *reply)
+    {
+        absl::Time start = absl::Now();
+        Status status = GalaxyServerImpl::CheckHealthInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
+                                   {stats::internal::QueryCountMeasure(), 1}},
+                                  {{stats::internal::MethodKey(), "CheckHealth"}});
         return status;
     }
 } // namespace galaxy
