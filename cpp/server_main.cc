@@ -8,7 +8,6 @@
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/ext/channelz_service_plugin.h>
-#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/opencensus.h>
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -49,7 +48,6 @@ void RunGalaxyServer()
     GalaxyServerImpl galaxy_service;
     galaxy_service.SetPassword(absl::GetFlag(FLAGS_fs_password));
 
-    grpc::EnableDefaultHealthCheckService(true);
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     grpc::channelz::experimental::InitChannelzService();
     ServerBuilder builder;

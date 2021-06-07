@@ -27,11 +27,21 @@ service FileSystem {
     // Download/upload file
     rpc DownloadFile( DownloadRequest ) returns (stream DownloadResponse) {}
     rpc UploadFile( stream UploadRequest ) returns ( UploadResponse) {}
+
+    // Health check
+    rpc CheckHealth( HealthCheckRequest ) returns ( HealthCheckResponse ) {}
 }
 
 message FileSystemStatus {
     int32 return_code = 1;
     string return_message = 2;
+}
+
+message FileSystemUsage {
+    double total_disk = 1;
+    double used_disk = 2;
+    double total_ram = 3;
+    double used_ram = 4;
 }
 
 enum WriteMode {
@@ -239,4 +249,15 @@ message DownloadResponse {
 
 message UploadResponse {
     FileSystemStatus status = 1;
+}
+
+message HealthCheckRequest {
+    int64 timestamp = 1;
+    Credential cred = 2;
+}
+
+message HealthCheckResponse {
+    uint64 timestamp = 1;
+    bool healthy = 2;
+    FileSystemUsage usage = 3;
 }
