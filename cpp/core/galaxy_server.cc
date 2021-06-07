@@ -838,6 +838,13 @@ namespace galaxy
         opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
                                    {stats::internal::QueryCountMeasure(), 1}},
                                   {{stats::internal::MethodKey(), "CheckHealth"}});
+        if (status.ok()) {
+            double disk_usage = reply->usage().used_disk() / reply->usage().total_disk();
+            double ram_usage = reply->usage().used_ram() / reply->usage().total_ram();
+            opencensus::stats::Record({{stats::internal::DiskUsageMeasure(), disk_usage},
+                            {stats::internal::RamUsageMeasure(), ram_usage}},
+                            {{stats::internal::MethodKey(), "CheckHealthUsage"}});
+        }
         return status;
     }
 } // namespace galaxy

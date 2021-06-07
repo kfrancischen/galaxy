@@ -14,6 +14,18 @@ namespace galaxy {
             return measure;
         }
 
+        opencensus::stats::MeasureDouble internal::DiskUsageMeasure() {
+            static const auto measure = opencensus::stats::MeasureDouble::Register(
+                internal::kDiskUsageMeasureName, "Disk usage in percentage", "percent");
+            return measure;
+        }
+
+        opencensus::stats::MeasureDouble internal::RamUsageMeasure() {
+            static const auto measure = opencensus::stats::MeasureDouble::Register(
+                internal::kRamUsageMeasureName, "RAM usage in percentage", "percent");
+            return measure;
+        }
+
         opencensus::tags::TagKey internal::MethodKey() {
             static const auto key = opencensus::tags::TagKey::Register("method");
             return key;

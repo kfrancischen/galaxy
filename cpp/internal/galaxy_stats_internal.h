@@ -10,8 +10,12 @@ namespace galaxy {
         namespace internal {
             ABSL_CONST_INIT const absl::string_view kLatencyMeasureName = "grpc/latency";
             ABSL_CONST_INIT const absl::string_view kCountMeasureName = "grpc/count";
+            ABSL_CONST_INIT const absl::string_view kDiskUsageMeasureName = "grpc/disk_usage";
+            ABSL_CONST_INIT const absl::string_view kRamUsageMeasureName = "grpc/RAM_usage";
             opencensus::stats::MeasureDouble LatencyMsMeasure();
             opencensus::stats::MeasureInt64 QueryCountMeasure();
+            opencensus::stats::MeasureDouble DiskUsageMeasure();
+            opencensus::stats::MeasureDouble RamUsageMeasure();
             opencensus::tags::TagKey MethodKey();
         }
     }
