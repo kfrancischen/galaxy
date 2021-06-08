@@ -439,12 +439,12 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
 }
 
 std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
-    GalaxyClientInternal client = GetChannelClient();
     std::string cur_cell = absl::GetFlag(FLAGS_fs_cell);
     if (cell != cur_cell) {
-        LOG(INFO) << "Switching from " <<cur_cell << " to cell " << cell << " in client's health check request.";
+        LOG(INFO) << "Switching from " << cur_cell << " to cell " << cell << " in client's health check request.";
         absl::SetFlag(&FLAGS_fs_cell, cell);
     }
+    GalaxyClientInternal client = GetChannelClient();
     try {
         HealthCheckRequest request;
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));

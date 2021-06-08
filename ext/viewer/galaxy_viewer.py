@@ -1,4 +1,7 @@
 from absl import flags, app, logging
+import pytz
+import threading
+from apscheduler.schedulers.background import BackgroundScheduler
 from galaxy_py import gclient, gclient_ext
 from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort, session
 from flask.views import MethodView
@@ -17,6 +20,7 @@ flags.DEFINE_string("password", None, "The password for the viewer")
 flags.DEFINE_string("ip", "0.0.0.0", "The ip for the viewer")
 flags.DEFINE_integer("port", None, "The port for the viewer")
 flags.DEFINE_boolean("debug", False, "Whether to use debug mode")
+flags.DEFINE_integer("health_check_interval", 60, "Interval for checking server health.")
 
 ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
@@ -231,12 +235,40 @@ galaxy_viewer.add_url_rule('/<path:p>', view_func=path_view)
 galaxy_viewer.add_url_rule('/search', view_func=path_view)
 
 
+def health_check_impl():
+
+    def _check_health():
+        for cell in gclient.list_cells():
+            logging.info("Checking health for cell " + cell + '.')
+            health_json = gclient.check_health(cell)
+            try:
+                health = json.loads(health_json)
+                if not health['healthy']:
+                    logging.error('Cell ' + cell + ' not healthy!')
+                else:
+                    logging.info('Cell ' + cell + ' healthy.')
+            except Exception as err:
+                logging.error('Checking health for cell ' + cell + ' failed with error ' + str(err) + '.')
+
+    background_scheduler = BackgroundScheduler(timezone=pytz.timezone('US/Pacific'))
+    background_scheduler.add_job(
+        _check_health,
+        'interval',
+        seconds=FLAGS.health_check_interval
+    )
+    background_scheduler.start()
+
+
 def main(argv):
     flags.mark_flag_as_required('username')
     flags.mark_flag_as_required('password')
     flags.mark_flag_as_required('port')
     galaxy_viewer.config['username'] = FLAGS.username
     galaxy_viewer.config['password'] = FLAGS.password
+    # Start health check thread
+    health_check_thread = threading.Thread(target=health_check_impl)
+    health_check_thread.start()
+    # Start UI main thread
     galaxy_viewer.run(FLAGS.ip, FLAGS.port, threaded=True, debug=FLAGS.debug)
 
 

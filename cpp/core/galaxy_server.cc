@@ -591,9 +591,9 @@ namespace galaxy
             double available_disk = (double)(statvfsbuf.f_bfree * statvfsbuf.f_frsize) / (1024 * 1024);
             usage.set_used_disk(total_disk - available_disk);
 
-            double total_ram = (double)sysinfobuf.totalram / (1024 * 1024);
+            double total_ram = (double)sysinfobuf.totalram * sysinfobuf.mem_unit / (1024 * 1024);
             usage.set_total_ram(total_ram);
-            double available_ram = (double)sysinfobuf.freeram / (1024 * 1024);
+            double available_ram = (double)sysinfobuf.freeram * sysinfobuf.mem_unit / (1024 * 1024);
             usage.set_used_ram(total_ram - available_ram);
             reply->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count());

@@ -524,7 +524,7 @@ namespace galaxy {
             }
         }
 
-        absl::Status GetRamUsage(struct sysinfo *sysinfobuf) {
+        absl::Status GetRamUsage(struct sysinfo* sysinfobuf) {
             if (sysinfo(sysinfobuf) == 0) {
                 return absl::OkStatus();
             } else {
