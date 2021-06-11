@@ -39,6 +39,9 @@ std::time_t galaxy::ext::GetCurrentTime() {
 
 double galaxy::ext::GetTTLTime(std::string ttl)
 {
+    if (ttl.empty()) {
+        return -1.0;
+    }
     std::string ch(1, ttl.back());
     int multiplier;
     if (ch == "m") {
@@ -48,7 +51,7 @@ double galaxy::ext::GetTTLTime(std::string ttl)
     } else if (ch == "d") {
         multiplier = 86400; // 60 * 60 * 24
     } else {
-        return -1;
+        return -1.0;
     }
     ttl.pop_back();
     int unit = std::stoi(ttl);

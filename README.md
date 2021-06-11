@@ -1,16 +1,16 @@
 # galaxy
 
-[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
-
 Simple distributed file system based on gRPC.
+
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 
 This is a toy-version of distributed file system developed based on gRPC, and it will be integrated with [pslx](https://github.com/kfrancischen/pslx) shortly. The core logic is developed with C++ and later wrapped with Python using [Pybind11](https://github.com/pybind/pybind11). The build system for the whole package is [bazel](https://bazel.build/). In addition, several public versions of Google internal tools are used: [abseil](https://abseil.io/docs/cpp/quickstart), [glog](https://github.com/google/glog). [rapidjson](https://rapidjson.org/) is used to parse the config files. [prometheus](https://prometheus.io/) and [opencensus](https://opencensus.io/) are integrated to monitor the server side rpc.
 
-#### Core concepts
+## Core concepts
 - `cell`: a cell is a machine that can be added as part of the filesystem, and is associated with a cell name. In galaxy, we use a two letter name for a cell, i.e. `aa`. The path for a cell in galaxy filesystem starts with `/galaxy/${CELL}-d/...`, where the `${CELL}` is the name of the cell. To make a machine as a cell in the filesystem, one just needs to launch the server code on the machine. Details are discussed in the next section.
 - `global config`: a configuration file containing configurations for each cell in the galaxy filesystem. An example of it is in [server_config_example.json](https://github.com/kfrancischen/galaxy/blob/master/example/cpp/server_config_example.json).
 
-#### Server Entry Points
+## Server Entry Points
 The entry point for galaxy filesystem server is located at [server_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/server_main.cc). To run the binary, one can use the following cmd
 ```shellscript
 bazel run //cpp:galaxy_server -- \
@@ -19,7 +19,7 @@ bazel run //cpp:galaxy_server -- \
 ```
 With the above cmd, the machine is added as cell `aa` with configurations specified in the `server_config_example.json` file.
 
-#### Client Python API
+## Client Python API
 galaxy provides unified API for client to access both local and remote files, to build the python modules, please following the cmd of
 ```shellscript
 python setup.py install
@@ -232,7 +232,7 @@ mv_folder(from_path, to_path)
     1. from_path: the path to the folder
     2. to_path: the path to the moved folder
 
-#### Fileutil tool
+## Fileutil tool
 fileutil is an entry point for file operations across different cells. The entry point is located at [fileutil_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/tool/fileutil_main.cc). To build the binary, the bazel cmd is
 ```shellscript
 bazel build -c opt //cpp/tool:fileutil
@@ -270,10 +270,13 @@ fileutil rm ${REMOTE_DIR/REMOTE_FILE} [--r]
 ```
 * Description: delete remote file/directory (recursively if `--r` is set).
 
-#### Flags
+## Flags
 galaxy allows users to set following flags to customize server (mainly) and the client. These flags are defined in [galaxy_flag,h](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.h), and their definitions are at [galaxy_flag.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.cc). For servers the flags of `fs_root`, `fs_address`, `fs_password` must be specified, and the values of these flags are usually put in the global configuration file. Besides using the configuration file or using the cmd line fashion [abseil](https://abseil.io/docs/cpp/quickstart) supports, one can also specify the flags by using `GALAXY_${FLAG_NAME}` environment variable. For instance, setting `GALAXY_fs_root=/home` is equivalent to parsing `fs_root=/home` as cmd line argument.
 
-#### Extensions
+## Extensions
+
+#### Galaxy Viewer
+
 A file browser extension is also implemented under [ext/viewer](https://github.com/kfrancischen/galaxy/tree/master/ext/viewer), which uses the Galaxy Python API and flask. The viewer can be launched with the following cmd
 
 ```shellscript
@@ -281,8 +284,18 @@ python galaxy_viewer.py --username=test --password=test --port=8000
 ```
 and the viewer is hosted at `0.0.0.0:8000` with the preset username and password for login.
 
+#### Galaxy TTL Cleaner
 
-#### Examples
+The galaxy file system is also built in with an [ext/ttl_cleaner](https://github.com/kfrancischen/galaxy/tree/master/ext/ttl_cleaner) extension, where one can specify a path with `ttl=${N}d` or `ttl=${N}h` or `ttl=${N}m` for `N` days, hours, minutes, respectively. Capital letters of `D`, `H` and `M` can also be used. Galaxy will only keep the files within the ttl lifetime in the path if the path is associated with a valid ttl.
+
+To launch the batch, periodic ttl cleaner, please use the following command
+```shellscript
+bazel run -c opt //ext/ttl_cleaner:galaxy_ttl_cleaner -- --run_every=1
+```
+The argument of `run_every` means the sleep time (in minute) between adjacent ttl cleaner runs. The deafult value is 10 (minutes).
+
+
+## Examples
 The examples are at folder [example](https://github.com/kfrancischen/galaxy/tree/master/example), and the following is a Python example
 ```python
 from galaxy_py import gclient, gclient_ext
