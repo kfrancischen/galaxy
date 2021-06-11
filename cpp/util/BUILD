@@ -2,7 +2,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
     name = "galaxy_util_lib",
-    visibility = ["//cpp:__subpackages__"],
+    visibility = ["//cpp:__subpackages__", "//ext:__subpackages__"],
     srcs = [
         "galaxy_util.h",
         "galaxy_util.cc",
