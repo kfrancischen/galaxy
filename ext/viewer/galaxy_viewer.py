@@ -39,7 +39,7 @@ datatypes = {
     'quicktime': '3g2,3gp,3gp2,3gpp,mov,qt',
     'source': 'atom,bat,bash,c,cc,h,cmd,coffee,css,hml,js,json,yaml,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,'
               'swift,scss,sh,xml,yml,plist,ipynb,BUILD,WORKSPACE',
-    'text': 'txt,pbtxt',
+    'text': 'txt,pbtxt,log',
     'video': 'mp4,m4v,ogv,webm',
     'website': 'htm,html,mhtm,mhtml,xhtm,xhtml',
 }
@@ -51,7 +51,7 @@ icontypes = {
     'fa-film': '3g2,3gp,3gp2,3gpp,mov,qt,mp4,m4v,ogv,webm',
     'fa-code': 'atom,plist,bat,bash,c,cc,h,cmd,coffee,css,hml,js,json,yaml,java,less,markdown,md,php,pl,py,rb,rss,sass,'
                'scpt,swift,scss,sh,xml,yml,BUILD,WORKSPACE',
-    'fa-file-text-o': 'txt,pbtxt',
+    'fa-file-text-o': 'txt,pbtxt,log',
     'fa-globe': 'htm,html,mhtm,mhtml,xhtm,xhtml',
 }
 

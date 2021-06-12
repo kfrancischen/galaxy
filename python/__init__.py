@@ -3,6 +3,8 @@ try:
 except ImportError:
     import _gclient as gclient
 
+from python.logging import GalaxyLogger
+
 
 class gclient_ext:
 
@@ -115,4 +117,5 @@ class gclient_ext:
 __all__ = [
     "gclient",
     "gclient_ext",
+    "GalaxyLogger",
 ]
