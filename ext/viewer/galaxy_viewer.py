@@ -1,7 +1,6 @@
 from absl import flags, app, logging
-import pytz
+import time
 import threading
-from apscheduler.schedulers.background import BackgroundScheduler
 from galaxy_py import gclient, gclient_ext
 from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort, session
 from flask.views import MethodView
@@ -250,13 +249,10 @@ def health_check_impl():
             except Exception as err:
                 logging.error('Checking health for cell ' + cell + ' failed with error ' + str(err) + '.')
 
-    background_scheduler = BackgroundScheduler(timezone=pytz.timezone('US/Pacific'))
-    background_scheduler.add_job(
-        _check_health,
-        'interval',
-        seconds=FLAGS.health_check_interval
-    )
-    background_scheduler.start()
+    while True:
+        _check_health()
+        if FLAGS.health_check_interval > 0:
+            time.sleep(FLAGS.health_check_interval)
 
 
 def main(argv):

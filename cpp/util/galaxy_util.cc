@@ -16,9 +16,14 @@
 #include "absl/strings/str_join.h"
 #include "glog/logging.h"
 
-absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
+absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server, const std::string& cell) {
     std::string config_path = absl::GetFlag(FLAGS_fs_global_config);
-    std::string cell = absl::GetFlag(FLAGS_fs_cell);
+    std::string cell_name;
+    if (cell.empty()) {
+        cell_name = absl::GetFlag(FLAGS_fs_cell);
+    } else {
+        cell_name = cell;
+    }
     std::ifstream infile;
     infile.open(config_path);
     if (infile) {
@@ -28,12 +33,12 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server) {
             infile.close();
             return absl::InternalError("Configuration json cannot be parsed.");
         }
-        if (!doc.HasMember(cell.c_str())) {
+        if (!doc.HasMember(cell_name.c_str())) {
             infile.close();
             return absl::InternalError("Cell configuration cannot be found.");
         }
         infile.close();
-        const rapidjson::Value& cell_config = doc[cell.c_str()];
+        const rapidjson::Value& cell_config = doc[cell_name.c_str()];
 
         rapidjson::StringBuffer sb;
         rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);

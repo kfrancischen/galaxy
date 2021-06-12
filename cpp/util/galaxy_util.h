@@ -6,7 +6,7 @@
 
 namespace galaxy {
     namespace util {
-        absl::StatusOr<std::string> ParseGlobalConfig(bool is_server=true);
+        absl::StatusOr<std::string> ParseGlobalConfig(bool is_server=true, const std::string& cell="");
 
         absl::StatusOr<std::vector<std::string>> ParseGlobalConfigAndGetCells();
 

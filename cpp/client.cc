@@ -62,8 +62,8 @@ using galaxy::GalaxyClientInternal;
 using galaxy::GalaxyFs;
 using google::protobuf::Message;
 
-GalaxyClientInternal GetChannelClient() {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+GalaxyClientInternal GetChannelClient(const std::string& cell) {
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false, cell);
     FLAGS_colorlogtostderr = true;
     FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
     google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
@@ -109,7 +109,7 @@ std::string ProtoMessageToString(const Message& message) {
 }
 
 void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const int mode) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         CreateDirRequest request;
         request.set_name(path);
@@ -128,7 +128,7 @@ void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const i
 }
 
 std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         DirOrDieRequest request;
         request.set_name(path);
@@ -148,7 +148,7 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
 }
 
 void galaxy::client::impl::RRmDir(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         RmDirRequest request;
         request.set_name(path);
@@ -166,7 +166,7 @@ void galaxy::client::impl::RRmDir(const std::string& path) {
 }
 
 void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         RmDirRecursiveRequest request;
         request.set_name(path);
@@ -184,7 +184,7 @@ void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
 }
 
 std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         ListDirsInDirRequest request;
         request.set_name(path);
@@ -208,7 +208,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const st
 }
 
 std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         ListFilesInDirRequest request;
         request.set_name(path);
@@ -232,7 +232,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const s
 }
 
 std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         ListAllInDirRecursiveRequest request;
         request.set_name(path);
@@ -256,7 +256,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive
 }
 
 std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursive(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         ListAllInDirRecursiveRequest request;
         request.set_name(path);
@@ -280,7 +280,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursiv
 }
 
 void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const int mode) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         CreateFileRequest request;
         request.set_name(path);
@@ -299,7 +299,7 @@ void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const 
 }
 
 std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         FileOrDieRequest request;
         request.set_name(path);
@@ -319,7 +319,7 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
 }
 
 void galaxy::client::impl::RRmFile(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         RmFileRequest request;
         request.set_name(path);
@@ -337,7 +337,7 @@ void galaxy::client::impl::RRmFile(const std::string& path) {
 }
 
 void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::string& new_path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         RenameFileRequest request;
         request.set_old_name(old_path);
@@ -356,7 +356,7 @@ void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::s
 }
 
 std::string galaxy::client::impl::RRead(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         ReadRequest request;
         request.set_name(path);
@@ -376,7 +376,7 @@ std::string galaxy::client::impl::RRead(const std::string& path) {
 }
 
 std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std::vector<std::string>& paths) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     ReadMultipleRequest request;
     std::map<std::string, std::string> result;
     *request.mutable_names() = {paths.begin(), paths.end()};
@@ -394,7 +394,7 @@ std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std
 }
 
 void galaxy::client::impl::RWrite(const std::string& path, const std::string& data, const std::string& mode) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     CHECK(mode == "a" || mode == "w");
     try {
         WriteRequest request;
@@ -419,7 +419,7 @@ void galaxy::client::impl::RWrite(const std::string& path, const std::string& da
 }
 
 std::string galaxy::client::impl::RGetAttr(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient("");
     try {
         GetAttrRequest request;
         request.set_name(path);
@@ -439,17 +439,11 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
 }
 
 std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
-    std::string cur_cell = absl::GetFlag(FLAGS_fs_cell);
-    if (cell != cur_cell) {
-        LOG(INFO) << "Switching from " << cur_cell << " to cell " << cell << " in client's health check request.";
-        absl::SetFlag(&FLAGS_fs_cell, cell);
-    }
-    GalaxyClientInternal client = GetChannelClient();
+    GalaxyClientInternal client = GetChannelClient(cell);
     try {
         HealthCheckRequest request;
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         HealthCheckResponse response = client.CheckHealth(request);
-        absl::SetFlag(&FLAGS_fs_cell, cur_cell);
         if (!response.healthy()) {
             throw "cell " + cell +" is unhealthy.";
         }
@@ -457,7 +451,6 @@ std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
     }
     catch (std::string errorMsg)
     {
-        absl::SetFlag(&FLAGS_fs_cell, cur_cell);
         LOG(ERROR) << errorMsg;
         return "";
     }
