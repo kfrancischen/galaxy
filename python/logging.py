@@ -108,6 +108,9 @@ class GalaxyLogger(object):
         handler.setLevel(level)
         self._logger.addHandler(handler)
 
+    def get_logger(self):
+        return self._logger
+
     def info(self, msg):
         self._logger.info(msg)
 
