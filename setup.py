@@ -70,6 +70,9 @@ class BuildBazelExtension(build_ext.build_ext):
         shutil.copyfile(
             "python/__init__.py", os.path.join(package_dir, "__init__.py")
         )
+        shutil.copyfile(
+            "python/logging.py", os.path.join(package_dir, "logging.py")
+        )
 
 
 setuptools.setup(

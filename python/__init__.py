@@ -3,7 +3,10 @@ try:
 except ImportError:
     import _gclient as gclient
 
-from python.logging import GalaxyLogger
+try:
+    from python.logging import GalaxyLogger
+except ImportError:
+    from galaxy_py.logging import GalaxyLogger
 
 
 class gclient_ext:
