@@ -232,6 +232,35 @@ mv_folder(from_path, to_path)
     1. from_path: the path to the folder
     2. to_path: the path to the moved folder
 
+
+## Galaxy Logging
+Galaxy logging allows users to stream logs to different cells in a distributed fashion. The logger class is defined as follows
+```python
+GalaxyLogger(log_name, logfile_dir)
+```
+* Args:
+    1. log_name: the name of the logger
+    2. logfile_dir: the directory to save the logs.
+
+The final log file will be in the format of `${logfile_dir}/${log_name}.${YY-MM-DD}.${LOG_LEVEL}.log`. The following is an example to use the GalaxyLogger:
+```python
+from galaxy_py import GalaxyLogger
+
+
+def main():
+    logger = GalaxyLogger("test", "/galaxy/aa-d/")
+    logger.info("this is an info test")
+    logger.warn("This is a warning test")
+    logger.error("This is an error test")
+    logger.debug("This is a debug test")
+    logger.critical("This is a critical test")
+    logger.fatal("This is a fatal test")
+
+
+if __name__ == "__main__":
+    main()
+```
+
 ## Fileutil tool
 fileutil is an entry point for file operations across different cells. The entry point is located at [fileutil_main.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/tool/fileutil_main.cc). To build the binary, the bazel cmd is
 ```shellscript
