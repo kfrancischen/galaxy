@@ -21,6 +21,7 @@ _CALL_STACK = {
     logging.CRITICAL: 11,
     logging.FATAL: 11,
 }
+_TRACEBACK_SEP = '-------------------'
 
 
 class GalaxyLoggingFormatter(logging.Formatter):
@@ -65,9 +66,11 @@ class GalaxyLoggingFormatter(logging.Formatter):
             critical_prefix)
 
     def format(self, record):
-        return_msg = GalaxyLoggingFormatter.get_log_prefix(record) + super(GalaxyLoggingFormatter, self).format(record)
+        return_msg = GalaxyLoggingFormatter.get_log_prefix(
+            record) + super(GalaxyLoggingFormatter, self).format(record)
         if record.levelno >= logging.ERROR:
-            return_msg += '\n\nENTERING TRACEBACK:\n' + traceback.format_exc()
+            return_msg += '\n' + _TRACEBACK_SEP + '\nENTERING TRACEBACK:\n' + \
+                traceback.format_exc() + _TRACEBACK_SEP
         return return_msg
 
 

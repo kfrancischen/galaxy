@@ -2,7 +2,7 @@ from galaxy_py import GalaxyLogger
 
 
 def main():
-    logger = GalaxyLogger("test", "/galaxy/aa-d/")
+    logger = GalaxyLogger("test", "/galaxy/aa-d/ttl=1d")
     logger.info("this is an info test")
     logger.warn("This is a warning test")
     logger.error("This is an error test")
