@@ -1,7 +1,8 @@
-from absl import flags, app, logging
+import argparse
 import time
 import threading
-from galaxy_py import gclient, gclient_ext
+import logging
+from galaxy_py import gclient, gclient_ext, GalaxyLoggingHandler
 from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort, session
 from flask.views import MethodView
 from flask_login import login_user, logout_user, UserMixin, LoginManager, login_required
@@ -12,17 +13,14 @@ import json
 import stat
 import mimetypes
 
-FLAGS = flags.FLAGS
-
-flags.DEFINE_string("username", None, "The username for the viewer")
-flags.DEFINE_string("password", None, "The password for the viewer")
-flags.DEFINE_string("ip", "0.0.0.0", "The ip for the viewer")
-flags.DEFINE_integer("port", None, "The port for the viewer")
-flags.DEFINE_boolean("debug", False, "Whether to use debug mode")
-flags.DEFINE_integer("health_check_interval", 60, "Interval for checking server health.")
-
 ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
+LOG_DIR = '/galaxy/bb-d/logs/ttl=7d/' + APP_NAME + '/'
+
+logger = logging.getLogger(APP_NAME)
+logger.setLevel(logging.INFO)
+handler = GalaxyLoggingHandler(APP_NAME, LOG_DIR)
+logger.addHandler(handler)
 
 galaxy_viewer = Flask(APP_NAME, static_url_path='/assets', static_folder='assets')
 galaxy_viewer.config.update(
@@ -77,14 +75,14 @@ def load_user(user_id):
     try:
         return User()
     except Exception as err:
-        logging.error("Load user with error message: " + str(err) + '.')
+        logger.error("Load user with error message: " + str(err) + '.')
         return None
 
 
 @galaxy_viewer.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
-        logging.info('Getting login request from ip [' + request.remote_addr + '].')
+        logger.info('Getting login request from ip [' + request.remote_addr + '].')
         if request.form['username'] == galaxy_viewer.config['username'] and \
                 request.form['password'] == galaxy_viewer.config['password']:
             user = User()
@@ -169,7 +167,7 @@ def file_response(path):
 class GalaxyPathView(MethodView):
     @login_required
     def get(self, p=''):
-        logging.info('Getting GET request from ip [' + request.remote_addr + '].')
+        logger.info('Getting GET request from ip [' + request.remote_addr + '].')
         if p and p[0] != '/':
             p = '/' + p
         total = {'size': 0, 'dir': 0, 'file': 0}
@@ -181,7 +179,7 @@ class GalaxyPathView(MethodView):
                 try:
                     attr = json.loads(gclient.get_attr(path_name))
                 except Exception as err:
-                    logging.error('Getting attribute of ' + path_name + ' failed with error ' + str(err) + '.')
+                    logger.error('Getting attribute of ' + path_name + ' failed with error ' + str(err) + '.')
                     continue
                 info = {
                     'name': path_name,
@@ -222,7 +220,7 @@ class GalaxyPathView(MethodView):
 
     @login_required
     def post(self, p=''):
-        logging.info('Getting POST request from ip [' + request.remote_addr + '].')
+        logger.info('Getting POST request from ip [' + request.remote_addr + '].')
         path = request.form.get('search_path').rstrip('/')
         return redirect(url_for('path_view', p=path))
 
@@ -234,39 +232,46 @@ galaxy_viewer.add_url_rule('/<path:p>', view_func=path_view)
 galaxy_viewer.add_url_rule('/search', view_func=path_view)
 
 
-def health_check_impl():
+def health_check_impl(check_interval):
 
     def _check_health():
         for cell in gclient.list_cells():
-            logging.info("Checking health for cell " + cell + '.')
+            logger.info("Checking health for cell " + cell + '.')
             health_json = gclient.check_health(cell)
             try:
                 health = json.loads(health_json)
                 if not health['healthy']:
-                    logging.error('Cell ' + cell + ' not healthy!')
+                    logger.error('Cell ' + cell + ' not healthy!')
                 else:
-                    logging.info('Cell ' + cell + ' healthy.')
+                    logger.info('Cell ' + cell + ' healthy.')
             except Exception as err:
-                logging.error('Checking health for cell ' + cell + ' failed with error ' + str(err) + '.')
+                logger.error('Checking health for cell ' + cell + ' failed with error ' + str(err) + '.')
 
     while True:
         _check_health()
-        if FLAGS.health_check_interval > 0:
-            time.sleep(FLAGS.health_check_interval)
+        if check_interval > 0:
+            time.sleep(check_interval)
 
 
-def main(argv):
-    flags.mark_flag_as_required('username')
-    flags.mark_flag_as_required('password')
-    flags.mark_flag_as_required('port')
-    galaxy_viewer.config['username'] = FLAGS.username
-    galaxy_viewer.config['password'] = FLAGS.password
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--username', dest='username', default=None, help='The username for the viewer')
+    parser.add_argument('--password', dest='password', default=None, help='The password for the viewer')
+    parser.add_argument('--ip', dest='ip', default='0.0.0.0', help='The ip for the viewer')
+    parser.add_argument('--port', dest='port', default=None, help='The port for the viewer')
+    parser.add_argument('--debug', dest='debug', action='store_true', help='Whether to use debug mode')
+    parser.add_argument('--health_check_interval', dest='health_check_interval', default=60,
+                        help='"Interval for checking server health')
+    args = parser.parse_args()
+    assert args.username is not None and args.password is not None and args.port is not None, 'Invalid arguments'
+    galaxy_viewer.config['username'] = args.username
+    galaxy_viewer.config['password'] = args.password
     # Start health check thread
-    health_check_thread = threading.Thread(target=health_check_impl)
+    health_check_thread = threading.Thread(target=health_check_impl, args=(args.health_check_interval,))
     health_check_thread.start()
     # Start UI main thread
-    galaxy_viewer.run(FLAGS.ip, FLAGS.port, threaded=True, debug=FLAGS.debug)
+    galaxy_viewer.run(args.ip, args.port, threaded=True, debug=args.debug)
 
 
 if __name__ == '__main__':
-    app.run(main)
+    main()

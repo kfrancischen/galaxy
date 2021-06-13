@@ -4,7 +4,6 @@ import threading
 import struct
 import traceback
 import os
-from inspect import getframeinfo, stack
 
 try:
     from python import _gclient as gclient
@@ -13,14 +12,6 @@ except ImportError:
 
 _THREAD_ID_MASK = 2 ** (struct.calcsize('L') * 8) - 1
 _CRITICAL_PREFIX = 'CRITICAL - '
-
-_CALL_STACK = {
-    logging.INFO: 11,
-    logging.WARNING: 12,
-    logging.ERROR: 11,
-    logging.CRITICAL: 11,
-    logging.FATAL: 11,
-}
 _TRACEBACK_SEP = '-------------------'
 
 
@@ -40,14 +31,6 @@ class GalaxyLoggingFormatter(logging.Formatter):
             critical_prefix = _CRITICAL_PREFIX
             severity = 'F'
 
-        try:
-            caller = getframeinfo(stack()[_CALL_STACK[level]][0])
-            filename = caller.filename.split('/')[-1]
-            lineno = caller.lineno
-        except Exception as _:
-            filename = record.filename
-            lineno = record.lineno
-
         created_tuple = time.localtime(record.created)
         created_microsecond = int(record.created % 1.0 * 1e6)
         thread_id = threading.get_ident() & _THREAD_ID_MASK
@@ -61,8 +44,8 @@ class GalaxyLoggingFormatter(logging.Formatter):
             created_tuple.tm_sec,
             created_microsecond,
             thread_id,
-            filename,
-            lineno,
+            record.filename,
+            record.lineno,
             critical_prefix)
 
     def format(self, record):
@@ -76,10 +59,10 @@ class GalaxyLoggingFormatter(logging.Formatter):
 
 class GalaxyLoggingHandler(logging.StreamHandler):
 
-    def __init__(self, filename_prefix):
+    def __init__(self, log_name, logfile_dir):
         super().__init__()
-        assert filename_prefix and filename_prefix[-1] != '/', "Wrong format of the log file prefix."
-        self._prefix = filename_prefix
+        assert log_name and log_name[-1] != '/' and logfile_dir, "Wrong format of the input."
+        self._prefix = os.path.join(logfile_dir, log_name)
         self.setFormatter(GalaxyLoggingFormatter())
 
     def get_file_name(self, record):
@@ -99,35 +82,3 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         file_name = self.get_file_name(record)
         gclient.write(file_name, msg + '\n', 'a')
         super(GalaxyLoggingHandler, self).emit(record)
-
-
-class GalaxyLogger(object):
-
-    def __init__(self, log_name, logfile_dir, level=logging.INFO):
-        super().__init__()
-        self._logger = logging.getLogger(log_name)
-        self._logger.setLevel(level)
-        handler = GalaxyLoggingHandler(os.path.join(logfile_dir, log_name))
-        handler.setLevel(level)
-        self._logger.addHandler(handler)
-
-    def get_logger(self):
-        return self._logger
-
-    def info(self, msg):
-        self._logger.info(msg)
-
-    def warn(self, msg):
-        self._logger.warn(msg)
-
-    def error(self, msg):
-        self._logger.error(msg)
-
-    def fatal(self, msg):
-        self._logger.fatal(msg)
-
-    def critical(self, msg):
-        self._logger.critical(msg)
-
-    def debug(self, msg):
-        self._logger.debug(msg)
