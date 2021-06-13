@@ -160,7 +160,7 @@ def file_response(path):
     response.headers.add(
         'Accept-Ranges', 'bytes'
     )
-    response.headers.add('Content-Disposition', 'attachment')
+    response.headers.add('Content-Disposition', 'inline')
     return response
 
 
