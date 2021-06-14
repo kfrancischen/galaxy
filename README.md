@@ -234,28 +234,25 @@ mv_folder(from_path, to_path)
 
 
 ## Galaxy Logging
-Galaxy logging allows users to stream logs to different cells in a distributed fashion. The logger handler class is defined as follows
+Galaxy logging allows users to stream logs to different cells in a distributed fashion. The logger class is defined as follows
 ```python
-GalaxyLoggingHandler(log_name, logfile_dir)
+from galaxy_py import glogging
+glogging.get_logger(log_name, log_dir)
 ```
 * Args:
     1. log_name: the name of the logger
-    2. logfile_dir: the directory to save the logs.
+    2. log_dir: the directory to save the logs.
 
-The final log file will be in the format of `${logfile_dir}/${log_name}.${YY-MM-DD}.${LOG_LEVEL}.log`. The following is an example to use the `GalaxyLoggingHandler`:
+The final log file will be in the format of `${log_dir}/${log_name}.${YY-MM-DD}.${LOG_LEVEL}.log`. The following is an example to use the `glogging`:
 ```python
-import logging
-from galaxy_py import GalaxyLoggingHandler
+from galaxy_py import glogging
 
 
 def main():
-    logger = logging.getLogger("test")
-    logger.setLevel(logging.INFO)
-    handler = GalaxyLoggingHandler("test", "/galaxy/aa-d/ttl=1d")
-    logger.addHandler(handler)
+    logger = glogging.get_logger('test', "/galaxy/aa-d/ttl=1d")
 
     logger.info("this is an info test")
-    logger.warn("This is a warning test")
+    logger.warning("This is a warning test")
     logger.error("This is an error test")
     logger.debug("This is a debug test")
     logger.critical("This is a critical test")

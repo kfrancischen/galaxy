@@ -59,10 +59,10 @@ class GalaxyLoggingFormatter(logging.Formatter):
 
 class GalaxyLoggingHandler(logging.StreamHandler):
 
-    def __init__(self, log_name, logfile_dir):
+    def __init__(self, log_prefix):
         super().__init__()
-        assert log_name and log_name[-1] != '/' and logfile_dir, "Wrong format of the input."
-        self._prefix = os.path.join(logfile_dir, log_name)
+        assert log_prefix and log_prefix[-1] != '/', "Wrong format of the input."
+        self._prefix = log_prefix
         self.setFormatter(GalaxyLoggingFormatter())
 
     def get_file_name(self, record):
@@ -82,3 +82,15 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         file_name = self.get_file_name(record)
         gclient.write(file_name, msg + '\n', 'a')
         super(GalaxyLoggingHandler, self).emit(record)
+
+
+class glogging(object):
+
+    @classmethod
+    def get_logger(cls, log_name, log_dir):
+        logger = logging.getLogger(log_name)
+        logger.setLevel(logging.DEBUG)
+        handler = GalaxyLoggingHandler(os.path.join(log_dir, log_name))
+        handler.setLevel(logging.DEBUG)
+        logger.addHandler(handler)
+        return logger

@@ -4,9 +4,9 @@ except ImportError:
     import _gclient as gclient
 
 try:
-    from python.logging import GalaxyLoggingHandler
+    from python.logging import glogging
 except ImportError:
-    from galaxy_py.logging import GalaxyLoggingHandler
+    from galaxy_py.logging import glogging
 
 
 class gclient_ext:
@@ -120,5 +120,5 @@ class gclient_ext:
 __all__ = [
     "gclient",
     "gclient_ext",
-    "GalaxyLoggingHandler",
+    "glogging",
 ]

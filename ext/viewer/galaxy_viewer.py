@@ -1,8 +1,7 @@
 import argparse
 import time
 import threading
-import logging
-from galaxy_py import gclient, gclient_ext, GalaxyLoggingHandler
+from galaxy_py import gclient, gclient_ext, glogging
 from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort, session
 from flask.views import MethodView
 from flask_login import login_user, logout_user, UserMixin, LoginManager, login_required
@@ -17,10 +16,7 @@ ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
 LOG_DIR = '/galaxy/bb-d/logs/ttl=7d/' + APP_NAME + '/'
 
-logger = logging.getLogger(APP_NAME)
-logger.setLevel(logging.INFO)
-handler = GalaxyLoggingHandler(APP_NAME, LOG_DIR)
-logger.addHandler(handler)
+logger = glogging.get_logger(APP_NAME, LOG_DIR)
 
 galaxy_viewer = Flask(APP_NAME, static_url_path='/assets', static_folder='assets')
 galaxy_viewer.config.update(

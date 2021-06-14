@@ -1,15 +1,11 @@
-import logging
-from galaxy_py import GalaxyLoggingHandler
+from galaxy_py import glogging
 
 
 def main():
-    logger = logging.getLogger("test")
-    logger.setLevel(logging.INFO)
-    handler = GalaxyLoggingHandler("test", "/galaxy/aa-d/ttl=1d")
-    logger.addHandler(handler)
+    logger = glogging.get_logger('test', "/galaxy/aa-d/ttl=1d")
 
     logger.info("this is an info test")
-    logger.warn("This is a warning test")
+    logger.warning("This is a warning test")
     logger.error("This is an error test")
     logger.debug("This is a debug test")
     logger.critical("This is a critical test")
