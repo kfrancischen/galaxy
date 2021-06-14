@@ -242,7 +242,7 @@ GalaxyLoggingHandler(log_name, logfile_dir)
     1. log_name: the name of the logger
     2. logfile_dir: the directory to save the logs.
 
-The final log file will be in the format of `${logfile_dir}/${log_name}.${YY-MM-DD}.${LOG_LEVEL}.log`. The following is an example to use the GalaxyLogger:
+The final log file will be in the format of `${logfile_dir}/${log_name}.${YY-MM-DD}.${LOG_LEVEL}.log`. The following is an example to use the `GalaxyLoggingHandler`:
 ```python
 import logging
 from galaxy_py import GalaxyLoggingHandler
