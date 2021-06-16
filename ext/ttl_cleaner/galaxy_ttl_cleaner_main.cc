@@ -22,6 +22,7 @@ void RunTTLCleanerOverDirectoryFiles(const std::string& path, TTLStat& ttl_stat)
         return;
     }
     std::string ttl = galaxy::ext::GetTTLFromPath(path);
+    std::time_t path_m_time = galaxy::ext::GetFileModifiedTime(path);
     LOG(INFO) << "TTL for path " << path << " is " << ttl;
     std::time_t cur_time = galaxy::ext::GetCurrentTime();
     double ttl_time = galaxy::ext::GetTTLTime(ttl);
@@ -44,8 +45,7 @@ void RunTTLCleanerOverDirectoryFiles(const std::string& path, TTLStat& ttl_stat)
 
     // The dir is empty after removing everything under it.
     if (ttl_time > 0 && galaxy::client::ListFilesInDir(path).size() + galaxy::client::ListDirsInDir(path).size() == 0) {
-        std::time_t m_time = galaxy::ext::GetFileModifiedTime(path);
-        if (difftime(cur_time, m_time) >= ttl_time) {
+        if (difftime(cur_time, path_m_time) >= ttl_time) {
             ttl_stat.num_dir_removed += 1;
             VLOG(1) << "Removing directory" << path;
             galaxy::client::RmDir(path);
