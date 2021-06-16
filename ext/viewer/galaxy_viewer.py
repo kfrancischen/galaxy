@@ -12,9 +12,22 @@ import json
 import stat
 import mimetypes
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--username', dest='username', default=None, help='The username for the viewer')
+parser.add_argument('--password', dest='password', default=None, help='The password for the viewer')
+parser.add_argument('--ip', dest='ip', default='0.0.0.0', help='The ip for the viewer')
+parser.add_argument('--port', dest='port', default=None, help='The port for the viewer')
+parser.add_argument('--cell', dest='cell', default='bb', help='The cell to store the log')
+parser.add_argument('--debug', dest='debug', action='store_true', help='Whether to use debug mode')
+parser.add_argument('--health_check_interval', dest='health_check_interval', default=60,
+                    help='"Interval for checking server health')
+args = parser.parse_args()
+assert args.username is not None and args.password is not None and args.port is not None, 'Invalid arguments'
+
+
 ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
-LOG_DIR = '/galaxy/bb-d/logs/ttl=7d/' + APP_NAME + '/'
+LOG_DIR = '/galaxy/' + args.cell + '-d/logs/ttl=7d/' + APP_NAME + '/'
 
 logger = glogging.get_logger(APP_NAME, LOG_DIR)
 
@@ -250,16 +263,6 @@ def health_check_impl(check_interval):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--username', dest='username', default=None, help='The username for the viewer')
-    parser.add_argument('--password', dest='password', default=None, help='The password for the viewer')
-    parser.add_argument('--ip', dest='ip', default='0.0.0.0', help='The ip for the viewer')
-    parser.add_argument('--port', dest='port', default=None, help='The port for the viewer')
-    parser.add_argument('--debug', dest='debug', action='store_true', help='Whether to use debug mode')
-    parser.add_argument('--health_check_interval', dest='health_check_interval', default=60,
-                        help='"Interval for checking server health')
-    args = parser.parse_args()
-    assert args.username is not None and args.password is not None and args.port is not None, 'Invalid arguments'
     galaxy_viewer.config['username'] = args.username
     galaxy_viewer.config['password'] = args.password
     # Start health check thread
