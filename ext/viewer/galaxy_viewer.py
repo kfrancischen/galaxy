@@ -23,7 +23,7 @@ parser.add_argument('--health_check_interval', dest='health_check_interval', def
                     help='"Interval for checking server health')
 args = parser.parse_args()
 assert args.username is not None and args.password is not None and args.port is not None, 'Invalid arguments'
-
+assert args.cell in gclient.list_cells(), "Invalid cell"
 
 ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
