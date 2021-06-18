@@ -73,6 +73,7 @@ int main(int argc, char* argv[])
     CHECK(result.ok()) << "Fail to parse the global config.";
     FLAGS_v = absl::GetFlag(FLAGS_fs_verbose_level);
     FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
+    FLAGS_max_log_size = 10;  // setting the maximum log size to 10M
     FLAGS_alsologtostderr = absl::GetFlag(FLAGS_fs_alsologtostderr);
     google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
     google::InitGoogleLogging(argv[0]);
