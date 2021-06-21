@@ -27,7 +27,7 @@ assert args.cell in gclient.list_cells(), "Invalid cell"
 
 ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
-LOG_DIR = '/galaxy/' + args.cell + '-d/logs/ttl=7d/' + APP_NAME + '/'
+LOG_DIR = '/galaxy/' + args.cell + '-d/ttl=7d/logs/' + APP_NAME + '/'
 
 logger = glogging.get_logger(APP_NAME, LOG_DIR)
 
