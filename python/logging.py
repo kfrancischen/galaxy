@@ -70,10 +70,10 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         levelno = record.levelno
         cur_date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
         if levelno == logging.INFO or levelno == logging.DEBUG:
-            level_file = '.'.join([self._prefix, cur_date, 'INFO', 'log']),
-        if levelno == logging.WARNING:
+            level_file = '.'.join([self._prefix, cur_date, 'INFO', 'log'])
+        elif levelno == logging.WARNING:
             level_file = '.'.join([self._prefix, cur_date, 'WARNING', 'log'])
-        if levelno == logging.ERROR:
+        elif levelno == logging.ERROR:
             level_file = '.'.join([self._prefix, cur_date, 'ERROR', 'log'])
         else:
             level_file = '.'.join([self._prefix, cur_date, 'FATAL', 'log'])
