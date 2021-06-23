@@ -63,24 +63,30 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         super().__init__()
         assert log_prefix and log_prefix[-1] != '/', "Wrong format of the input."
         self._prefix = log_prefix
+        self._filename = None
         self.setFormatter(GalaxyLoggingFormatter())
 
-    def get_file_name(self, record):
+    def _get_file_name_from_record(self, record):
         levelno = record.levelno
         cur_date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
         if levelno == logging.INFO or levelno == logging.DEBUG:
-            return '.'.join([self._prefix, cur_date, 'INFO', 'log'])
+            level_file = '.'.join([self._prefix, cur_date, 'INFO', 'log']),
         if levelno == logging.WARNING:
-            return '.'.join([self._prefix, cur_date, 'WARNING', 'log'])
+            level_file = '.'.join([self._prefix, cur_date, 'WARNING', 'log'])
         if levelno == logging.ERROR:
-            return '.'.join([self._prefix, cur_date, 'ERROR', 'log'])
+            level_file = '.'.join([self._prefix, cur_date, 'ERROR', 'log'])
         else:
-            return '.'.join([self._prefix, cur_date, 'FATAL', 'log'])
+            level_file = '.'.join([self._prefix, cur_date, 'FATAL', 'log'])
+        return level_file, '.'.join([self._prefix, cur_date, 'ALL', 'log'])
+
+    def get_file_name(self):
+        return self._filename
 
     def emit(self, record):
         msg = self.format(record)
-        file_name = self.get_file_name(record)
-        gclient.write(file_name, msg + '\n', 'a')
+        level_file, self._filename = self._get_file_name_from_record(record)
+        gclient.write(level_file, msg + '\n', 'a')
+        gclient.write(self._filename, msg + '\n', 'a')
         super(GalaxyLoggingHandler, self).emit(record)
 
 
@@ -94,3 +100,10 @@ class glogging(object):
         handler.setLevel(logging.DEBUG)
         logger.addHandler(handler)
         return logger
+
+    @classmethod
+    def get_logger_file(cls, logger):
+        try:
+            return logger.handlers[0].get_file_name()
+        except Exception as _:
+            return ""

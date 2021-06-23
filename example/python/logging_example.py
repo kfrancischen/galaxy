@@ -10,6 +10,7 @@ def main():
     logger.debug("This is a debug test")
     logger.critical("This is a critical test")
     logger.fatal("This is a fatal test")
+    print(glogging.get_logger_file(logger))
 
 
 if __name__ == "__main__":
