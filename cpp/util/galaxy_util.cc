@@ -78,7 +78,7 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server, cons
         if (cell_config.HasMember("fs_max_msg_size") && is_server) {
             absl::SetFlag(&FLAGS_fs_max_msg_size, cell_config["fs_max_msg_size"].GetInt());
         }
-        return "Getting cell config for cell [" + cell + "]:\n" + sb.GetString();
+        return "Getting cell config for cell [" + cell_name + "]:\n" + sb.GetString();
     } else {
         return absl::NotFoundError(config_path + " does not exist.");
     }
