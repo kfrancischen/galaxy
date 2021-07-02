@@ -39,6 +39,20 @@ def main():
     print(gclient_ext.read_proto_message('/galaxy/aa-d/test1.pb', TestMessage))
     print(gclient.check_health("aa"))
 
+    gclient.write_multiple(
+        path_data_map={
+            '/galaxy/aa-d/test_from_python/test2.txt': '123',
+            '/galaxy/aa-d/test_from_python/test4.txt': '234',
+        },
+        mode='a'
+    )
+    gclient_ext.write_proto_messages(
+        path_data_map={
+            '/galaxy/aa-d/test_from_python/test2.pb': message,
+            '/galaxy/aa-d/test_from_python/test4.pb': message,
+        }
+    )
+
 
 if __name__ == "__main__":
     main()

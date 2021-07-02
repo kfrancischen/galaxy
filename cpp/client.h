@@ -24,6 +24,7 @@ namespace galaxy {
             std::string RRead(const std::string& path);
             std::map<std::string, std::string> RReadMultiple(const std::vector<std::string>& paths);
             void RWrite(const std::string& path, const std::string& data, const std::string& mode="w");
+            void RWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode="w");
             std::string RGetAttr(const std::string& path);
             std::string RCheckHealth(const std::string& cell);
 
@@ -43,6 +44,7 @@ namespace galaxy {
             std::string LRead(const std::string& path);
             std::map<std::string, std::string> LReadMultiple(const std::vector<std::string>& paths);
             void LWrite(const std::string& path, const std::string& data, const std::string& mode="w");
+            void LWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode="w");
             std::string LGetAttr(const std::string& path);
         }
         void CreateDirIfNotExist(const std::string& path, const int mode=0777);
@@ -60,6 +62,7 @@ namespace galaxy {
         std::string Read(const std::string& path);
         std::map<std::string, std::string> ReadMultiple(const std::vector<std::string>& paths);
         void Write(const std::string& path, const std::string& data, const std::string& mode="w");
+        void WriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode="w");
         std::string GetAttr(const std::string& path);
         std::vector<std::string> ListCells();
         std::string CheckHealth(const std::string& cell);

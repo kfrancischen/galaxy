@@ -55,6 +55,9 @@ namespace galaxy
         grpc::Status Write(grpc::ServerContext *context, const galaxy_schema::WriteRequest *request,
                            galaxy_schema::WriteResponse *reply) override;
 
+        grpc::Status WriteMultiple(grpc::ServerContext *context, const galaxy_schema::WriteMultipleRequest *request,
+                                   galaxy_schema::WriteMultipleResponse *reply) override;
+
         grpc::Status DownloadFile(grpc::ServerContext *context, const galaxy_schema::DownloadRequest *request,
                                   grpc::ServerWriter<galaxy_schema::DownloadResponse> *reply) override;
 
@@ -114,6 +117,9 @@ namespace galaxy
 
         grpc::Status WriteInternal(grpc::ServerContext *context, const galaxy_schema::WriteRequest *request,
                                    galaxy_schema::WriteResponse *reply);
+
+        grpc::Status WriteMultipleInternal(grpc::ServerContext *context, const galaxy_schema::WriteMultipleRequest *request,
+                                           galaxy_schema::WriteMultipleResponse *reply);
 
         grpc::Status DownloadFileInternal(grpc::ServerContext *context, const galaxy_schema::DownloadRequest *request,
                                           grpc::ServerWriter<galaxy_schema::DownloadResponse> *reply);

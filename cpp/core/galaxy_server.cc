@@ -62,6 +62,8 @@ using galaxy_schema::UploadRequest;
 using galaxy_schema::UploadResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
+using galaxy_schema::WriteMultipleRequest;
+using galaxy_schema::WriteMultipleResponse;
 using galaxy_schema::HealthCheckRequest;
 using galaxy_schema::HealthCheckResponse;
 
@@ -486,6 +488,38 @@ namespace galaxy
         }
     }
 
+    Status GalaxyServerImpl::WriteMultipleInternal(ServerContext *context, const WriteMultipleRequest *request,
+                                                   WriteMultipleResponse *reply)
+    {
+        if (!GalaxyServerImpl::VerifyPassword(request->cred()).ok())
+        {
+            LOG(ERROR) << "Wrong password from client during function call WriteMultiple.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call WriteMultiple.");
+        }
+        for (const auto& val : request->data()) {
+            WriteResponse write_response;
+            std::string path = val.first;
+            absl::Status absl_status = GalaxyFs::Instance()->CreateFileIfNotExist(path, 0777);
+            if (absl_status.ok())
+            {
+                std::string abs_path;
+                GalaxyFs::Instance()->DieFileIfNotExist(path, abs_path);
+                WriteRequest write_request;
+                write_request.set_name(path);
+                write_request.mutable_cred()->CopyFrom(request->cred());
+                write_request.set_data(val.second);
+                write_request.set_mode(request->mode());
+                Status status = GalaxyServerImpl::WriteInternal(context, &write_request, &write_response);
+                if (!status.ok())
+                {
+                    LOG(ERROR) << "Fail to write " << path;
+                }
+            }
+            (*reply->mutable_data())[path].CopyFrom(write_response);
+        }
+        return Status::OK;
+    }
+
     Status GalaxyServerImpl::DownloadFileInternal(ServerContext *context, const DownloadRequest *request,
                                                   ServerWriter<DownloadResponse> *reply)
     {
@@ -799,6 +833,19 @@ namespace galaxy
         opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
                                    {stats::internal::QueryCountMeasure(), 1}},
                                   {{stats::internal::MethodKey(), "Write"}});
+        return status;
+    }
+
+    Status GalaxyServerImpl::WriteMultiple(ServerContext *context, const WriteMultipleRequest *request,
+                                           WriteMultipleResponse *reply)
+    {
+        absl::Time start = absl::Now();
+        Status status = GalaxyServerImpl::WriteMultipleInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
+                                   {stats::internal::QueryCountMeasure(), 1}},
+                                  {{stats::internal::MethodKey(), "WriteMultiple"}});
         return status;
     }
 

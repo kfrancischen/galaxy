@@ -16,6 +16,11 @@ class gclient_ext:
         gclient.write(path=path, data=data.SerializeToString())
 
     @classmethod
+    def write_proto_messages(cls, path_data_map):
+        new_map = {k: v.SerializeToString() for k, v in path_data_map.items()}
+        gclient.write_multiple(path_data_map=new_map)
+
+    @classmethod
     def read_proto_message(cls, path, message_type):
         data = gclient.read(path)
         if data:

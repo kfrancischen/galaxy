@@ -23,6 +23,7 @@ service FileSystem {
     rpc Read( ReadRequest ) returns ( ReadResponse ) {}
     rpc ReadMultiple( ReadMultipleRequest ) returns ( ReadMultipleResponse ) {}
     rpc Write( WriteRequest ) returns ( WriteResponse ) {}
+    rpc WriteMultiple( WriteMultipleRequest ) returns ( WriteMultipleResponse ) {}
 
     // Download/upload file
     rpc DownloadFile( DownloadRequest ) returns (stream DownloadResponse) {}
@@ -225,6 +226,12 @@ message WriteRequest {
     Credential cred = 4;
 }
 
+message WriteMultipleRequest {
+    map<string, bytes> data = 1;
+    WriteMode mode = 2;
+    Credential cred = 3;
+}
+
 message DownloadRequest {
     string from_name = 1;
     string to_name = 2;
@@ -240,6 +247,10 @@ message UploadRequest {
 
 message WriteResponse {
     FileSystemStatus status = 1;
+}
+
+message WriteMultipleResponse {
+    map<string, WriteResponse> data = 1;
 }
 
 message DownloadResponse {

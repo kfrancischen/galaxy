@@ -55,6 +55,8 @@ using galaxy_schema::RmFileRequest;
 using galaxy_schema::RmFileResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
+using galaxy_schema::WriteMultipleRequest;
+using galaxy_schema::WriteMultipleResponse;
 using galaxy_schema::HealthCheckRequest;
 using galaxy_schema::HealthCheckResponse;
 
@@ -418,6 +420,32 @@ void galaxy::client::impl::RWrite(const std::string& path, const std::string& da
     }
 }
 
+void galaxy::client::impl::RWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode) {
+    GalaxyClientInternal client = GetChannelClient("");
+    CHECK(mode == "a" || mode == "w");
+    try {
+        WriteMultipleRequest request;
+        if (mode == "a") {
+            request.set_mode(WriteMode::APPEND);
+        } else {
+            request.set_mode(WriteMode::OVERWRITE);
+        }
+        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        *request.mutable_data() = {path_data_map.begin(), path_data_map.end()};
+        WriteMultipleResponse response = client.WriteMultiple(request);
+        for (const auto& pair : response.data()) {
+            std::string path = galaxy::util::MapToCellPath(pair.first);
+            if (pair.second.status().return_code() != 1) {
+                LOG(ERROR) << "Failed to write data for file " << path;
+            }
+        }
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+    }
+}
+
 std::string galaxy::client::impl::RGetAttr(const std::string& path) {
     GalaxyClientInternal client = GetChannelClient("");
     try {
@@ -709,6 +737,16 @@ void galaxy::client::impl::LWrite(const std::string& path, const std::string& da
 
 }
 
+void galaxy::client::impl::LWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode) {
+    GalaxyFs fs("");
+    for (const auto& val : path_data_map) {
+        auto status = fs.Write(val.first, val.second, mode);
+        if (!status.ok()) {
+            LOG(ERROR) << "Write " << val.first <<" failed with error " << status.ToString();
+        }
+    }
+}
+
 std::string galaxy::client::impl::LGetAttr(const std::string& path) {
     try {
         GalaxyFs fs("");
@@ -915,6 +953,22 @@ void galaxy::client::Write(const std::string& path, const std::string& data, con
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LWrite(path, data, mode);
     }
+}
+
+void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode) {
+    std::map<std::string, std::string> local_data, remote_data;
+    for (const auto& val : path_data_map) {
+        absl::StatusOr<std::string> path_or = galaxy::util::InitClient(val.first);
+        if (path_or.ok()) {
+            VLOG(2) << "Using remote mode for " << val.first;
+            remote_data.insert({*path_or, val.second});
+        } else {
+            VLOG(1) << "Using local mode for " << val.first;
+            local_data.insert({val.first, val.second});
+        }
+    }
+    galaxy::client::impl::RWriteMultiple(remote_data, mode);
+    galaxy::client::impl::LWriteMultiple(local_data, mode);
 }
 
 std::string galaxy::client::GetAttr(const std::string& path) {

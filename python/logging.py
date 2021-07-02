@@ -85,8 +85,13 @@ class GalaxyLoggingHandler(logging.StreamHandler):
     def emit(self, record):
         msg = self.format(record)
         level_file, self._filename = self._get_file_name_from_record(record)
-        gclient.write(level_file, msg + '\n', 'a')
-        gclient.write(self._filename, msg + '\n', 'a')
+        gclient.write_multiple(
+            path_data_map={
+                level_file: msg + '\n',
+                self._filename: msg + '\n',
+            },
+            mode='a'
+        )
         super(GalaxyLoggingHandler, self).emit(record)
 
 

@@ -43,6 +43,8 @@ using galaxy_schema::RmFileRequest;
 using galaxy_schema::RmFileResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
+using galaxy_schema::WriteMultipleRequest;
+using galaxy_schema::WriteMultipleResponse;
 using galaxy_schema::HealthCheckRequest;
 using galaxy_schema::HealthCheckResponse;
 
@@ -248,6 +250,20 @@ namespace galaxy
         ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->Write(&context, request, &reply);
+        if (status.ok()) {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
+    WriteMultipleResponse GalaxyClientInternal::WriteMultiple(const WriteMultipleRequest &request)
+    {
+        WriteMultipleResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        Status status = stub_->WriteMultiple(&context, request, &reply);
         if (status.ok()) {
             return reply;
         } else {

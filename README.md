@@ -138,6 +138,14 @@ write(path, data, mode="w")
     3. mode: `w` means overwrite and `a` means append.
 
 ```python
+write_multiple(path_data_map, mode="w")
+```
+* Decription: write multiple data to files.
+* Args:
+    1. path_data_map: a map from path to the data to write.
+    3. mode: `w` means overwrite and `a` means append.
+
+```python
 get_attr(path)
 ```
 * Decription: get attribute information of a file or a directory.
@@ -154,6 +162,15 @@ write_proto_message(path, data, mode="w")
     1. path: the path to the file
     2. data: the data in protobuf message format
     3. mode: "w" means overwrite and "a" means append.
+
+```python
+write_proto_messages(path_data_map, mode="w")
+```
+* Decription: write multiple protobuf data to files.
+* Args:
+    1. path_data_map: a map from path to the protobuf to write.
+    3. mode: "w" means overwrite and "a" means append.
+
 
 ```python
 read_proto_message(path, message_type)
@@ -330,6 +347,7 @@ The argument of `run_every` means the sleep time (in minute) between adjacent tt
 The examples are at folder [example](https://github.com/kfrancischen/galaxy/tree/master/example), and the following is a Python example
 ```python
 from galaxy_py import gclient, gclient_ext
+from hello_world_pb2 import TestMessage
 import time
 
 
@@ -369,6 +387,19 @@ def main():
     print(gclient_ext.read_proto_message('/galaxy/aa-d/test1.pb', TestMessage))
     print(gclient.check_health("aa"))
 
+    gclient.write_multiple(
+        path_data_map={
+            '/galaxy/aa-d/test_from_python/test2.txt': '123',
+            '/galaxy/aa-d/test_from_python/test4.txt': '234',
+        },
+        mode='a'
+    )
+    gclient_ext.write_proto_messages(
+        path_data_map={
+            '/galaxy/aa-d/test_from_python/test2.pb': message,
+            '/galaxy/aa-d/test_from_python/test4.pb': message,
+        }
+    )
 
 
 if __name__ == "__main__":
