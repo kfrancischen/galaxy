@@ -180,14 +180,6 @@ read_proto_message(path, message_type)
     1. path: the path to the protobuf message file
     2. message_type: the protobuf type of the message
 
-
-```python
-read_txt(path)
-```
-* Decription: read a text file.
-* Args:
-    1. path: the path to the text file
-
 ```python
 read_proto_messages(paths, message_type)
 ```
@@ -195,6 +187,13 @@ read_proto_messages(paths, message_type)
 * Args:
     1. paths: the paths to the protobuf message files
     2. message_type: the protobuf type of the message
+
+```python
+read_txt(path)
+```
+* Decription: read a text file.
+* Args:
+    1. path: the path to the text file
 
 ```python
 read_txts(paths)
