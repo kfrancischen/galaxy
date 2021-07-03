@@ -52,6 +52,10 @@ def main():
             '/galaxy/aa-d/test_from_python/test4.pb': message,
         }
     )
+    print(gclient_ext.read_proto_messages(
+        paths=[
+          '/galaxy/aa-d/test_from_python/test2.pb', '/galaxy/aa-d/test_from_python/test4.pb'],
+        message_type=TestMessage))
 
 
 if __name__ == "__main__":
