@@ -57,6 +57,9 @@ def main():
           '/galaxy/aa-d/test_from_python/test2.pb', '/galaxy/aa-d/test_from_python/test4.pb'],
         message_type=TestMessage))
 
+    print(gclient.create_file_if_not_exist("/LOCAL/test/test.txt"))
+    print(gclient.create_file_if_not_exist("/galaxy/aa-d/test/test.txt"))
+
 
 if __name__ == "__main__":
     main()

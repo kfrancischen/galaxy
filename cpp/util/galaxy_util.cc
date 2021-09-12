@@ -16,14 +16,8 @@
 #include "absl/strings/str_join.h"
 #include "glog/logging.h"
 
-absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server, const std::string& cell) {
+absl::StatusOr<rapidjson::Document> ParseCellsConfigDoc() {
     std::string config_path = absl::GetFlag(FLAGS_fs_global_config);
-    std::string cell_name;
-    if (cell.empty()) {
-        cell_name = absl::GetFlag(FLAGS_fs_cell);
-    } else {
-        cell_name = cell;
-    }
     std::ifstream infile;
     infile.open(config_path);
     if (infile) {
@@ -33,55 +27,76 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server, cons
             infile.close();
             return absl::InternalError("Configuration json cannot be parsed.");
         }
-        if (!doc.HasMember(cell_name.c_str())) {
-            infile.close();
-            return absl::InternalError("Cell configuration cannot be found.");
-        }
         infile.close();
-        const rapidjson::Value& cell_config = doc[cell_name.c_str()];
-
-        rapidjson::StringBuffer sb;
-        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
-        cell_config.Accept(writer);
-        if (!cell_config.HasMember("fs_root") || !cell_config.HasMember("fs_ip") || !cell_config.HasMember("fs_port") || !cell_config.HasMember("fs_password") || !cell_config.HasMember("fs_stats_port")) {
-            return absl::FailedPreconditionError("Imcomplete configuration file. The file should at least contain fs_root, fs_ip, fs_port, fs_stats_port and fs_password.");
-        }
-        absl::SetFlag(&FLAGS_fs_root, cell_config["fs_root"].GetString());
-        absl::SetFlag(&FLAGS_fs_password, cell_config["fs_password"].GetString());
-        std::string fs_ip = cell_config["fs_ip"].GetString();
-        int fs_port = cell_config["fs_port"].GetInt();
-        int fs_stats_port = cell_config["fs_stats_port"].GetInt();
-        if (is_server) {
-            absl::SetFlag(&FLAGS_fs_address, "0.0.0.0:" + std::to_string(fs_port));
-            absl::SetFlag(&FLAGS_fs_stats_address, "0.0.0.0:" + std::to_string(fs_stats_port));
-        } else {
-            absl::SetFlag(&FLAGS_fs_address, fs_ip + ":" + std::to_string(fs_port));
-        }
-
-        if (cell_config.HasMember("fs_log_ttl")) {
-            absl::SetFlag(&FLAGS_fs_log_ttl, cell_config["fs_log_ttl"].GetInt());
-        }
-        if (cell_config.HasMember("fs_log_dir")) {
-            std::string log_dir = cell_config["fs_log_dir"].GetString();
-            mkdir(log_dir.c_str(), 0777);
-            absl::SetFlag(&FLAGS_fs_log_dir, log_dir);
-        }
-        if (cell_config.HasMember("fs_verbose_level")) {
-            absl::SetFlag(&FLAGS_fs_verbose_level, cell_config["fs_verbose_level"].GetInt());
-        }
-        if (cell_config.HasMember("fs_alsologtostderr")) {
-            absl::SetFlag(&FLAGS_fs_alsologtostderr, cell_config["fs_alsologtostderr"].GetBool());
-        }
-        if (cell_config.HasMember("fs_num_thread") && is_server) {
-            absl::SetFlag(&FLAGS_fs_num_thread, cell_config["fs_num_thread"].GetInt());
-        }
-        if (cell_config.HasMember("fs_max_msg_size") && is_server) {
-            absl::SetFlag(&FLAGS_fs_max_msg_size, cell_config["fs_max_msg_size"].GetInt());
-        }
-        return "Getting cell config for cell [" + cell_name + "]:\n" + sb.GetString();
+        return doc;
     } else {
         return absl::NotFoundError(config_path + " does not exist.");
     }
+}
+
+std::string GetGalaxyFsPath(const std::string& cell) {
+    std::string separator(1, galaxy::constant::kSeparator);
+    std::string cell_suffix(galaxy::constant::kCellSuffix);
+    std::string cell_prefix(galaxy::constant::kCellPrefix);
+    return cell_prefix + separator + cell + cell_suffix;
+}
+
+
+absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server, const std::string& cell) {
+    absl::StatusOr<rapidjson::Document> cells_config = ParseCellsConfigDoc();
+    if (!cells_config.ok()) {
+        return cells_config.status();
+    }
+    std::string cell_name;
+    if (cell.empty()) {
+        cell_name = absl::GetFlag(FLAGS_fs_cell);
+    } else {
+        cell_name = cell;
+    }
+
+    if (!(*cells_config).HasMember(cell_name.c_str())) {
+        return absl::InternalError("Cell configuration cannot be found.");
+    }
+    const rapidjson::Value& cell_config = (*cells_config)[cell_name.c_str()];
+    rapidjson::StringBuffer sb;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
+    cell_config.Accept(writer);
+    if (!cell_config.HasMember("fs_root") || !cell_config.HasMember("fs_ip") || !cell_config.HasMember("fs_port") || !cell_config.HasMember("fs_password") || !cell_config.HasMember("fs_stats_port")) {
+        return absl::FailedPreconditionError("Imcomplete configuration file. The file should at least contain fs_root, fs_ip, fs_port, fs_stats_port and fs_password.");
+    }
+    absl::SetFlag(&FLAGS_fs_root, cell_config["fs_root"].GetString());
+    absl::SetFlag(&FLAGS_fs_password, cell_config["fs_password"].GetString());
+    std::string fs_ip = cell_config["fs_ip"].GetString();
+    int fs_port = cell_config["fs_port"].GetInt();
+    int fs_stats_port = cell_config["fs_stats_port"].GetInt();
+    if (is_server) {
+        absl::SetFlag(&FLAGS_fs_address, "0.0.0.0:" + std::to_string(fs_port));
+        absl::SetFlag(&FLAGS_fs_stats_address, "0.0.0.0:" + std::to_string(fs_stats_port));
+    } else {
+        absl::SetFlag(&FLAGS_fs_address, fs_ip + ":" + std::to_string(fs_port));
+    }
+
+    if (cell_config.HasMember("fs_log_ttl")) {
+        absl::SetFlag(&FLAGS_fs_log_ttl, cell_config["fs_log_ttl"].GetInt());
+    }
+    if (cell_config.HasMember("fs_log_dir")) {
+        std::string log_dir = cell_config["fs_log_dir"].GetString();
+        mkdir(log_dir.c_str(), 0777);
+        absl::SetFlag(&FLAGS_fs_log_dir, log_dir);
+    }
+    if (cell_config.HasMember("fs_verbose_level")) {
+        absl::SetFlag(&FLAGS_fs_verbose_level, cell_config["fs_verbose_level"].GetInt());
+    }
+    if (cell_config.HasMember("fs_alsologtostderr")) {
+        absl::SetFlag(&FLAGS_fs_alsologtostderr, cell_config["fs_alsologtostderr"].GetBool());
+    }
+    if (cell_config.HasMember("fs_num_thread") && is_server) {
+        absl::SetFlag(&FLAGS_fs_num_thread, cell_config["fs_num_thread"].GetInt());
+    }
+    if (cell_config.HasMember("fs_max_msg_size") && is_server) {
+        absl::SetFlag(&FLAGS_fs_max_msg_size, cell_config["fs_max_msg_size"].GetInt());
+    }
+    return "Getting cell config for cell [" + cell_name + "]:\n" + sb.GetString();
 }
 
 absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPathFromPath(const std::string& path) {
@@ -99,10 +114,14 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
     }
     std::string cell = v[1];
     cell.erase(cell_suffix.length());
+    if (cell == absl::GetFlag(FLAGS_fs_cell)) {
+        return absl::FailedPreconditionError("Path is on the exact cell, using local model.");
+    }
     v.erase(v.begin(), v.begin() + 2);
     std::string file_path = absl::StrJoin(v, separator);
     return std::make_pair(cell, file_path);
 }
+
 
 absl::StatusOr<std::string> galaxy::util::InitClient(const std::string& path) {
     absl::StatusOr<std::pair<std::string, std::string>> cell_and_path = galaxy::util::GetCellAndPathFromPath(path);
@@ -115,33 +134,47 @@ absl::StatusOr<std::string> galaxy::util::InitClient(const std::string& path) {
 }
 
 std::string galaxy::util::MapToCellPath(const std::string& path) {
-    std::string separator(1, galaxy::constant::kSeparator);
-    std::string cell_suffix(galaxy::constant::kCellSuffix);
-    std::string cell_prefix(galaxy::constant::kCellPrefix);
-    std::string path_prefix = cell_prefix + separator + absl::GetFlag(FLAGS_fs_cell) + cell_suffix;
+    std::string path_prefix = GetGalaxyFsPath(absl::GetFlag(FLAGS_fs_cell));
     std::string out_path(path);
     out_path.replace(0, absl::GetFlag(FLAGS_fs_root).length(), path_prefix);
     return out_path;
 }
 
 absl::StatusOr<std::vector<std::string>> galaxy::util::ParseGlobalConfigAndGetCells() {
-    std::string config_path = absl::GetFlag(FLAGS_fs_global_config);
-    std::ifstream infile;
-    infile.open(config_path);
-    if (infile) {
-        rapidjson::IStreamWrapper isw(infile);
-        rapidjson::Document doc;
-        if (doc.ParseStream(isw).HasParseError()) {
-            infile.close();
-            return absl::InternalError("Configuration json cannot be parsed.");
-        }
-        infile.close();
-        std::vector<std::string> cells;
-        for (auto it = doc.MemberBegin(); it != doc.MemberEnd(); it++) {
-            cells.push_back(it->name.GetString());
-        }
-        return cells;
-    } else {
-        return absl::NotFoundError(config_path + " does not exist.");
+    absl::StatusOr<rapidjson::Document> cells_config = ParseCellsConfigDoc();
+    if (!cells_config.ok()) {
+        return cells_config.status();
     }
+    std::vector<std::string> cells;
+    for (auto it = (*cells_config).MemberBegin(); it != (*cells_config).MemberEnd(); it++) {
+        cells.push_back(it->name.GetString());
+    }
+    return cells;
+}
+
+
+absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& path) {
+    absl::StatusOr<rapidjson::Document> cells_config = ParseCellsConfigDoc();
+    if (!cells_config.ok()) {
+        return cells_config.status();
+    }
+    std::string cell_name = absl::GetFlag(FLAGS_fs_cell);
+    if (!(*cells_config).HasMember(cell_name.c_str())) {
+        return absl::InternalError("Cell configuration cannot be found.");
+    }
+    const rapidjson::Value& cell_config = (*cells_config)[cell_name.c_str()];
+    if (!cell_config.HasMember("fs_root")) {
+        return absl::FailedPreconditionError("Imcomplete configuration file. The file should at least contain fs_root.");
+    }
+    std::string local_prefix(galaxy::constant::kLocalPrefix);
+    std::string path_prefix = GetGalaxyFsPath(absl::GetFlag(FLAGS_fs_cell));
+
+    std::string output_path(path);
+
+    if (output_path.find(local_prefix) != std::string::npos) {
+        output_path.replace(0, local_prefix.length(), cell_config["fs_root"].GetString());
+    } else if (output_path.find(path_prefix) != std::string::npos) {
+        output_path.replace(0, path_prefix.length(), cell_config["fs_root"].GetString());
+    }
+    return output_path;
 }

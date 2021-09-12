@@ -773,7 +773,12 @@ void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode
         galaxy::client::impl::RCreateDirIfNotExist(*path_or, mode);
     } else {
         VLOG(1) << "Using local mode";
-        galaxy::client::impl::LCreateDirIfNotExist(path, mode);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            galaxy::client::impl::LCreateDirIfNotExist(*local_path_or, mode);
+        }
     }
 }
 
@@ -784,7 +789,12 @@ std::string galaxy::client::DirOrDie(const std::string& path) {
         return galaxy::client::impl::RDirOrDie(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LDirOrDie(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LDirOrDie(*local_path_or);
+        }
     }
 }
 
@@ -795,7 +805,12 @@ void galaxy::client::RmDir(const std::string& path) {
         galaxy::client::impl::RRmDir(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        galaxy::client::impl::LRmDir(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            galaxy::client::impl::LRmDir(*local_path_or);
+        }
     }
 }
 
@@ -806,7 +821,12 @@ void galaxy::client::RmDirRecursive(const std::string& path) {
         galaxy::client::impl::RRmDirRecursive(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        galaxy::client::impl::LRmDirRecursive(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            galaxy::client::impl::LRmDirRecursive(*local_path_or);
+        }
     }
 }
 
@@ -817,7 +837,12 @@ std::map<std::string, std::string> galaxy::client::ListDirsInDir(const std::stri
         return galaxy::client::impl::RListDirsInDir(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LListDirsInDir(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LListDirsInDir(*local_path_or);
+        }
     }
 }
 
@@ -828,7 +853,12 @@ std::map<std::string, std::string> galaxy::client::ListFilesInDir(const std::str
         return galaxy::client::impl::RListFilesInDir(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LListFilesInDir(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LListFilesInDir(*local_path_or);
+        }
     }
 }
 
@@ -839,7 +869,12 @@ std::map<std::string, std::string> galaxy::client::ListDirsInDirRecursive(const 
         return galaxy::client::impl::RListDirsInDirRecursive(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LListDirsInDirRecursive(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LListDirsInDirRecursive(*local_path_or);
+        }
     }
 }
 
@@ -850,7 +885,12 @@ std::map<std::string, std::string> galaxy::client::ListFilesInDirRecursive(const
         return galaxy::client::impl::RListFilesInDirRecursive(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LListFilesInDirRecursive(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LListFilesInDirRecursive(*local_path_or);
+        }
     }
 }
 
@@ -861,7 +901,12 @@ void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mod
         galaxy::client::impl::RCreateFileIfNotExist(*path_or, mode);
     } else {
         VLOG(1) << "Using local mode";
-        galaxy::client::impl::LCreateFileIfNotExist(path, mode);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            galaxy::client::impl::LCreateFileIfNotExist(*local_path_or, mode);
+        }
     }
 }
 
@@ -872,7 +917,12 @@ std::string galaxy::client::FileOrDie(const std::string& path) {
         return galaxy::client::impl::RFileOrDie(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LFileOrDie(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LFileOrDie(*local_path_or);
+        }
     }
 }
 
@@ -883,7 +933,12 @@ void galaxy::client::RmFile(const std::string& path) {
         galaxy::client::impl::RRmFile(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        galaxy::client::impl::LRmFile(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            galaxy::client::impl::LRmFile(*local_path_or);
+        }
     }
 }
 
@@ -898,7 +953,13 @@ void galaxy::client::RenameFile(const std::string& old_path, const std::string& 
         galaxy::client::impl::RRenameFile(*old_path_or, *new_path_or);
     } else {
         VLOG(1) << "Using local mode";
-        galaxy::client::impl::LRenameFile(old_path, new_path);
+        absl::StatusOr<std::string> local_old_path_or = galaxy::util::ConvertToLocalPath(old_path);
+        absl::StatusOr<std::string> local_new_path_or = galaxy::util::ConvertToLocalPath(new_path);
+        if (!local_old_path_or.ok() || !local_new_path_or.ok()) {
+            throw "Invalid Path " + old_path + " and " + new_path;
+        } else {
+            galaxy::client::impl::LRenameFile(*local_old_path_or, *local_new_path_or);
+        }
     }
 
 }
@@ -910,7 +971,12 @@ std::string galaxy::client::Read(const std::string& path) {
         return galaxy::client::impl::RRead(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LRead(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LRead(*local_path_or);
+        }
     }
 }
 
@@ -923,7 +989,10 @@ std::map<std::string, std::string> galaxy::client::ReadMultiple(const std::vecto
             remote_paths.push_back(*path_or);
         } else {
             VLOG(1) << "Using local mode for " << path;
-            local_paths.push_back(path);
+            absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+            if (local_path_or.ok()) {
+                local_paths.push_back(*local_path_or);
+            }
         }
     }
 
@@ -936,11 +1005,6 @@ std::map<std::string, std::string> galaxy::client::ReadMultiple(const std::vecto
         std::map<std::string, std::string> local_result = galaxy::client::impl::LReadMultiple(local_paths);
         result.insert(local_result.begin(), local_result.end());
     }
-    for (const auto& path : paths) {
-        if (result.find(path) == result.end()) {
-            result.insert({path, ""});
-        }
-    }
     return result;
 }
 
@@ -951,7 +1015,12 @@ void galaxy::client::Write(const std::string& path, const std::string& data, con
         galaxy::client::impl::RWrite(*path_or, data, mode);
     } else {
         VLOG(1) << "Using local mode";
-        galaxy::client::impl::LWrite(path, data, mode);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            galaxy::client::impl::LWrite(*local_path_or, data, mode);
+        }
     }
 }
 
@@ -964,7 +1033,10 @@ void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& pat
             remote_data.insert({*path_or, val.second});
         } else {
             VLOG(1) << "Using local mode for " << val.first;
-            local_data.insert({val.first, val.second});
+            absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(val.first);
+            if (local_path_or.ok()) {
+                local_data.insert({*local_path_or, val.second});
+            }
         }
     }
     galaxy::client::impl::RWriteMultiple(remote_data, mode);
@@ -978,7 +1050,12 @@ std::string galaxy::client::GetAttr(const std::string& path) {
         return galaxy::client::impl::RGetAttr(*path_or);
     } else {
         VLOG(1) << "Using local mode";
-        return galaxy::client::impl::LGetAttr(path);
+        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
+        if (!local_path_or.ok()) {
+            throw "Invalid Path " + path;
+        } else {
+            return galaxy::client::impl::LGetAttr(*local_path_or);
+        }
     }
 }
 
