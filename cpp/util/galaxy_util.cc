@@ -110,9 +110,6 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
     }
     std::string cell = v[1];
     cell.erase(cell_suffix.length());
-    if (cell == absl::GetFlag(FLAGS_fs_cell)) {
-        return absl::FailedPreconditionError("Path is on the exact cell, using local model.");
-    }
     v.erase(v.begin(), v.begin() + 2);
     std::string file_path = absl::StrJoin(v, separator);
     return std::make_pair(cell, file_path);
