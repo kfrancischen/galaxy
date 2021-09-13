@@ -2,11 +2,11 @@ import argparse
 import time
 import threading
 from galaxy_py import gclient, gclient_ext, glogging
-from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort, session
+from flask import Flask, make_response, request, render_template, Response, redirect, url_for, abort
 from flask.views import MethodView
 from flask_login import login_user, logout_user, UserMixin, LoginManager, login_required
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 import json
 import stat
@@ -27,7 +27,7 @@ assert args.cell in gclient.list_cells(), "Invalid cell"
 
 ROOT = '/galaxy/'
 APP_NAME = 'galaxy_viewer'
-LOG_DIR = '/galaxy/' + args.cell + '-d/ttl=7d/logs/' + APP_NAME + '/'
+LOG_DIR = '/LOCAL/ttl=7d/logs/' + APP_NAME + '/'
 
 logger = glogging.get_logger(APP_NAME, LOG_DIR)
 
@@ -73,10 +73,10 @@ class User(UserMixin):
         return APP_NAME.encode('utf-8')
 
 
-@galaxy_viewer.before_request
-def make_session_permanent():
-    session.permanent = True
-    galaxy_viewer.permanent_session_lifetime = timedelta(minutes=30)
+# @galaxy_viewer.before_request
+# def make_session_permanent():
+#     session.permanent = True
+#     galaxy_viewer.permanent_session_lifetime = timedelta(minutes=30)
 
 
 @login_manager.user_loader

@@ -145,7 +145,7 @@ absl::StatusOr<std::vector<std::string>> galaxy::util::ParseGlobalConfigAndGetCe
 
 absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& path) {
     rapidjson::Document cells_config = ParseCellsConfigDoc();
-    std::string cell_name = absl::GetFlag(FLAGS_fs_cell);
+    std::string cell_name = getenv("GALAXY_fs_cell");
     if (!cells_config.HasMember(cell_name.c_str())) {
         return absl::InternalError("Cell configuration cannot be found.");
     }
@@ -154,7 +154,7 @@ absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& 
         return absl::FailedPreconditionError("Imcomplete configuration file. The file should at least contain fs_root.");
     }
     std::string local_prefix(galaxy::constant::kLocalPrefix);
-    std::string path_prefix = GetGalaxyFsPath(absl::GetFlag(FLAGS_fs_cell));
+    std::string path_prefix = GetGalaxyFsPath(cell_name);
 
     std::string output_path(path);
 
