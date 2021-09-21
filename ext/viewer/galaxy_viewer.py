@@ -174,7 +174,8 @@ def file_response(path):
 
 
 class GalaxyPathView(MethodView):
-    @login_required
+    decorators = [login_required]
+
     def get(self, p=''):
         logger.info('Getting GET request from ip [' + request.remote_addr + '].')
         if p and p[0] != '/':
@@ -227,7 +228,6 @@ class GalaxyPathView(MethodView):
                 res = make_response('Not found', 404)
         return res
 
-    @login_required
     def post(self, p=''):
         logger.info('Getting POST request from ip [' + request.remote_addr + '].')
         path = request.form.get('search_path').rstrip('/')

@@ -8,6 +8,7 @@ This is a toy-version of distributed file system developed based on gRPC, and it
 
 ## Core concepts
 - `cell`: a cell is a machine that can be added as part of the filesystem, and is associated with a cell name. In galaxy, we use a two letter name for a cell, i.e. `aa`. The path for a cell in galaxy filesystem starts with `/galaxy/${CELL}-d/...`, where the `${CELL}` is the name of the cell. To make a machine as a cell in the filesystem, one just needs to launch the server code on the machine. Details are discussed in the next section.
+- `special indicator`: a path started with `/LOCAL/...` instead of `/galaxy/${CELL}-d/...` will be considered a path specifically for the cell where the galaxy server is hosted. For instance if the server is hosted at cell `aa`, then special indicator of `/LOCAL/...` is equal to `/galaxy/aa-d/...`, but there exists one difference: path with `/LOCAL/...` does not go through gRPC calls under requests, and instead vanilla local IO are performed. This special indicator is useful when user knows that the IO on the path is local.
 - `global config`: a configuration file containing configurations for each cell in the galaxy filesystem. An example of it is in [server_config_example.json](https://github.com/kfrancischen/galaxy/blob/master/example/cpp/server_config_example.json).
 
 ## Server Entry Points
