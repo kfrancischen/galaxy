@@ -14,7 +14,7 @@ bazel build //cpp:galaxy_server
 
 # generate pm2 instance
 echo "Starting pm2 instance..."
-pm2 start bazel-bin/cpp/galaxy_server --name galaxy_server --watch
+pm2 start bazel-bin/cpp/galaxy_server --name galaxy_server
 
 
 # bazel build for ttl cleaner
@@ -23,4 +23,4 @@ bazel build //ext/ttl_cleaner:galaxy_ttl_cleaner
 
 # generate pm2 instance
 echo "Starting pm2 instance..."
-pm2 start bazel-bin/ext/ttl_cleaner/galaxy_ttl_cleaner --name galaxy_ttl_cleaner --watch
+pm2 start bazel-bin/ext/ttl_cleaner/galaxy_ttl_cleaner --name galaxy_ttl_cleaner
