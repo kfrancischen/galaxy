@@ -145,7 +145,12 @@ absl::StatusOr<std::vector<std::string>> galaxy::util::ParseGlobalConfigAndGetCe
 
 absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& path) {
     rapidjson::Document cells_config = ParseCellsConfigDoc();
-    std::string cell_name = getenv("GALAXY_fs_cell");
+    char* cell_name_char = getenv("GALAXY_fs_cell");
+    if (cell_name_char == NULL) {
+        // It is a computer not in the galaxy system.
+        return path;
+    }
+    std::string cell_name(cell_name_char);
     if (!cells_config.HasMember(cell_name.c_str())) {
         return absl::InternalError("Cell configuration cannot be found.");
     }
