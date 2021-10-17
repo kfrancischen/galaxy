@@ -145,10 +145,16 @@ absl::StatusOr<std::vector<std::string>> galaxy::util::ParseGlobalConfigAndGetCe
 
 absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& path) {
     rapidjson::Document cells_config = ParseCellsConfigDoc();
+    std::string output_path(path);
+    std::string local_prefix(galaxy::constant::kLocalPrefix);
     char* cell_name_char = getenv("GALAXY_fs_cell");
     if (cell_name_char == NULL) {
         // It is a computer not in the galaxy system.
-        return path;
+        char* fs_root_char = getenv("GALAXY_fs_root");
+        if (fs_root_char != NULL) {
+            output_path.replace(0, local_prefix.length(), fs_root_char);
+        }
+        return output_path;
     }
     std::string cell_name(cell_name_char);
     if (!cells_config.HasMember(cell_name.c_str())) {
@@ -158,10 +164,7 @@ absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& 
     if (!cell_config.HasMember("fs_root")) {
         return absl::FailedPreconditionError("Imcomplete configuration file. The file should at least contain fs_root.");
     }
-    std::string local_prefix(galaxy::constant::kLocalPrefix);
     std::string path_prefix = GetGalaxyFsPath(cell_name);
-
-    std::string output_path(path);
 
     if (output_path.find(local_prefix) != std::string::npos) {
         output_path.replace(0, local_prefix.length(), cell_config["fs_root"].GetString());
