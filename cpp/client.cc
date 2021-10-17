@@ -1039,8 +1039,12 @@ void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& pat
             }
         }
     }
-    galaxy::client::impl::RWriteMultiple(remote_data, mode);
-    galaxy::client::impl::LWriteMultiple(local_data, mode);
+    if (!remote_data.empty()) {
+        galaxy::client::impl::RWriteMultiple(remote_data, mode);
+    }
+    if (!local_data.empty()) {
+        galaxy::client::impl::LWriteMultiple(local_data, mode);
+    }
 }
 
 std::string galaxy::client::GetAttr(const std::string& path) {
