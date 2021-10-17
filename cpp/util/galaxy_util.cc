@@ -151,7 +151,7 @@ absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& 
     if (cell_name_char == NULL) {
         // It is a computer not in the galaxy system.
         char* fs_root_char = getenv("GALAXY_fs_root");
-        if (fs_root_char != NULL) {
+        if (fs_root_char != NULL && output_path.find(local_prefix) != std::string::npos) {
             output_path.replace(0, local_prefix.length(), fs_root_char);
         }
         return output_path;
