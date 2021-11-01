@@ -254,11 +254,12 @@ mv_folder(from_path, to_path)
 Galaxy logging allows users to stream logs to different cells in a distributed fashion. The logger class is defined as follows
 ```python
 from galaxy_py import glogging
-glogging.get_logger(log_name, log_dir)
+glogging.get_logger(log_name, log_dir, disk_only)
 ```
 * Args:
     1. log_name: the name of the logger
     2. log_dir: the directory to save the logs.
+    3. disk_only: whether the log is only output to disk (not to the console). This can be controlled by the environment variable `GALAXY_logging_disk_only`. Default value is False.
 
 The final log file will be in the format of `${log_dir}/${log_name}.${YY-MM-DD}.${LOG_LEVEL}.log`. The following is an example to use the `glogging`:
 ```python
