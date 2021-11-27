@@ -47,7 +47,7 @@ datatypes = {
     'source': 'atom,bat,bash,c,cc,h,cmd,coffee,css,hml,js,json,yaml,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,'
               'swift,scss,sh,xml,yml,plist,ipynb,BUILD,WORKSPACE',
     'text': 'txt,pbtxt,log',
-    'video': 'mp4,m4v,ogv,webm',
+    'video': 'mp4,m4v,ogv,webm,mkv,rmvb',
     'website': 'htm,html,mhtm,mhtml,xhtm,xhtml',
 }
 icontypes = {
