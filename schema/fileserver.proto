@@ -31,6 +31,9 @@ service FileSystem {
 
     // Health check
     rpc CheckHealth( HealthCheckRequest ) returns ( HealthCheckResponse ) {}
+
+    // Remote execution
+    rpc RemoteExecution( RemoteExecutionRequest ) returns ( RemoteExecutionResponse ) {}
 }
 
 message FileSystemStatus {
@@ -271,4 +274,17 @@ message HealthCheckResponse {
     uint64 timestamp = 1;
     bool healthy = 2;
     FileSystemUsage usage = 3;
+}
+
+message RemoteExecutionRequest {
+    string home_dir = 1;
+    string main = 2;
+    map<string, string> env_kargs = 3;
+    repeated string program_args = 4;
+    Credential cred = 5;
+}
+
+message RemoteExecutionResponse {
+    string data = 1;
+    FileSystemStatus status = 2;
 }

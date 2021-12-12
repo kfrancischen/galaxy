@@ -65,7 +65,10 @@ namespace galaxy
                                 galaxy_schema::UploadResponse *reply) override;
 
         grpc::Status CheckHealth(grpc::ServerContext *context, const galaxy_schema::HealthCheckRequest *request,
-                           galaxy_schema::HealthCheckResponse *reply) override;
+                                 galaxy_schema::HealthCheckResponse *reply) override;
+
+        grpc::Status RemoteExecution(grpc::ServerContext *context, const galaxy_schema::RemoteExecutionRequest *request,
+                                     galaxy_schema::RemoteExecutionResponse *reply) override;
 
         void SetPassword(const std::string &password);
 
@@ -128,7 +131,10 @@ namespace galaxy
                                         galaxy_schema::UploadResponse *reply);
 
         grpc::Status CheckHealthInternal(grpc::ServerContext *context, const galaxy_schema::HealthCheckRequest *request,
-                           galaxy_schema::HealthCheckResponse *reply);
+                                         galaxy_schema::HealthCheckResponse *reply);
+
+        grpc::Status RemoteExecutionInternal(grpc::ServerContext *context, const galaxy_schema::RemoteExecutionRequest *request,
+                                             galaxy_schema::RemoteExecutionResponse *reply);
     };
 } // namespace galaxy
 

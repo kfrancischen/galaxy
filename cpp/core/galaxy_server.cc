@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <chrono>
+#include <array>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -66,6 +67,8 @@ using galaxy_schema::WriteMultipleRequest;
 using galaxy_schema::WriteMultipleResponse;
 using galaxy_schema::HealthCheckRequest;
 using galaxy_schema::HealthCheckResponse;
+using galaxy_schema::RemoteExecutionRequest;
+using galaxy_schema::RemoteExecutionResponse;
 
 namespace galaxy
 {
@@ -637,6 +640,54 @@ namespace galaxy
         }
     }
 
+    std::string ExecuteCommand(const std::string& cmd)
+    {
+        std::array<char, 128> buffer;
+        std::string result;
+        std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+        if (!pipe) {
+            throw "Cmd \n" + cmd + "\nfailed.";
+        }
+        while (!feof(pipe.get()))
+        {
+            if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+                result += buffer.data();
+        }
+        return result;
+    }
+
+    Status GalaxyServerImpl::RemoteExecutionInternal(ServerContext *context, const RemoteExecutionRequest *request,
+                                                     RemoteExecutionResponse *reply)
+    {
+        if (!GalaxyServerImpl::VerifyPassword(request->cred()).ok())
+        {
+            LOG(ERROR) << "Wrong password from client during function call RemoteExecution.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RemoteExecution.");
+        }
+        std::string cmd = "cd " + request->home_dir() + " &&";
+        for (const auto& pair : request->env_kargs()) {
+            cmd += " " + pair.first + "=" + pair.second;
+        }
+        cmd += request->main();
+        for (const auto& val : request->program_args()) {
+            cmd += " " + val;
+        }
+        try {
+            std::string result = ExecuteCommand(cmd);
+            reply->set_data(result);
+            FileSystemStatus status;
+            status.set_return_code(1);
+            reply->mutable_status()->CopyFrom(status);
+            return Status::OK;
+        }
+        catch (std::string errorMsg)
+        {
+            LOG(ERROR) << "CheckHealth failed during function call RemoteExecution with error " << errorMsg;
+            return Status(StatusCode::INVALID_ARGUMENT, errorMsg);
+        }
+
+    }
+
     //***************************************************************************************//
     // external functions
     Status GalaxyServerImpl::GetAttr(ServerContext *context, const GetAttrRequest *request,
@@ -892,6 +943,19 @@ namespace galaxy
                             {stats::internal::RamUsageMeasure(), ram_usage}},
                             {{stats::internal::MethodKey(), "CheckHealthUsage"}});
         }
+        return status;
+    }
+
+    Status GalaxyServerImpl::RemoteExecution(ServerContext *context, const RemoteExecutionRequest *request,
+                                             RemoteExecutionResponse *reply)
+    {
+        absl::Time start = absl::Now();
+        Status status = GalaxyServerImpl::RemoteExecutionInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
+                                   {stats::internal::QueryCountMeasure(), 1}},
+                                  {{stats::internal::MethodKey(), "RemoteExecution"}});
         return status;
     }
 } // namespace galaxy
