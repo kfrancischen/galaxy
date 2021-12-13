@@ -664,7 +664,10 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call RemoteExecution.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RemoteExecution.");
         }
-        std::string cmd = "cd " + request->home_dir() + " &&";
+        std::string cmd = "";
+        if (!request->home_dir().empty()) {
+            cmd += "cd " + request->home_dir() + " &&";
+        }
         for (const auto& pair : request->env_kargs()) {
             cmd += " " + pair.first + "=" + pair.second;
         }
@@ -672,6 +675,7 @@ namespace galaxy
         for (const auto& val : request->program_args()) {
             cmd += " " + val;
         }
+        reply->set_raw_cmd(cmd);
         try {
             std::string result = ExecuteCommand(cmd);
             reply->set_data(result);

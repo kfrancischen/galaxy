@@ -1,5 +1,5 @@
-#ifndef CPP_LOCAL_FILEUTIL_H_
-#define CPP_LOCAL_FILEUTIL_H_
+#ifndef CPP_TOOL_FILEUTIL_H_
+#define CPP_TOOL_FILEUTIL_H_
 
 #include <grpcpp/grpcpp.h>
 #include "schema/fileserver.grpc.pb.h"
@@ -19,7 +19,7 @@ namespace galaxy
         private:
             std::unique_ptr<galaxy_schema::FileSystem::Stub> stub_;
         };
-    } // namespace internal
+    } // namespace impl
 
 
     void LsCmd(const std::string& path);
@@ -32,4 +32,4 @@ namespace galaxy
     void ListCellsCmd();
 } // namespace galaxy
 
-#endif // CPP_LOCAL_FILEUTIL_H_
+#endif // CPP_TOOL_FILEUTIL_H_

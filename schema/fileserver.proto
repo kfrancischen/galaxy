@@ -285,6 +285,7 @@ message RemoteExecutionRequest {
 }
 
 message RemoteExecutionResponse {
-    string data = 1;
-    FileSystemStatus status = 2;
+    string raw_cmd = 1;
+    string data = 2;
+    FileSystemStatus status = 3;
 }
