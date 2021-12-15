@@ -398,8 +398,9 @@ namespace galaxy {
         }
 
         void UnlockFile(const std::string& lock_name) {
-            CHECK(internal::ExistFile(lock_name)) << "Lock file does not exist.";
-            CHECK(RmFile(lock_name, false).ok()) << "Removing lock for " + lock_name + " failed.";
+            if (internal::ExistFile(lock_name)) {
+                CHECK(RmFile(lock_name, false).ok()) << "Removing lock for " + lock_name + " failed.";
+            }
         }
 
         void Lock(const std::string& path) {
