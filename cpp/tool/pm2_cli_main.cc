@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         LOG(INFO) << "\tArg[" << i << "]: " << argv[i];
     }
-    if (strcmp(argv[1], "list") == 0) {
+    if (strcmp(argv[1], "list") == 0 || strcmp(argv[1], "ls") == 0) {
         CHECK_LE(argc, 3) << "No more than 2 arguments in list.";
         if (argc == 2) {
             galaxy::Pm2List();
