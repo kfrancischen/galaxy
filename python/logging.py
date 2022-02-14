@@ -113,6 +113,13 @@ class glogging(object):
         return logger
 
     @classmethod
+    def update_log_all_date(cls, logger):
+        try:
+            logger.handlers[0].update_log_all_date()
+        except Exception as _:
+            pass
+
+    @classmethod
     def get_logger_file(cls, logger):
         try:
             return logger.handlers[0].get_file_name()
