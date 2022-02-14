@@ -67,8 +67,8 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         self._disk_only = disk_only
         self.setFormatter(GalaxyLoggingFormatter())
 
-    def _get_file_name_from_record(self, record):
-        levelno = record.levelno
+    def _get_file_name_from_record(self, record=None):
+        levelno = record.levelno if record else None
         cur_date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
         if levelno == logging.INFO or levelno == logging.DEBUG:
             level_file = '.'.join([self._prefix, cur_date, 'INFO', 'log'])
@@ -82,6 +82,10 @@ class GalaxyLoggingHandler(logging.StreamHandler):
 
     def get_file_name(self):
         return self._filename
+
+    def update_log_all_date(self):
+        _, file_name = self._get_file_name_from_record(record=None)
+        gclient.create_file_if_not_exist(file_name)
 
     def emit(self, record):
         msg = self.format(record)
