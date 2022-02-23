@@ -35,6 +35,10 @@ galaxy_viewer = Flask(APP_NAME, static_url_path='/assets', static_folder='assets
 galaxy_viewer.config.update(
     SECRET_KEY=APP_NAME
 )
+galaxy_viewer.config.update(
+    SESSION_COOKIE_NAME=APP_NAME + '_cookie'
+)
+
 
 ignored = ['.bzr', '$RECYCLE.BIN', '.DAV', '.DS_Store', '.git', '.hg', '.htaccess', '.htpasswd', '.Spotlight-V100',
            '.svn', '__MACOSX', 'ehthumbs.db', 'robots.txt', 'Thumbs.db', 'thumbs.tps']
@@ -95,7 +99,7 @@ def login():
         if request.form['username'] == galaxy_viewer.config['username'] and \
                 request.form['password'] == galaxy_viewer.config['password']:
             user = User()
-            login_user(user)
+            login_user(user, remember=True)
             return redirect(request.args.get('next'))
         else:
             abort(401)
