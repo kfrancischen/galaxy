@@ -181,6 +181,7 @@ class GalaxyPathView(MethodView):
     decorators = [login_required]
 
     def get(self, p=''):
+        p = p.strip()
         logger.info('Getting GET request from ip [' + request.remote_addr + '].')
         if p and p[0] != '/':
             p = '/' + p
@@ -235,7 +236,7 @@ class GalaxyPathView(MethodView):
     def post(self, p=''):
         logger.info('Getting POST request from ip [' + request.remote_addr + '].')
         path = request.form.get('search_path').rstrip('/')
-        return redirect(url_for('path_view', p=path))
+        return redirect(url_for('path_view', p=path.strip()))
 
 
 path_view = GalaxyPathView.as_view('path_view')
