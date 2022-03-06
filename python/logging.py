@@ -88,15 +88,16 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         gclient.create_file_if_not_exist(file_name)
 
     def emit(self, record):
-        msg = self.format(record)
-        level_file, self._filename = self._get_file_name_from_record(record)
-        gclient.write_multiple(
-            path_data_map={
-                level_file: msg + '\n',
-                self._filename: msg + '\n',
-            },
-            mode='a'
-        )
+        if os.environ.get('DISABLE_DISK_LOGGING', 'False') != 'True':
+            msg = self.format(record)
+            level_file, self._filename = self._get_file_name_from_record(record)
+            gclient.write_multiple(
+                path_data_map={
+                    level_file: msg + '\n',
+                    self._filename: msg + '\n',
+                },
+                mode='a'
+            )
         if not self._disk_only:
             super(GalaxyLoggingHandler, self).emit(record)
 
