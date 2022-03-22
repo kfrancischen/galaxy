@@ -59,12 +59,13 @@ class GalaxyLoggingFormatter(logging.Formatter):
 
 class GalaxyLoggingHandler(logging.StreamHandler):
 
-    def __init__(self, log_prefix, disk_only):
+    def __init__(self, log_prefix, disk_only, disable_disk_logging):
         super().__init__()
         assert log_prefix and log_prefix[-1] != '/', "Wrong format of the input."
         self._prefix = log_prefix
         self._filename = None
         self._disk_only = disk_only
+        self._disable_disk_logging = disable_disk_logging
         self.setFormatter(GalaxyLoggingFormatter())
 
     def _get_file_name_from_record(self, record=None):
@@ -88,7 +89,7 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         gclient.create_file_if_not_exist(file_name)
 
     def emit(self, record):
-        if os.environ.get('DISABLE_DISK_LOGGING', 'False') != 'True':
+        if not self._disable_disk_logging:
             msg = self.format(record)
             level_file, self._filename = self._get_file_name_from_record(record)
             gclient.write_multiple(
@@ -105,10 +106,11 @@ class GalaxyLoggingHandler(logging.StreamHandler):
 class glogging(object):
 
     @classmethod
-    def get_logger(cls, log_name, log_dir, disk_only=os.getenv('GALAXY_logging_disk_only', False)):
+    def get_logger(cls, log_name, log_dir, disk_only=os.getenv('GALAXY_logging_disk_only', False),
+                   disable_disk_logging=os.getenv('GALAXY_disable_disk_logging', False)):
         logger = logging.getLogger(log_name)
         logger.setLevel(logging.DEBUG)
-        handler = GalaxyLoggingHandler(os.path.join(log_dir, log_name), disk_only)
+        handler = GalaxyLoggingHandler(os.path.join(log_dir, log_name), disk_only, disable_disk_logging)
         handler.setLevel(logging.DEBUG)
         logger.addHandler(handler)
         return logger
