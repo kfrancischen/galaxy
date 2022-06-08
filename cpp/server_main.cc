@@ -51,9 +51,11 @@ void RunGalaxyServer()
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     grpc::channelz::experimental::InitChannelzService();
     ServerBuilder builder;
-    grpc::ResourceQuota rq;
-    rq.SetMaxThreads(absl::GetFlag(FLAGS_fs_num_thread));
-    builder.SetResourceQuota(rq);
+    if (absl::GetFlag(FLAGS_fs_num_thread) > 0) {
+        grpc::ResourceQuota rq;
+        rq.SetMaxThreads(absl::GetFlag(FLAGS_fs_num_thread));
+        builder.SetResourceQuota(rq);
+    }
     builder.SetMaxMessageSize(absl::GetFlag(FLAGS_fs_max_msg_size) * 1024 * 1024);
     builder.AddChannelArgument(GRPC_ARG_ENABLE_CHANNELZ, 1);
 
