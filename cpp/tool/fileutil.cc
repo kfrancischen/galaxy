@@ -118,7 +118,7 @@ namespace galaxy
     }
 
     impl::GalaxyFileutil GetFileutilClient() {
-        absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+        absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false, "");
         CHECK(result.ok()) << "Fail to parse the global config.";
         grpc::ChannelArguments ch_args;
         ch_args.SetMaxReceiveMessageSize(-1);

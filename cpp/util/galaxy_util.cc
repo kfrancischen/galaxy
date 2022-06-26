@@ -96,6 +96,8 @@ absl::StatusOr<std::string> galaxy::util::ParseGlobalConfig(bool is_server, cons
 }
 
 absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPathFromPath(const std::string& path) {
+    // This function only returns a <cell, path> pair when the path is remote.
+    // Otherwise a status error will be thrown.
     if (path.empty() || path[0] != galaxy::constant::kSeparator) {
         return absl::InvalidArgumentError("Input path is invalid.");
     }
@@ -115,7 +117,7 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
         std::string cell_name(cell_name_char);
         // The requested cell is the same cell as the requester.
         if (cell_name == cell) {
-            return absl::InvalidArgumentError("Input path is not a remote path.");
+            return absl::InvalidArgumentError("Input path is in galaxy but not a remote path.");
         }
     }
 
@@ -128,8 +130,11 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
 absl::StatusOr<std::string> galaxy::util::InitClient(const std::string& path) {
     absl::StatusOr<std::pair<std::string, std::string>> cell_and_path = galaxy::util::GetCellAndPathFromPath(path);
     if (!cell_and_path.ok()) {
-        return absl::InternalError("Wrong format of path.");
+        // For local path, set the cell to be empty.
+        absl::SetFlag(&FLAGS_fs_cell, "");
+        return absl::InternalError("Wrong format of path, or local path.");
     } else {
+        // For remote path, set the cell to the one inferred from the path.
         absl::SetFlag(&FLAGS_fs_cell, (*cell_and_path).first);
         return (*cell_and_path).second;
     }
@@ -169,8 +174,10 @@ absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& 
     std::string path_prefix = GetGalaxyFsPath(cell_name);
 
     if (output_path.find(local_prefix) != std::string::npos) {
+        // This occurs when path is in the format of /LOCAL/...
         output_path.replace(0, local_prefix.length(), cell_config["fs_root"].GetString());
     } else if (output_path.find(path_prefix) != std::string::npos) {
+        // This occurs when the path is in the format of /galaxy/CELL-d/.., where CELL is the current server cell.
         output_path.replace(0, path_prefix.length(), cell_config["fs_root"].GetString());
     }
     return output_path;
@@ -188,7 +195,6 @@ std::string galaxy::util::ConvertToCellPath(const std::string& path) {
         }
         cell_name = cell_name_char;
     }
-
     rapidjson::Document cells_config = ParseCellsConfigDoc();
     const rapidjson::Value& cell_config = cells_config[cell_name.c_str()];
     std::string fs_local = cell_config["fs_root"].GetString();

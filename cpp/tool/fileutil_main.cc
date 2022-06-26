@@ -6,7 +6,7 @@
 #include "absl/flags/flag.h"
 
 int main(int argc, char* argv[]) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false);
+    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false, "");
     CHECK(result.ok()) << "Fail to parse the global config.";
     FLAGS_colorlogtostderr = true;
     FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
