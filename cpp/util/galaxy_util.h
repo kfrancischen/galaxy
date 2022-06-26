@@ -14,7 +14,7 @@ namespace galaxy {
 
         absl::StatusOr<std::string> InitClient(const std::string& path);
 
-        std::string MapToCellPath(const std::string& path);
+        std::string ConvertToCellPath(const std::string& path);
 
 
         absl::StatusOr<std::string> ConvertToLocalPath(const std::string& path);

@@ -140,7 +140,7 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
         if (status.return_code() != 1) {
             throw "Fail to call DirOrDie.";
         }
-        return galaxy::util::MapToCellPath(response.name());
+        return galaxy::util::ConvertToCellPath(response.name());
     }
     catch (std::string errorMsg)
     {
@@ -198,7 +198,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const st
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_dir : response.sub_dirs()) {
-            result.insert({galaxy::util::MapToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
         }
         return result;
     }
@@ -222,7 +222,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const s
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_file : response.sub_files()) {
-            result.insert({galaxy::util::MapToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
         }
         return result;
     }
@@ -246,7 +246,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_dir : response.sub_dirs()) {
-            result.insert({galaxy::util::MapToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
         }
         return result;
     }
@@ -270,7 +270,7 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursiv
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_file : response.sub_files()) {
-            result.insert({galaxy::util::MapToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
         }
         return result;
     }
@@ -311,7 +311,7 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
         if (status.return_code() != 1) {
             throw "Fail to call FileOrDie.";
         }
-        return galaxy::util::MapToCellPath(response.name());
+        return galaxy::util::ConvertToCellPath(response.name());
     }
     catch (std::string errorMsg)
     {
@@ -385,7 +385,7 @@ std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std
     request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
     ReadMultipleResponse response = client.ReadMultiple(request);
     for (const auto& pair : response.data()) {
-        std::string path = galaxy::util::MapToCellPath(pair.first);
+        std::string path = galaxy::util::ConvertToCellPath(pair.first);
         if (pair.second.status().return_code() != 1) {
             LOG(ERROR) << "Failed to read data for file " << path;
         } else {
@@ -434,7 +434,7 @@ void galaxy::client::impl::RWriteMultiple(const std::map<std::string, std::strin
         *request.mutable_data() = {path_data_map.begin(), path_data_map.end()};
         WriteMultipleResponse response = client.WriteMultiple(request);
         for (const auto& pair : response.data()) {
-            std::string path = galaxy::util::MapToCellPath(pair.first);
+            std::string path = galaxy::util::ConvertToCellPath(pair.first);
             if (pair.second.status().return_code() != 1) {
                 LOG(ERROR) << "Failed to write data for file " << path;
             }
@@ -506,7 +506,7 @@ std::string galaxy::client::impl::LDirOrDie(const std::string& path) {
         if (!status.ok()) {
             throw "DirOrDie failed with error " + status.ToString() + '.';
         }
-        return out_path;
+        return galaxy::util::ConvertToCellPath(out_path);
     }
     catch (std::string errorMsg)
     {
@@ -553,7 +553,7 @@ std::map<std::string, std::string> galaxy::client::impl::LListDirsInDir(const st
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_dir : sub_dirs) {
-            result.insert({sub_dir.first, StatbufToString(sub_dir.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), StatbufToString(sub_dir.second)});
         }
         return result;
     }
@@ -574,7 +574,7 @@ std::map<std::string, std::string> galaxy::client::impl::LListFilesInDir(const s
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_file : sub_files) {
-            result.insert({sub_file.first, StatbufToString(sub_file.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), StatbufToString(sub_file.second)});
         }
         return result;
     }
@@ -596,7 +596,7 @@ std::map<std::string, std::string> galaxy::client::impl::LListDirsInDirRecursive
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_dir : sub_dirs) {
-            result.insert({sub_dir.first, StatbufToString(sub_dir.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), StatbufToString(sub_dir.second)});
         }
         return result;
     }
@@ -618,7 +618,7 @@ std::map<std::string, std::string> galaxy::client::impl::LListFilesInDirRecursiv
         }
         std::map<std::string, std::string> result;
         for (const auto& sub_file : sub_files) {
-            result.insert({sub_file.first, StatbufToString(sub_file.second)});
+            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), StatbufToString(sub_file.second)});
         }
         return result;
     }
@@ -652,7 +652,7 @@ std::string galaxy::client::impl::LFileOrDie(const std::string& path) {
         if (!status.ok()) {
             throw "FileOrDie failed with error " + status.ToString() + '.';
         }
-        return out_path;
+        return galaxy::util::ConvertToCellPath(out_path);
     }
     catch (std::string errorMsg)
     {
@@ -714,9 +714,9 @@ std::map<std::string, std::string> galaxy::client::impl::LReadMultiple(const std
         auto status = fs.Read(path, data);
         if (!status.ok()) {
             LOG(ERROR) << "Read " << path <<" failed with error " << status.ToString();
-            data_map.insert({path, ""});
+            data_map.insert({galaxy::util::ConvertToCellPath(path), ""});
         } else {
-            data_map.insert({path, data});
+            data_map.insert({galaxy::util::ConvertToCellPath(path), data});
         }
     }
     return data_map;

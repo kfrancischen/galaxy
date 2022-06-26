@@ -110,6 +110,15 @@ absl::StatusOr<std::pair<std::string, std::string>> galaxy::util::GetCellAndPath
     }
     std::string cell = v[1];
     cell.erase(cell_suffix.length());
+    char* cell_name_char = getenv("GALAXY_fs_cell");
+    if (cell_name_char != NULL) {
+        std::string cell_name(cell_name_char);
+        // The requested cell is the same cell as the requester.
+        if (cell_name == cell) {
+            return absl::InvalidArgumentError("Input path is not a remote path.");
+        }
+    }
+
     v.erase(v.begin(), v.begin() + 2);
     std::string file_path = absl::StrJoin(v, separator);
     return std::make_pair(cell, file_path);
@@ -124,13 +133,6 @@ absl::StatusOr<std::string> galaxy::util::InitClient(const std::string& path) {
         absl::SetFlag(&FLAGS_fs_cell, (*cell_and_path).first);
         return (*cell_and_path).second;
     }
-}
-
-std::string galaxy::util::MapToCellPath(const std::string& path) {
-    std::string path_prefix = GetGalaxyFsPath(absl::GetFlag(FLAGS_fs_cell));
-    std::string out_path(path);
-    out_path.replace(0, absl::GetFlag(FLAGS_fs_root).length(), path_prefix);
-    return out_path;
 }
 
 absl::StatusOr<std::vector<std::string>> galaxy::util::ParseGlobalConfigAndGetCells() {
@@ -172,4 +174,30 @@ absl::StatusOr<std::string> galaxy::util::ConvertToLocalPath(const std::string& 
         output_path.replace(0, path_prefix.length(), cell_config["fs_root"].GetString());
     }
     return output_path;
+}
+
+
+std::string galaxy::util::ConvertToCellPath(const std::string& path) {
+    std::string cell_name = absl::GetFlag(FLAGS_fs_cell);
+    // Not a remote call.
+    if (cell_name.empty()) {
+        char* cell_name_char = getenv("GALAXY_fs_cell");
+        // Not a cell in the galaxy.
+        if (cell_name_char == NULL) {
+            return path;
+        }
+        cell_name = cell_name_char;
+    }
+
+    rapidjson::Document cells_config = ParseCellsConfigDoc();
+    const rapidjson::Value& cell_config = cells_config[cell_name.c_str()];
+    std::string fs_local = cell_config["fs_root"].GetString();
+    // Not a path in galaxy.
+    if (path.find(fs_local) == std::string::npos) {
+        return path;
+    }
+    std::string path_prefix = GetGalaxyFsPath(cell_name);
+    std::string out_path(path);
+    out_path.replace(0, fs_local.length(), path_prefix);
+    return out_path;
 }
