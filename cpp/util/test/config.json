@@ -1,0 +1,28 @@
+{
+    "zz": {
+        "fs_root": "/home/galaxy",
+        "fs_log_dir": "/home/galaxy/GALAXY_LOG",
+        "fs_password": "123",
+        "fs_log_ttl": 7,
+        "fs_port": 50051,
+	    "fs_stats_port": 5005,
+        "fs_ip": "1.2.3.4",
+        "fs_verbose_level": 1,
+        "fs_alsologtostderr": true,
+        "fs_num_thread": 1000,
+        "fs_max_msg_size": 100
+    },
+    "zzz": {
+        "fs_root": "/home/galaxy",
+        "fs_log_dir": "/home/galaxy/GALAXY_LOG",
+        "fs_password": "123",
+        "fs_log_ttl": 7,
+        "fs_port": 50051,
+	    "fs_stats_port": 5005,
+        "fs_ip": "2.3.4.5",
+        "fs_verbose_level": 1,
+        "fs_alsologtostderr": true,
+        "fs_num_thread": 1000,
+        "fs_max_msg_size": 100
+    }
+}
