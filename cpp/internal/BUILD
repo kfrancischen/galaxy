@@ -60,3 +60,13 @@ cc_library(
         "@com_google_absl//absl/strings",
     ]
 )
+
+cc_test(
+    name = "galaxy_fs_internal_test",
+    size = "small",
+    srcs = ["galaxy_fs_internal_test.cc"],
+    deps = [
+        ":galaxy_fs_internal_lib",
+        "@com_google_googletest//:gtest_main",
+    ]
+)

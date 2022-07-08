@@ -55,7 +55,7 @@ namespace galaxy {
 
         absl::StatusOr<std::string> GetFileAbsDir(const std::string& abs_path) {
             std::vector<std::string> v = absl::StrSplit(abs_path, galaxy::constant::kSeparator);
-            if (v.size() < 1) {
+            if ((v.size() == 0) || (v.size() == 1 && v[0] == "")) {
                 return absl::FailedPreconditionError("Path incorrect.");
             }
 
@@ -66,10 +66,14 @@ namespace galaxy {
 
         absl::StatusOr<std::string> GetFileName(const std::string& abs_path) {
             std::vector<std::string> v = absl::StrSplit(abs_path, galaxy::constant::kSeparator);
-            if (v.size() < 1) {
+            if ((v.size() == 0) || (v.size() == 1 && v[0] == "")) {
                 return absl::FailedPreconditionError("Path incorrect.");
             }
-            return v.back();
+            std::string file_name = v.back();
+            if (file_name == "") {
+                return absl::FailedPreconditionError("Path incorrect.");
+            }
+            return file_name;
         }
 
         absl::StatusOr<std::string> GetFileLockName(const std::string& abs_path) {
