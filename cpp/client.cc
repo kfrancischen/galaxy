@@ -117,6 +117,10 @@ void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const i
         request.set_name(path);
         request.set_mode(mode);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         CreateDirResponse response = client.CreateDirIfNotExist(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -135,6 +139,10 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
         DirOrDieRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         DirOrDieResponse response = client.DirOrDie(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -155,6 +163,10 @@ void galaxy::client::impl::RRmDir(const std::string& path) {
         RmDirRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         RmDirResponse response = client.RmDir(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -173,6 +185,10 @@ void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
         RmDirRecursiveRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         RmDirRecursiveResponse response = client.RmDirRecursive(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -191,6 +207,10 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const st
         ListDirsInDirRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         ListDirsInDirResponse response = client.ListDirsInDir(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -215,6 +235,10 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const s
         ListFilesInDirRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         ListFilesInDirResponse response = client.ListFilesInDir(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -239,6 +263,10 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive
         ListAllInDirRecursiveRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -263,6 +291,10 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursiv
         ListAllInDirRecursiveRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -288,6 +320,10 @@ void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const 
         request.set_name(path);
         request.set_mode(mode);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         CreateFileResponse response = client.CreateFileIfNotExist(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -306,6 +342,10 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
         FileOrDieRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         FileOrDieResponse response = client.FileOrDie(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -326,6 +366,10 @@ void galaxy::client::impl::RRmFile(const std::string& path) {
         RmFileRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         RmFileResponse response = client.RmFile(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -345,6 +389,10 @@ void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::s
         request.set_old_name(old_path);
         request.set_new_name(new_path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         RenameFileResponse response = client.RenameFile(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -363,6 +411,10 @@ std::string galaxy::client::impl::RRead(const std::string& path) {
         ReadRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         ReadResponse response = client.Read(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -383,6 +435,10 @@ std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std
     std::map<std::string, std::string> result;
     *request.mutable_names() = {paths.begin(), paths.end()};
     request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+    char* cell_name = getenv("GALAXY_fs_cell");
+    if (cell_name != NULL) {
+        request.set_from_cell(cell_name);
+    }
     ReadMultipleResponse response = client.ReadMultiple(request);
     for (const auto& pair : response.data()) {
         std::string path = galaxy::util::ConvertToCellPath(pair.first);
@@ -408,6 +464,10 @@ void galaxy::client::impl::RWrite(const std::string& path, const std::string& da
             request.set_mode(WriteMode::OVERWRITE);
         }
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         WriteResponse response = client.Write(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -432,6 +492,10 @@ void galaxy::client::impl::RWriteMultiple(const std::map<std::string, std::strin
         }
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         *request.mutable_data() = {path_data_map.begin(), path_data_map.end()};
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         WriteMultipleResponse response = client.WriteMultiple(request);
         for (const auto& pair : response.data()) {
             std::string path = galaxy::util::ConvertToCellPath(pair.first);
@@ -452,6 +516,10 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
         GetAttrRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         GetAttrResponse response = client.GetAttr(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -471,6 +539,10 @@ std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
     try {
         HealthCheckRequest request;
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        char* cell_name = getenv("GALAXY_fs_cell");
+        if (cell_name != NULL) {
+            request.set_from_cell(cell_name);
+        }
         HealthCheckResponse response = client.CheckHealth(request);
         if (!response.healthy()) {
             throw "cell " + cell +" is unhealthy.";

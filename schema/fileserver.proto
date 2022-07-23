@@ -84,6 +84,7 @@ message Attribute {
 message GetAttrRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message GetAttrResponse {
@@ -96,6 +97,7 @@ message CreateDirRequest {
     string name = 1;
     uint64 mode = 2;
     Credential cred = 3;
+    string from_cell = 4;
 }
 
 message CreateDirResponse {
@@ -105,6 +107,7 @@ message CreateDirResponse {
 message DirOrDieRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message DirOrDieResponse {
@@ -115,6 +118,7 @@ message DirOrDieResponse {
 message RmDirRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message RmDirResponse {
@@ -124,6 +128,7 @@ message RmDirResponse {
 message RmDirRecursiveRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message RmDirRecursiveResponse {
@@ -133,6 +138,7 @@ message RmDirRecursiveResponse {
 message ListDirsInDirRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message ListDirsInDirResponse {
@@ -144,6 +150,7 @@ message ListDirsInDirResponse {
 message ListFilesInDirRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message ListFilesInDirResponse {
@@ -154,6 +161,7 @@ message ListFilesInDirResponse {
 message ListAllInDirRecursiveRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message ListAllInDirRecursiveResponse {
@@ -167,6 +175,7 @@ message CreateFileRequest {
     string name = 1;
     uint64 mode = 2;
     Credential cred = 3;
+    string from_cell = 4;
 }
 
 message CreateFileResponse {
@@ -176,6 +185,7 @@ message CreateFileResponse {
 message FileOrDieRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message FileOrDieResponse {
@@ -186,6 +196,7 @@ message FileOrDieResponse {
 message RmFileRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message RmFileResponse {
@@ -196,6 +207,7 @@ message RenameFileRequest {
     string old_name = 1;
     string new_name = 2;
     Credential cred = 3;
+    string from_cell = 4;
 }
 
 message RenameFileResponse {
@@ -206,11 +218,13 @@ message RenameFileResponse {
 message ReadRequest {
     string name = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message ReadMultipleRequest {
     repeated string names = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message ReadResponse {
@@ -227,18 +241,21 @@ message WriteRequest {
     bytes data = 2;
     WriteMode mode = 3;
     Credential cred = 4;
+    string from_cell = 5;
 }
 
 message WriteMultipleRequest {
     map<string, bytes> data = 1;
     WriteMode mode = 2;
     Credential cred = 3;
+    string from_cell = 4;
 }
 
 message DownloadRequest {
     string from_name = 1;
     string to_name = 2;
     Credential cred = 3;
+    string from_cell = 4;
 }
 
 message UploadRequest {
@@ -246,6 +263,7 @@ message UploadRequest {
     string to_name = 2;
     bytes data = 3;
     Credential cred = 4;
+    string from_cell = 5;
 }
 
 message WriteResponse {
@@ -268,6 +286,7 @@ message UploadResponse {
 message HealthCheckRequest {
     int64 timestamp = 1;
     Credential cred = 2;
+    string from_cell = 3;
 }
 
 message HealthCheckResponse {
@@ -282,6 +301,7 @@ message RemoteExecutionRequest {
     map<string, string> env_kargs = 3;
     repeated string program_args = 4;
     Credential cred = 5;
+    string from_cell = 6;
 }
 
 message RemoteExecutionResponse {

@@ -25,6 +25,10 @@ namespace galaxy
             auto client = remote_execution::GetRemoteExeClient(cell);
             RemoteExecutionRequest request;
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            char* cell_name = getenv("GALAXY_fs_cell");
+            if (cell_name != NULL) {
+                request.set_from_cell(cell_name);
+            }
             request.set_main("pm2");
             *request.add_program_args() = "list";
             RemoteExecutionResponse response = client.RemoteExecution(request);
@@ -56,6 +60,10 @@ namespace galaxy
             auto client = remote_execution::GetRemoteExeClient(cell);
             RemoteExecutionRequest request;
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            char* cell_name = getenv("GALAXY_fs_cell");
+            if (cell_name != NULL) {
+                request.set_from_cell(cell_name);
+            }
             request.set_home_dir(home_dir);
             request.set_main("pm2");
             *request.add_program_args() = "start";
@@ -81,6 +89,10 @@ namespace galaxy
             auto client = remote_execution::GetRemoteExeClient(cell);
             RemoteExecutionRequest request;
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            char* cell_name = getenv("GALAXY_fs_cell");
+            if (cell_name != NULL) {
+                request.set_from_cell(cell_name);
+            }
             request.set_main("pm2");
             *request.add_program_args() = "stop";
             *request.add_program_args() = job_name;
@@ -112,6 +124,10 @@ namespace galaxy
             auto client = remote_execution::GetRemoteExeClient(cell);
             RemoteExecutionRequest request;
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            char* cell_name = getenv("GALAXY_fs_cell");
+            if (cell_name != NULL) {
+                request.set_from_cell(cell_name);
+            }
             request.set_main("pm2");
             *request.add_program_args() = "restart";
             *request.add_program_args() = job_name;

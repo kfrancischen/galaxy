@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     FLAGS_stderrthreshold = 3;
     google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
     google::InitGoogleLogging(argv[0]);
-    CHECK_GT(argc, 2) << "Need more than 2 arguments";
+    CHECK_GE(argc, 2) << "Need no less than 2 arguments";
     LOG(INFO) << "Getting cmd:";
     for (int i = 1; i < argc; i++) {
         LOG(INFO) << "\tArg[" << i << "]: " << argv[i];

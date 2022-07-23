@@ -136,6 +136,10 @@ namespace galaxy
             request.set_from_name(*from_path_or);
             request.set_to_name(to_path);
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            char* cell_name = getenv("GALAXY_fs_cell");
+            if (cell_name != NULL) {
+                request.set_from_cell(cell_name);
+            }
             DownloadResponse response = client.DownloadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Get cmd.";
@@ -157,6 +161,10 @@ namespace galaxy
             request.set_from_name(from_path);
             request.set_to_name(*to_path_or);
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            char* cell_name = getenv("GALAXY_fs_cell");
+            if (cell_name != NULL) {
+                request.set_from_cell(cell_name);
+            }
             UploadResponse response = client.UploadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Upload cmd.";
@@ -213,6 +221,10 @@ namespace galaxy
             request.set_from_name(*from_path_or);
             request.set_to_name(to_path);
             request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+            char* cell_name = getenv("GALAXY_fs_cell");
+            if (cell_name != NULL) {
+                request.set_from_cell(cell_name);
+            }
             client::RmFile(to_path);
             DownloadResponse response = client.CopyFile(request);
             FileSystemStatus status = response.status();
