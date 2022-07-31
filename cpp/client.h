@@ -11,12 +11,12 @@ namespace galaxy {
             // Remote clients
             void RCreateDirIfNotExist(const std::string& path, const int mode=0777);
             std::string RDirOrDie(const std::string& path);
-            void RRmDir(const std::string& path);
-            void RRmDirRecursive(const std::string& path);
+            void RRmDir(const std::string& path, bool include_hidden=false);
+            void RRmDirRecursive(const std::string& path, bool include_hidden=false);
             std::map<std::string, std::string> RListDirsInDir(const std::string& path);
-            std::map<std::string, std::string> RListFilesInDir(const std::string& path);
+            std::map<std::string, std::string> RListFilesInDir(const std::string& path, bool include_hidden=false);
             std::map<std::string, std::string> RListDirsInDirRecursive(const std::string& path);
-            std::map<std::string, std::string> RListFilesInDirRecursive(const std::string& path);
+            std::map<std::string, std::string> RListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
             void RCreateFileIfNotExist(const std::string& path, const int mode=0777);
             std::string RFileOrDie(const std::string& path);
             void RRmFile(const std::string& path);
@@ -31,12 +31,12 @@ namespace galaxy {
             // Local clients
             void LCreateDirIfNotExist(const std::string& path, const int mode=0777);
             std::string LDirOrDie(const std::string& path);
-            void LRmDir(const std::string& path);
-            void LRmDirRecursive(const std::string& path);
+            void LRmDir(const std::string& path, bool include_hidden=false);
+            void LRmDirRecursive(const std::string& path, bool include_hidden=false);
             std::map<std::string, std::string> LListDirsInDir(const std::string& path);
-            std::map<std::string, std::string> LListFilesInDir(const std::string& path);
+            std::map<std::string, std::string> LListFilesInDir(const std::string& path, bool include_hidden=false);
             std::map<std::string, std::string> LListDirsInDirRecursive(const std::string& path);
-            std::map<std::string, std::string> LListFilesInDirRecursive(const std::string& path);
+            std::map<std::string, std::string> LListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
             void LCreateFileIfNotExist(const std::string& path, const int mode=0777);
             std::string LFileOrDie(const std::string& path);
             void LRmFile(const std::string& path);
@@ -49,12 +49,12 @@ namespace galaxy {
         }
         void CreateDirIfNotExist(const std::string& path, const int mode=0777);
         std::string DirOrDie(const std::string& path);
-        void RmDir(const std::string& path);
-        void RmDirRecursive(const std::string& path);
+        void RmDir(const std::string& path, bool include_hidden=false);
+        void RmDirRecursive(const std::string& path, bool include_hidden=false);
         std::map<std::string, std::string> ListDirsInDir(const std::string& path);
-        std::map<std::string, std::string> ListFilesInDir(const std::string& path);
+        std::map<std::string, std::string> ListFilesInDir(const std::string& path, bool include_hidden=false);
         std::map<std::string, std::string> ListDirsInDirRecursive(const std::string& path);
-        std::map<std::string, std::string> ListFilesInDirRecursive(const std::string& path);
+        std::map<std::string, std::string> ListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
         void CreateFileIfNotExist(const std::string& path, const int mode=0777);
         std::string FileOrDie(const std::string& path);
         void RmFile(const std::string& path);

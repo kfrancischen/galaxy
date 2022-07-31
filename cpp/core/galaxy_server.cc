@@ -191,7 +191,7 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call RmDir.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RmDir.");
         }
-        absl::Status fs_status = GalaxyFs::Instance()->RmDir(request->name());
+        absl::Status fs_status = GalaxyFs::Instance()->RmDir(request->name(), request->include_hidden());
         if (!fs_status.ok())
         {
             LOG(ERROR) << "RmDir failed during function call RmDir with error " << fs_status;
@@ -214,7 +214,7 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call RmDirRecursive.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RmDirRecursive.");
         }
-        absl::Status fs_status = GalaxyFs::Instance()->RmDirRecursive(request->name());
+        absl::Status fs_status = GalaxyFs::Instance()->RmDirRecursive(request->name(), request->include_hidden());
         if (!fs_status.ok())
         {
             LOG(ERROR) << "RmDirRecursive failed during function call RmDirRecursive with error " << fs_status;
@@ -265,7 +265,7 @@ namespace galaxy
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ListFilesInDir.");
         }
         absl::flat_hash_map<std::string, struct stat> files;
-        absl::Status fs_status = GalaxyFs::Instance()->ListFilesInDir(request->name(), files);
+        absl::Status fs_status = GalaxyFs::Instance()->ListFilesInDir(request->name(), files, request->include_hidden());
         if (!fs_status.ok())
         {
             LOG(ERROR) << "ListFilesInDir failed during function call ListFilesInDir with error" << fs_status;
@@ -293,7 +293,7 @@ namespace galaxy
         }
         absl::flat_hash_map<std::string, struct stat> files;
         absl::flat_hash_map<std::string, struct stat> dirs;
-        absl::Status fs_status = GalaxyFs::Instance()->ListAllInDirRecursive(request->name(), dirs, files);
+        absl::Status fs_status = GalaxyFs::Instance()->ListAllInDirRecursive(request->name(), dirs, files, request->include_hidden());
         if (!fs_status.ok())
         {
             LOG(ERROR) << "ListFilesInDir failed during function call ListAllInDirRecursive with error" << fs_status;

@@ -157,12 +157,13 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::RRmDir(const std::string& path) {
+void galaxy::client::impl::RRmDir(const std::string& path, bool include_hidden) {
     GalaxyClientInternal client = GetChannelClient("");
     try {
         RmDirRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_include_hidden(include_hidden);
         char* cell_name = getenv("GALAXY_fs_cell");
         if (cell_name != NULL) {
             request.set_from_cell(cell_name);
@@ -179,12 +180,13 @@ void galaxy::client::impl::RRmDir(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::RRmDirRecursive(const std::string& path) {
+void galaxy::client::impl::RRmDirRecursive(const std::string& path, bool include_hidden) {
     GalaxyClientInternal client = GetChannelClient("");
     try {
         RmDirRecursiveRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_include_hidden(include_hidden);
         char* cell_name = getenv("GALAXY_fs_cell");
         if (cell_name != NULL) {
             request.set_from_cell(cell_name);
@@ -229,12 +231,13 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const st
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const std::string& path, bool include_hidden) {
     GalaxyClientInternal client = GetChannelClient("");
     try {
         ListFilesInDirRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_include_hidden(include_hidden);
         char* cell_name = getenv("GALAXY_fs_cell");
         if (cell_name != NULL) {
             request.set_from_cell(cell_name);
@@ -285,12 +288,13 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursive(const std::string& path, bool include_hidden) {
     GalaxyClientInternal client = GetChannelClient("");
     try {
         ListAllInDirRecursiveRequest request;
         request.set_name(path);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_include_hidden(include_hidden);
         char* cell_name = getenv("GALAXY_fs_cell");
         if (cell_name != NULL) {
             request.set_from_cell(cell_name);
@@ -587,10 +591,10 @@ std::string galaxy::client::impl::LDirOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::LRmDir(const std::string& path) {
+void galaxy::client::impl::LRmDir(const std::string& path, bool include_hidden) {
     try {
         GalaxyFs fs("");
-        auto status = fs.RmDir(path);
+        auto status = fs.RmDir(path, include_hidden);
         if (!status.ok()) {
             throw "RmDir failed with error " + status.ToString() + '.';
         }
@@ -601,10 +605,10 @@ void galaxy::client::impl::LRmDir(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::LRmDirRecursive(const std::string& path) {
+void galaxy::client::impl::LRmDirRecursive(const std::string& path, bool include_hidden) {
     try {
         GalaxyFs fs("");
-        auto status = fs.RmDirRecursive(path);
+        auto status = fs.RmDirRecursive(path, include_hidden);
         if (!status.ok()) {
             throw "RmDirRecursive failed with error " + status.ToString() + '.';
         }
@@ -636,11 +640,11 @@ std::map<std::string, std::string> galaxy::client::impl::LListDirsInDir(const st
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::LListFilesInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListFilesInDir(const std::string& path, bool include_hidden) {
     try {
         absl::flat_hash_map<std::string, struct stat> sub_files;
         GalaxyFs fs("");
-        auto status = fs.ListFilesInDir(path, sub_files);
+        auto status = fs.ListFilesInDir(path, sub_files, include_hidden);
         if (!status.ok()) {
             throw "ListFilesInDir failed with error " + status.ToString() + '.';
         }
@@ -679,12 +683,12 @@ std::map<std::string, std::string> galaxy::client::impl::LListDirsInDirRecursive
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::LListFilesInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListFilesInDirRecursive(const std::string& path, bool include_hidden) {
     try {
         absl::flat_hash_map<std::string, struct stat> sub_files;
         absl::flat_hash_map<std::string, struct stat> sub_dirs;
         GalaxyFs fs("");
-        auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files);
+        auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files, include_hidden);
         if (!status.ok()) {
             throw "ListFilesInDirRecursive failed with error " + status.ToString() + '.';
         }
@@ -870,34 +874,34 @@ std::string galaxy::client::DirOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::RmDir(const std::string& path) {
+void galaxy::client::RmDir(const std::string& path, bool include_hidden) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RRmDir(*path_or);
+        galaxy::client::impl::RRmDir(*path_or, include_hidden);
     } else {
         VLOG(1) << "Using local mode";
         absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
         if (!local_path_or.ok()) {
             throw "Invalid Path " + path;
         } else {
-            galaxy::client::impl::LRmDir(*local_path_or);
+            galaxy::client::impl::LRmDir(*local_path_or, include_hidden);
         }
     }
 }
 
-void galaxy::client::RmDirRecursive(const std::string& path) {
+void galaxy::client::RmDirRecursive(const std::string& path, bool include_hidden) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RRmDirRecursive(*path_or);
+        galaxy::client::impl::RRmDirRecursive(*path_or, include_hidden);
     } else {
         VLOG(1) << "Using local mode";
         absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
         if (!local_path_or.ok()) {
             throw "Invalid Path " + path;
         } else {
-            galaxy::client::impl::LRmDirRecursive(*local_path_or);
+            galaxy::client::impl::LRmDirRecursive(*local_path_or, include_hidden);
         }
     }
 }
@@ -918,18 +922,18 @@ std::map<std::string, std::string> galaxy::client::ListDirsInDir(const std::stri
     }
 }
 
-std::map<std::string, std::string> galaxy::client::ListFilesInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::ListFilesInDir(const std::string& path, bool include_hidden) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RListFilesInDir(*path_or);
+        return galaxy::client::impl::RListFilesInDir(*path_or, include_hidden);
     } else {
         VLOG(1) << "Using local mode";
         absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
         if (!local_path_or.ok()) {
             throw "Invalid Path " + path;
         } else {
-            return galaxy::client::impl::LListFilesInDir(*local_path_or);
+            return galaxy::client::impl::LListFilesInDir(*local_path_or, include_hidden);
         }
     }
 }
@@ -950,18 +954,18 @@ std::map<std::string, std::string> galaxy::client::ListDirsInDirRecursive(const 
     }
 }
 
-std::map<std::string, std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path, bool include_hidden) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RListFilesInDirRecursive(*path_or);
+        return galaxy::client::impl::RListFilesInDirRecursive(*path_or, include_hidden);
     } else {
         VLOG(1) << "Using local mode";
         absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
         if (!local_path_or.ok()) {
             throw "Invalid Path " + path;
         } else {
-            return galaxy::client::impl::LListFilesInDirRecursive(*local_path_or);
+            return galaxy::client::impl::LListFilesInDirRecursive(*local_path_or, include_hidden);
         }
     }
 }
