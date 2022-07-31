@@ -89,7 +89,7 @@ namespace galaxy {
 
         }
 
-        absl::StatusOr<std::vector<std::string>> ListFilesInDir(const std::string& path) {
+        absl::StatusOr<std::vector<std::string>> ListFilesInDir(const std::string& path, bool include_hidden) {
             if (!ExistDir(path)) {
                 return absl::NotFoundError("Input path is not directory or does not exist.");
             }
@@ -98,7 +98,7 @@ namespace galaxy {
             DIR* dirp = opendir(path.c_str());
             struct dirent* dp;
             while ((dp = readdir(dirp)) != NULL) {
-                if (dp->d_name[0] == '.') {
+                if (!include_hidden && dp->d_name[0] == '.') {
                     // Ignore all the hidden files.
                     continue;
                 }
@@ -111,8 +111,8 @@ namespace galaxy {
             return file_paths;
         }
 
-        void _ListFilesInDirRecursive(const std::string& path, std::vector<std::string>& result) {
-            absl::StatusOr<std::vector<std::string>> sub_files_or = ListFilesInDir(path);
+        void _ListFilesInDirRecursive(const std::string& path, std::vector<std::string>& result, bool include_hidden) {
+            absl::StatusOr<std::vector<std::string>> sub_files_or = ListFilesInDir(path, include_hidden);
             if (sub_files_or.ok()) {
                 std::vector<std::string> sub_files = *sub_files_or;
                 result.reserve(result.size() + std::distance(sub_files.begin(), sub_files.end()));
@@ -122,17 +122,17 @@ namespace galaxy {
             absl::StatusOr<std::vector<std::string>> sub_dirs_or = ListDirsInDir(path);
             if (sub_dirs_or.ok()) {
                 for (const auto& val : *sub_dirs_or) {
-                    _ListFilesInDirRecursive(val, result);
+                    _ListFilesInDirRecursive(val, result, include_hidden);
                 }
             }
         }
 
-        absl::StatusOr<std::vector<std::string>> ListFilesInDirRecursive(const std::string& path) {
+        absl::StatusOr<std::vector<std::string>> ListFilesInDirRecursive(const std::string& path, bool include_hidden) {
             if (!ExistDir(path)) {
                 return absl::NotFoundError("Input path is not directory or does not exist.");
             }
             std::vector<std::string> sub_files;
-            _ListFilesInDirRecursive(path, sub_files);
+            _ListFilesInDirRecursive(path, sub_files, include_hidden);
             return sub_files;
         }
 
@@ -298,12 +298,12 @@ namespace galaxy {
         }
 
 
-        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files) {
+        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden) {
             if (!internal::ExistDir(path)) {
                 LOG(ERROR) << "Path " << path << " does not exist during function call ListFilesInDir.";
                 return absl::NotFoundError("Path " + path + " does not exist for ListFilesInDir.");
             } else {
-                absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDir(path);
+                absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDir(path, include_hidden);
                 if (!files.ok()) {
                     return absl::NotFoundError("Input path is not directory or does not exist.");
                 }
@@ -321,7 +321,7 @@ namespace galaxy {
 
 
         absl::Status ListAllInDirRecursive(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs,
-            absl::flat_hash_map<std::string, struct stat>& sub_files) {
+            absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden) {
             if (!internal::ExistDir(path)) {
                 LOG(ERROR) << "Path " << path << " does not exist during function call ListDirsInDirRecursive.";
                 return absl::NotFoundError("Path " + path + " does not exist for ListDirsInDirRecursive.");
@@ -338,7 +338,7 @@ namespace galaxy {
                     }
                     sub_dirs.insert({dir, statbuf});
                 }
-                absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDirRecursive(path);
+                absl::StatusOr<std::vector<std::string>> files = internal::ListFilesInDirRecursive(path, include_hidden);
                 if (!files.ok()) {
                     return absl::NotFoundError("Input path is not directory or does not exist.");
                 }
@@ -354,18 +354,18 @@ namespace galaxy {
             }
         }
 
-        absl::Status RmDir(const std::string& path) {
+        absl::Status RmDir(const std::string& path, bool include_hidden) {
             if (!internal::ExistDir(path)) {
                 LOG(ERROR) << "Directory " << path << " does not exist during function call RmDir.";
                 return absl::NotFoundError("Path " + path + " does not exist for RmDir.");
             }
-            absl::StatusOr<std::vector<std::string>> file_paths = internal::ListFilesInDir(path);
+            absl::StatusOr<std::vector<std::string>> file_paths = internal::ListFilesInDir(path, include_hidden);
             if (!file_paths.ok()) {
                 return absl::NotFoundError("Input path is not directory or does not exist.");
             }
 
             for (const auto & file_path : *file_paths) {
-                if (!RmFile(file_path, true).ok()) {
+                if (!RmFile(file_path, !include_hidden).ok()) {
                     return absl::InternalError("Removing directory " + file_path + " failed.");
                 }
             }
@@ -378,7 +378,7 @@ namespace galaxy {
             }
         }
 
-        absl::Status RmDirRecursive(const std::string& path) {
+        absl::Status RmDirRecursive(const std::string& path, bool include_hidden) {
             absl::StatusOr<std::vector<std::string>> dirs_path = internal::ListDirsInDir(path);
             if (!dirs_path.ok()) {
                 return absl::NotFoundError("Input path is not directory or does not exist.");
@@ -386,12 +386,12 @@ namespace galaxy {
 
             if (!(*dirs_path).empty()) {
                 for (const auto& dir_path : *dirs_path) {
-                    if (!RmDirRecursive(dir_path).ok()) {
+                    if (!RmDirRecursive(dir_path, include_hidden).ok()) {
                         return absl::InternalError("Recursively removing directory " + dir_path + " failed.");
                     }
                 }
             }
-            return RmDir(path);
+            return RmDir(path, include_hidden);
         }
 
         void LockFile(const std::string& lock_name) {

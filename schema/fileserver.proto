@@ -119,6 +119,7 @@ message RmDirRequest {
     string name = 1;
     Credential cred = 2;
     string from_cell = 3;
+    bool include_hidden = 4;
 }
 
 message RmDirResponse {
@@ -129,6 +130,7 @@ message RmDirRecursiveRequest {
     string name = 1;
     Credential cred = 2;
     string from_cell = 3;
+    bool include_hidden = 4;
 }
 
 message RmDirRecursiveResponse {
@@ -151,6 +153,7 @@ message ListFilesInDirRequest {
     string name = 1;
     Credential cred = 2;
     string from_cell = 3;
+    bool include_hidden = 4;
 }
 
 message ListFilesInDirResponse {
@@ -162,6 +165,7 @@ message ListAllInDirRecursiveRequest {
     string name = 1;
     Credential cred = 2;
     string from_cell = 3;
+    bool include_hidden = 4;
 }
 
 message ListAllInDirRecursiveResponse {

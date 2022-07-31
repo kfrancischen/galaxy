@@ -22,10 +22,10 @@ namespace galaxy {
         absl::StatusOr<std::string> GetFileAbsDir(const std::string& abs_path);
         absl::StatusOr<std::string> GetFileName(const std::string& abs_path);
         absl::StatusOr<std::string> GetFileLockName(const std::string& abs_path);
-        absl::StatusOr<std::vector<std::string>> ListFilesInDir(const std::string& path);
+        absl::StatusOr<std::vector<std::string>> ListFilesInDir(const std::string& path, bool include_hidden);
         absl::StatusOr<std::vector<std::string>> ListDirsInDir(const std::string& path);
         absl::StatusOr<std::vector<std::string>> ListDirsInDirRecursive(const std::string& path);
-        absl::StatusOr<std::vector<std::string>> ListFilesInDirRecursive(const std::string& path);
+        absl::StatusOr<std::vector<std::string>> ListFilesInDirRecursive(const std::string& path, bool include_hidden);
         bool IsEmpty(const std::string& path);
         int Mkdir(const std::string& path, mode_t mode);
         int MkdirRecursive(const std::string &path, mode_t mode, bool check_exist);
@@ -41,13 +41,13 @@ namespace galaxy {
 
         absl::Status CreateFileIfNotExist(const std::string& path, mode_t mode);
         absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path);
-        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files);
+        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden=false);
         absl::Status ListDirsInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs);
         absl::Status ListAllInDirRecursive(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs,
-            absl::flat_hash_map<std::string, struct stat>& sub_files);
+            absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden=false);
 
-        absl::Status RmDir(const std::string& path);
-        absl::Status RmDirRecursive(const std::string& path);
+        absl::Status RmDir(const std::string& path, bool include_hidden=false);
+        absl::Status RmDirRecursive(const std::string& path, bool include_hidden=false);
         absl::Status RmFile(const std::string& path, bool require_lock);
         absl::Status RenameFile(const std::string& old_path, const std::string& new_path);
         absl::Status Read(const std::string& path, std::string& data);
