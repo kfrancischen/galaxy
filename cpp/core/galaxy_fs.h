@@ -32,13 +32,13 @@ namespace galaxy
         absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path);
 
         absl::Status ListDirsInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs);
-        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files);
+        absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden=false);
 
         absl::Status ListAllInDirRecursive(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs,
-            absl::flat_hash_map<std::string, struct stat>& sub_files);
+            absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden=false);
 
-        absl::Status RmDir(const std::string& path);
-        absl::Status RmDirRecursive(const std::string& path);
+        absl::Status RmDir(const std::string& path, bool include_hidden=false);
+        absl::Status RmDirRecursive(const std::string& path, bool include_hidden=false);
         absl::Status RmFile(const std::string& path);
         absl::Status RenameFile(const std::string& old_path, const std::string& new_path);
 

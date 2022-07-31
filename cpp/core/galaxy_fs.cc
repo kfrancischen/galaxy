@@ -45,26 +45,26 @@ namespace galaxy {
         return impl::ListDirsInDir(abs_path, sub_dirs);
     }
 
-    absl::Status GalaxyFs::ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files) {
+    absl::Status GalaxyFs::ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return impl::ListFilesInDir(abs_path, sub_files);
+        return impl::ListFilesInDir(abs_path, sub_files, include_hidden);
     }
 
     absl::Status GalaxyFs::ListAllInDirRecursive(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_dirs,
-            absl::flat_hash_map<std::string, struct stat>& sub_files) {
+            absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return impl::ListAllInDirRecursive(abs_path, sub_dirs, sub_files);
+        return impl::ListAllInDirRecursive(abs_path, sub_dirs, sub_files, include_hidden);
     }
 
-    absl::Status GalaxyFs::RmDir(const std::string& path) {
+    absl::Status GalaxyFs::RmDir(const std::string& path, bool include_hidden) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return impl::RmDir(abs_path);
+        return impl::RmDir(abs_path, include_hidden);
 
     }
 
-    absl::Status GalaxyFs::RmDirRecursive(const std::string& path) {
+    absl::Status GalaxyFs::RmDirRecursive(const std::string& path, bool include_hidden) {
         std::string abs_path = internal::JoinPath(root_, path);
-        return impl::RmDirRecursive(abs_path);
+        return impl::RmDirRecursive(abs_path, include_hidden);
 
     }
 
