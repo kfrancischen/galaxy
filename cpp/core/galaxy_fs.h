@@ -39,7 +39,7 @@ namespace galaxy
 
         absl::Status RmDir(const std::string& path, bool include_hidden=false);
         absl::Status RmDirRecursive(const std::string& path, bool include_hidden=false);
-        absl::Status RmFile(const std::string& path);
+        absl::Status RmFile(const std::string& path, bool require_lock=true);
         absl::Status RenameFile(const std::string& old_path, const std::string& new_path);
 
         absl::Status Read(const std::string& path, std::string& data);

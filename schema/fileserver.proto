@@ -201,6 +201,7 @@ message RmFileRequest {
     string name = 1;
     Credential cred = 2;
     string from_cell = 3;
+    bool is_hidden = 4;
 }
 
 message RmFileResponse {

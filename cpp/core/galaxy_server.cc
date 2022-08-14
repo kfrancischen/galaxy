@@ -371,7 +371,7 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call RmFile.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call RmFile.");
         }
-        absl::Status fs_status = GalaxyFs::Instance()->RmFile(request->name());
+        absl::Status fs_status = GalaxyFs::Instance()->RmFile(request->name(), !request->is_hidden());
         if (!fs_status.ok())
         {
             LOG(ERROR) << "RmFile failed during function call RmFile with error " << fs_status;

@@ -19,7 +19,7 @@ namespace galaxy {
             std::map<std::string, std::string> RListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
             void RCreateFileIfNotExist(const std::string& path, const int mode=0777);
             std::string RFileOrDie(const std::string& path);
-            void RRmFile(const std::string& path);
+            void RRmFile(const std::string& path, bool is_hidden=false);
             void RRenameFile(const std::string& old_path, const std::string& new_path);
             std::string RRead(const std::string& path);
             std::map<std::string, std::string> RReadMultiple(const std::vector<std::string>& paths);
@@ -39,7 +39,7 @@ namespace galaxy {
             std::map<std::string, std::string> LListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
             void LCreateFileIfNotExist(const std::string& path, const int mode=0777);
             std::string LFileOrDie(const std::string& path);
-            void LRmFile(const std::string& path);
+            void LRmFile(const std::string& path, bool is_hidden=false);
             void LRenameFile(const std::string& old_path, const std::string& new_path);
             std::string LRead(const std::string& path);
             std::map<std::string, std::string> LReadMultiple(const std::vector<std::string>& paths);
@@ -57,7 +57,7 @@ namespace galaxy {
         std::map<std::string, std::string> ListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
         void CreateFileIfNotExist(const std::string& path, const int mode=0777);
         std::string FileOrDie(const std::string& path);
-        void RmFile(const std::string& path);
+        void RmFile(const std::string& path, bool is_hidden=false);
         void RenameFile(const std::string& old_path, const std::string& new_path);
         std::string Read(const std::string& path);
         std::map<std::string, std::string> ReadMultiple(const std::vector<std::string>& paths);

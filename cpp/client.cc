@@ -364,11 +364,12 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::RRmFile(const std::string& path) {
+void galaxy::client::impl::RRmFile(const std::string& path, bool is_hidden) {
     GalaxyClientInternal client = GetChannelClient("");
     try {
         RmFileRequest request;
         request.set_name(path);
+        request.set_is_hidden(is_hidden);
         request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
         char* cell_name = getenv("GALAXY_fs_cell");
         if (cell_name != NULL) {
@@ -737,10 +738,10 @@ std::string galaxy::client::impl::LFileOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::LRmFile(const std::string& path) {
+void galaxy::client::impl::LRmFile(const std::string& path, bool is_hidden) {
     try {
         GalaxyFs fs("");
-        auto status = fs.RmFile(path);
+        auto status = fs.RmFile(path, !is_hidden);
         if (!status.ok()) {
             throw "RmFile failed with error " + status.ToString() + '.';
         }
@@ -1002,18 +1003,18 @@ std::string galaxy::client::FileOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::RmFile(const std::string& path) {
+void galaxy::client::RmFile(const std::string& path, bool is_hidden) {
     absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
     if (path_or.ok()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RRmFile(*path_or);
+        galaxy::client::impl::RRmFile(*path_or, is_hidden);
     } else {
         VLOG(1) << "Using local mode";
         absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
         if (!local_path_or.ok()) {
             throw "Invalid Path " + path;
         } else {
-            galaxy::client::impl::LRmFile(*local_path_or);
+            galaxy::client::impl::LRmFile(*local_path_or, is_hidden);
         }
     }
 }

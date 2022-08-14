@@ -68,9 +68,9 @@ namespace galaxy {
 
     }
 
-    absl::Status GalaxyFs::RmFile(const std::string& path){
+    absl::Status GalaxyFs::RmFile(const std::string& path, bool require_lock){
         std::string abs_path = internal::JoinPath(root_, path);
-        return impl::RmFile(abs_path, true);
+        return impl::RmFile(abs_path, require_lock);
 
     }
 

@@ -32,7 +32,7 @@ void RunTTLCleanerOverDirectoryFiles(const std::string& path, TTLStat& ttl_stat)
             std::time_t m_time = galaxy::ext::GetFileModifiedTime(file.first);
             if (difftime(cur_time, m_time) >= ttl_time) {
                 VLOG(1) << "Removing file" << file.first;
-                galaxy::client::RmFile(file.first);
+                galaxy::client::RmFile(file.first, true);
                 ttl_stat.num_file_removed += 1;
             }
         }
