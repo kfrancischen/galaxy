@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "ext/ttl_cleaner/galaxy_ttl_cleaner.h"
 #include "cpp/core/galaxy_fs.h"
+#include "cpp/util/galaxy_util.h"
 
 std::string galaxy::ext::GetTTLFromPath(const std::string& path) {
     std::string path_lower(path);
@@ -23,9 +24,13 @@ std::string galaxy::ext::GetTTLFromPath(const std::string& path) {
 
 
 std::time_t galaxy::ext::GetFileModifiedTime(const std::string& path) {
+    absl::StatusOr<std::string> path_or = galaxy::util::ConvertToLocalPath(path);
+    if (!path_or.ok()) {
+        return -1;
+    }
     GalaxyFs fs("");
     struct stat statbuf;
-    auto status = fs.GetAttr(path, &statbuf);
+    auto status = fs.GetAttr(*path_or, &statbuf);
     if (!status.ok()) {
         return -1;
     }

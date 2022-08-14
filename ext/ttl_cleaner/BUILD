@@ -8,6 +8,7 @@ cc_library(
     ],
     deps= [
         "//cpp/core:galaxy_fs_lib",
+        "//cpp/util:galaxy_util_lib",
     ]
 )
 
