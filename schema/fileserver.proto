@@ -41,6 +41,34 @@ message FileSystemStatus {
     string return_message = 2;
 }
 
+message CellConfig {
+    string cell = 1;
+    string fs_root = 2;
+    string fs_log_dir = 3;
+    string fs_password = 4;
+    int32 fs_log_ttl = 5;
+    int32 fs_port = 6;
+    int32 fs_stats_port = 7;
+    string fs_ip = 8;
+    int32 fs_verbose_level = 9;
+    bool fs_alsologtostderr = 10;
+    int32 fs_num_thread = 11;
+    int32 fs_max_msg_size = 12;
+}
+
+message SingleRequestCellConfigs {
+    CellConfig from_cell_config = 1;
+    CellConfig to_cell_config = 2;
+}
+
+message FileAnalyzerResult {
+    string from_cell = 1;
+    string to_cell = 2;
+    string path = 3;
+    bool is_remote = 4;
+    SingleRequestCellConfigs configs = 5;
+}
+
 message FileSystemUsage {
     double total_disk = 1;
     double used_disk = 2;

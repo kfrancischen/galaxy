@@ -2,6 +2,7 @@
 #define CPP_UTIL_GALAXY_UTIL_H_
 
 #include "absl/status/statusor.h"
+#include "schema/fileserver.pb.h"
 #include <vector>
 
 namespace galaxy {
@@ -18,6 +19,11 @@ namespace galaxy {
 
 
         absl::StatusOr<std::string> ConvertToLocalPath(const std::string& path);
+
+        // New Galaxy Util APIs
+        absl::StatusOr<galaxy_schema::FileAnalyzerResult> RunFileAnalyzer(const std::string& path);
+        absl::StatusOr<galaxy_schema::CellConfig> ParseCellConfig(const std::string& cell);
+        galaxy_schema::FileAnalyzerResult InitClientV2(const std::string& path);
     }  // namespace util
 
 } // namespace galaxy

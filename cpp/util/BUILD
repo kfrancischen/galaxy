@@ -14,6 +14,7 @@ cc_library(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@google_glog//:glog",
+        "//schema:fileserver_cc_proto",
         "//cpp/core:galaxy_flag_lib",
         "//cpp/internal:galaxy_const_lib",
     ]
