@@ -121,7 +121,7 @@ namespace galaxy
     impl::GalaxyFileutil GetFileutilClient(const CellConfig& config) {
         grpc::ChannelArguments ch_args;
         ch_args.SetMaxReceiveMessageSize(-1);
-        impl::GalaxyFileutil client(grpc::CreateCustomChannel(config.fs_ip() + std::to_string(config.fs_port()), grpc::InsecureChannelCredentials(), ch_args));
+        impl::GalaxyFileutil client(grpc::CreateCustomChannel(config.fs_ip() + ":" + std::to_string(config.fs_port()), grpc::InsecureChannelCredentials(), ch_args));
         return client;
     }
 

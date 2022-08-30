@@ -118,7 +118,7 @@ namespace galaxy
         try
         {
             absl::StatusOr<CellConfig> config = util::ParseCellConfig(cell);
-            auto client = remote_execution::GetRemoteExeClient(cell);
+            auto client = remote_execution::GetRemoteExeClient(*config);
             RemoteExecutionRequest request;
             request.mutable_cred()->set_password(config->fs_password());
             request.set_from_cell(config->cell());

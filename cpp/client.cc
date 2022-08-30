@@ -74,7 +74,7 @@ GalaxyClientInternal GetChannelClient(const SingleRequestCellConfigs& config) {
     grpc::ChannelArguments ch_args;
     ch_args.SetMaxReceiveMessageSize(-1);
     GalaxyClientInternal client(grpc::CreateCustomChannel(
-        config.to_cell_config().fs_ip() + std::to_string(config.to_cell_config().fs_port()), grpc::InsecureChannelCredentials(), ch_args));
+        config.to_cell_config().fs_ip() + ":" + std::to_string(config.to_cell_config().fs_port()), grpc::InsecureChannelCredentials(), ch_args));
     return client;
 }
 

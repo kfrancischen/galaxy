@@ -38,7 +38,7 @@ namespace galaxy
     {
         grpc::ChannelArguments ch_args;
         ch_args.SetMaxReceiveMessageSize(-1);
-        remote_execution::GalaxyRemoteExe client(grpc::CreateCustomChannel(config.fs_ip() + std::to_string(config.fs_port()), grpc::InsecureChannelCredentials(), ch_args));
+        remote_execution::GalaxyRemoteExe client(grpc::CreateCustomChannel(config.fs_ip() + ":" + std::to_string(config.fs_port()), grpc::InsecureChannelCredentials(), ch_args));
         return client;
     }
 }
