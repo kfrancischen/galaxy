@@ -1,15 +1,17 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "absl/flags/flag.h"
 #include "cpp/remote_execution.h"
 #include "cpp/core/galaxy_flag.h"
 #include "cpp/tool/pm2_cli.h"
 #include "cpp/client.h"
-#include "absl/flags/flag.h"
+#include "cpp/util/galaxy_util.h"
 #include "glog/logging.h"
 
 using grpc::ClientContext;
 using grpc::Status;
+using galaxy_schema::CellConfig;
 
 using galaxy_schema::RemoteExecutionRequest;
 using galaxy_schema::RemoteExecutionResponse;
@@ -22,13 +24,11 @@ namespace galaxy
     {
         try
         {
-            auto client = remote_execution::GetRemoteExeClient(cell);
+            absl::StatusOr<CellConfig> config = util::ParseCellConfig(cell);
+            auto client = remote_execution::GetRemoteExeClient(*config);
             RemoteExecutionRequest request;
-            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-            char* cell_name = getenv("GALAXY_fs_cell");
-            if (cell_name != NULL) {
-                request.set_from_cell(cell_name);
-            }
+            request.mutable_cred()->set_password(config->fs_password());
+            request.set_from_cell(config->cell());
             request.set_main("pm2");
             *request.add_program_args() = "list";
             RemoteExecutionResponse response = client.RemoteExecution(request);
@@ -57,13 +57,11 @@ namespace galaxy
     {
         try
         {
-            auto client = remote_execution::GetRemoteExeClient(cell);
+            absl::StatusOr<CellConfig> config = util::ParseCellConfig(cell);
+            auto client = remote_execution::GetRemoteExeClient(*config);
             RemoteExecutionRequest request;
-            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-            char* cell_name = getenv("GALAXY_fs_cell");
-            if (cell_name != NULL) {
-                request.set_from_cell(cell_name);
-            }
+            request.mutable_cred()->set_password(config->fs_password());
+            request.set_from_cell(config->cell());
             request.set_home_dir(home_dir);
             request.set_main("pm2");
             *request.add_program_args() = "start";
@@ -86,13 +84,11 @@ namespace galaxy
     {
         try
         {
-            auto client = remote_execution::GetRemoteExeClient(cell);
+            absl::StatusOr<CellConfig> config = util::ParseCellConfig(cell);
+            auto client = remote_execution::GetRemoteExeClient(*config);
             RemoteExecutionRequest request;
-            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-            char* cell_name = getenv("GALAXY_fs_cell");
-            if (cell_name != NULL) {
-                request.set_from_cell(cell_name);
-            }
+            request.mutable_cred()->set_password(config->fs_password());
+            request.set_from_cell(config->cell());
             request.set_main("pm2");
             *request.add_program_args() = "stop";
             *request.add_program_args() = job_name;
@@ -121,13 +117,11 @@ namespace galaxy
     {
         try
         {
+            absl::StatusOr<CellConfig> config = util::ParseCellConfig(cell);
             auto client = remote_execution::GetRemoteExeClient(cell);
             RemoteExecutionRequest request;
-            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-            char* cell_name = getenv("GALAXY_fs_cell");
-            if (cell_name != NULL) {
-                request.set_from_cell(cell_name);
-            }
+            request.mutable_cred()->set_password(config->fs_password());
+            request.set_from_cell(config->cell());
             request.set_main("pm2");
             *request.add_program_args() = "restart";
             *request.add_program_args() = job_name;

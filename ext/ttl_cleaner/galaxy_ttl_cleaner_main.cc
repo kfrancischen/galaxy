@@ -1,13 +1,13 @@
-#include <time.h>
 #include "ext/ttl_cleaner/galaxy_ttl_cleaner.h"
-#include "glog/logging.h"
-#include "cpp/client.h"
-#include "cpp/util/galaxy_util.h"
-#include "cpp/core/galaxy_flag.h"
-
+#include <time.h>
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/time/clock.h"
+
+#include "cpp/client.h"
+#include "cpp/util/galaxy_util.h"
+#include "cpp/core/galaxy_flag.h"
+#include "glog/logging.h"
 
 ABSL_FLAG(int, run_every, 10, "Interval (in minutes) to run the ttl cleaner.");
 
@@ -69,16 +69,16 @@ int main(int argc, char* argv[])
 {
     absl::ParseCommandLine(argc, argv);
     FLAGS_colorlogtostderr = true;
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(true);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    FLAGS_v = absl::GetFlag(FLAGS_fs_verbose_level);
-    FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
+    absl::StatusOr<galaxy_schema::CellConfig> config = galaxy::util::ParseCellConfig(absl::GetFlag(FLAGS_fs_cell));
+    CHECK(config.ok()) << "Fail to parse the cell config.";
+    FLAGS_v = config->fs_verbose_level();
+    FLAGS_log_dir = config->fs_log_dir();
     FLAGS_max_log_size = 10;  // setting the maximum log size to 10M
-    FLAGS_alsologtostderr = absl::GetFlag(FLAGS_fs_alsologtostderr);
-    google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
+    FLAGS_alsologtostderr = config->fs_alsologtostderr();
+    google::EnableLogCleaner(config->fs_log_ttl());
     google::InitGoogleLogging(argv[0]);
     while (true) {
-        RunTTLCleaner(absl::GetFlag(FLAGS_fs_root));
+        RunTTLCleaner(config->fs_root());
         absl::SleepFor(absl::Minutes(absl::GetFlag(FLAGS_run_every)));
     }
     return 0;

@@ -2,16 +2,16 @@
 #include "cpp/internal/galaxy_fs_internal.h"
 
 #include "absl/flags/flag.h"
-#include "cpp/core/galaxy_fs.h"
 #include "cpp/core/galaxy_flag.h"
+#include "cpp/core/galaxy_fs.h"
 
 namespace galaxy {
 
     GalaxyFs::GalaxyFs(const std::string& root) : root_(root){};
     GalaxyFs::~GalaxyFs(){};
 
-    std::unique_ptr<GalaxyFs> GalaxyFs::Instance() {
-        return std::unique_ptr<GalaxyFs>(new GalaxyFs(absl::GetFlag(FLAGS_fs_root)));
+    std::unique_ptr<GalaxyFs> GalaxyFs::Instance(std::string root) {
+        return std::unique_ptr<GalaxyFs>(new GalaxyFs(root));
     }
 
     void GalaxyFs::SetRootDir(const std::string& path) {

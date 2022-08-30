@@ -1,28 +1,29 @@
 #include <iostream>
 #include <string>
 
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include <grpcpp/ext/channelz_service_plugin.h>
+#include <grpcpp/opencensus.h>
+
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "cpp/core/galaxy_server.h"
 #include "cpp/core/galaxy_flag.h"
 #include "cpp/core/galaxy_stats.h"
 #include "cpp/util/galaxy_util.h"
-
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <grpcpp/ext/channelz_service_plugin.h>
-#include <grpcpp/opencensus.h>
-#include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
 #include "glog/logging.h"
 #include "opencensus/exporters/stats/prometheus/prometheus_exporter.h"
 #include "prometheus/exposer.h"
+#include "schema/fileserver.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using galaxy::GalaxyServerImpl;
 
-void RunGalaxyServer()
+void RunGalaxyServer(const galaxy_schema::CellConfig& config)
 {
-    std::string stats_address(absl::GetFlag(FLAGS_fs_stats_address));
+    std::string stats_address("0.0.0.0:" + std::to_string(config.fs_stats_port()));
     // Register the OpenCensus gRPC plugin to enable stats and tracing in gRPC.
     grpc::RegisterOpenCensusPlugin();
     // Register the gRPC views (latency, error count, etc).
@@ -33,30 +34,29 @@ void RunGalaxyServer()
     // Expose a Prometheus endpoint.
     prometheus::Exposer exposer(stats_address);
     exposer.RegisterAuth(
-        [](const std::string &user, const std::string &password)
+        [&config](const std::string& user, const std::string& password)
         {
-            return user == "admin" && password == absl::GetFlag(FLAGS_fs_password);
+            return user == "admin" && password == config.fs_password();
         });
     exposer.RegisterCollectable(exporter);
 
     // Init custom measure.
     galaxy::stats::RegisterServerViews();
-    std::cout << "Stats are exposed to " << stats_address << std::endl;
     LOG(INFO) << "Stats are exposed to " << stats_address << ".";
 
-    std::string server_address(absl::GetFlag(FLAGS_fs_address));
+    std::string server_address("0.0.0.0:" + std::to_string(config.fs_port()));
     GalaxyServerImpl galaxy_service;
-    galaxy_service.SetPassword(absl::GetFlag(FLAGS_fs_password));
+    galaxy_service.SetPassword(config.fs_password());
 
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     grpc::channelz::experimental::InitChannelzService();
     ServerBuilder builder;
-    if (absl::GetFlag(FLAGS_fs_num_thread) > 0) {
+    if (config.fs_num_thread() > 0) {
         grpc::ResourceQuota rq;
-        rq.SetMaxThreads(absl::GetFlag(FLAGS_fs_num_thread));
+        rq.SetMaxThreads(config.fs_num_thread());
         builder.SetResourceQuota(rq);
     }
-    builder.SetMaxMessageSize(absl::GetFlag(FLAGS_fs_max_msg_size) * 1024 * 1024);
+    builder.SetMaxMessageSize(config.fs_max_msg_size() * 1024 * 1024);
     builder.AddChannelArgument(GRPC_ARG_ENABLE_CHANNELZ, 1);
 
     // Listen on the given address without any authentication mechanism.
@@ -68,7 +68,6 @@ void RunGalaxyServer()
 
     // Finally assemble the server.
     std::unique_ptr<Server> server(builder.BuildAndStart());
-    std::cout << "Server listening on " << server_address << std::endl;
     LOG(INFO) << "Server listening on " << server_address << ".";
     // Wait for the server to shutdown. Note that some other thread must be
     // responsible for shutting down the server for this call to ever return.
@@ -79,15 +78,16 @@ int main(int argc, char* argv[])
 {
     absl::ParseCommandLine(argc, argv);
     FLAGS_colorlogtostderr = true;
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(true);
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    FLAGS_v = absl::GetFlag(FLAGS_fs_verbose_level);
-    FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
+    absl::StatusOr<galaxy_schema::CellConfig> config = galaxy::util::ParseCellConfig(absl::GetFlag(FLAGS_fs_cell));
+    CHECK(config.ok()) << "Fail to parse the cell config.";
+    FLAGS_v = config->fs_verbose_level();
+    FLAGS_log_dir = config->fs_log_dir();
     FLAGS_max_log_size = 10;  // setting the maximum log size to 10M
-    FLAGS_alsologtostderr = absl::GetFlag(FLAGS_fs_alsologtostderr);
-    google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
+    FLAGS_alsologtostderr = config->fs_alsologtostderr();
+    google::EnableLogCleaner(config->fs_log_ttl());
     google::InitGoogleLogging(argv[0]);
-    LOG(INFO) << *result;
-    RunGalaxyServer();
+    LOG(INFO) << "Getting config for cell: " << absl::GetFlag(FLAGS_fs_cell);
+    LOG(INFO) << std::endl << config->DebugString();
+    RunGalaxyServer(*config);
     return 0;
 }

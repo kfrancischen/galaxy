@@ -1,8 +1,8 @@
 #ifndef GALAXY_EXT_TTL_CLEANER_GALAXY_TTL_CLEANER_H_
 #define GALAXY_EXT_TTL_CLEANER_GALAXY_TTL_CLEANER_H_
 
-#include <string>
 #include <ctime>
+#include <string>
 
 namespace galaxy {
     namespace ext {

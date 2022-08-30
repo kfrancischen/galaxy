@@ -19,7 +19,7 @@ namespace galaxy
         ~GalaxyFs();
         GalaxyFs(const GalaxyFs&) = delete;
 
-        static std::unique_ptr<GalaxyFs> Instance();
+        static std::unique_ptr<GalaxyFs> Instance(std::string root="");
 
         void SetRootDir(const std::string& path);
 

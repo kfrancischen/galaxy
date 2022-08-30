@@ -25,6 +25,9 @@ using galaxy_schema::Credential;
 using galaxy_schema::Attribute;
 using galaxy_schema::WriteMode;
 
+using galaxy_schema::SingleRequestCellConfigs;
+using galaxy_schema::FileAnalyzerResult;
+
 using galaxy_schema::CreateDirRequest;
 using galaxy_schema::CreateDirResponse;
 using galaxy_schema::CreateFileRequest;
@@ -64,15 +67,14 @@ using galaxy::GalaxyClientInternal;
 using galaxy::GalaxyFs;
 using google::protobuf::Message;
 
-GalaxyClientInternal GetChannelClient(const std::string& cell) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false, cell);
+GalaxyClientInternal GetChannelClient(const SingleRequestCellConfigs& config) {
     FLAGS_colorlogtostderr = true;
-    FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
-    google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
-    CHECK(result.ok()) << "Fail to parse the global config.";
+    FLAGS_log_dir = config.from_cell_config().fs_log_dir();
+    google::EnableLogCleaner(config.from_cell_config().fs_log_ttl());
     grpc::ChannelArguments ch_args;
     ch_args.SetMaxReceiveMessageSize(-1);
-    GalaxyClientInternal client(grpc::CreateCustomChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials(), ch_args));
+    GalaxyClientInternal client(grpc::CreateCustomChannel(
+        config.to_cell_config().fs_ip() + std::to_string(config.to_cell_config().fs_port()), grpc::InsecureChannelCredentials(), ch_args));
     return client;
 }
 
@@ -110,17 +112,14 @@ std::string ProtoMessageToString(const Message& message) {
     return output_str;
 }
 
-void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const int mode) {
-    GalaxyClientInternal client = GetChannelClient("");
+void galaxy::client::impl::RCreateDirIfNotExist(const FileAnalyzerResult& result, const int mode) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         CreateDirRequest request;
-        request.set_name(path);
+        request.set_name(result.path());
         request.set_mode(mode);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         CreateDirResponse response = client.CreateDirIfNotExist(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -133,22 +132,19 @@ void galaxy::client::impl::RCreateDirIfNotExist(const std::string& path, const i
     }
 }
 
-std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::string galaxy::client::impl::RDirOrDie(const FileAnalyzerResult& result) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         DirOrDieRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         DirOrDieResponse response = client.DirOrDie(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
             throw "Fail to call DirOrDie.";
         }
-        return galaxy::util::ConvertToCellPath(response.name());
+        return galaxy::util::ConvertToCellPath(response.name(), result.configs().to_cell_config());
     }
     catch (std::string errorMsg)
     {
@@ -157,17 +153,14 @@ std::string galaxy::client::impl::RDirOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::RRmDir(const std::string& path, bool include_hidden) {
-    GalaxyClientInternal client = GetChannelClient("");
+void galaxy::client::impl::RRmDir(const FileAnalyzerResult& result, bool include_hidden) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         RmDirRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
         request.set_include_hidden(include_hidden);
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_from_cell(result.configs().from_cell_config().cell());
         RmDirResponse response = client.RmDir(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -180,17 +173,14 @@ void galaxy::client::impl::RRmDir(const std::string& path, bool include_hidden) 
     }
 }
 
-void galaxy::client::impl::RRmDirRecursive(const std::string& path, bool include_hidden) {
-    GalaxyClientInternal client = GetChannelClient("");
+void galaxy::client::impl::RRmDirRecursive(const FileAnalyzerResult& result, bool include_hidden) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         RmDirRecursiveRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
         request.set_include_hidden(include_hidden);
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_from_cell(result.configs().from_cell_config().cell());
         RmDirRecursiveResponse response = client.RmDirRecursive(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -203,26 +193,24 @@ void galaxy::client::impl::RRmDirRecursive(const std::string& path, bool include
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const FileAnalyzerResult& result) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         ListDirsInDirRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         ListDirsInDirResponse response = client.ListDirsInDir(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
             throw "Fail to call ListDirsInDir.";
         }
-        std::map<std::string, std::string> result;
-        for (const auto& sub_dir : response.sub_dirs()) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
+        std::map<std::string, std::string> dirs;
+        for (const auto &sub_dir : response.sub_dirs()) {
+            dirs.insert({galaxy::util::ConvertToCellPath(sub_dir.first, result.configs().to_cell_config()),
+                         ProtoMessageToString(sub_dir.second)});
         }
-        return result;
+        return dirs;
     }
     catch (std::string errorMsg)
     {
@@ -231,27 +219,25 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDir(const st
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const std::string& path, bool include_hidden) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const FileAnalyzerResult& result, bool include_hidden) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         ListFilesInDirRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
         request.set_include_hidden(include_hidden);
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_from_cell(result.configs().from_cell_config().cell());
         ListFilesInDirResponse response = client.ListFilesInDir(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
             throw "Fail to call ListFilesInDir.";
         }
-        std::map<std::string, std::string> result;
+        std::map<std::string, std::string> files;
         for (const auto& sub_file : response.sub_files()) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
+            files.insert({galaxy::util::ConvertToCellPath(sub_file.first, result.configs().to_cell_config()),
+                          ProtoMessageToString(sub_file.second)});
         }
-        return result;
+        return files;
     }
     catch (std::string errorMsg)
     {
@@ -260,26 +246,24 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDir(const s
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive(const FileAnalyzerResult& result) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         ListAllInDirRecursiveRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
             throw "Fail to call RListDirsInDirRecursive.";
         }
-        std::map<std::string, std::string> result;
+        std::map<std::string, std::string> dirs;
         for (const auto& sub_dir : response.sub_dirs()) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), ProtoMessageToString(sub_dir.second)});
+            dirs.insert({galaxy::util::ConvertToCellPath(sub_dir.first, result.configs().to_cell_config()),
+                         ProtoMessageToString(sub_dir.second)});
         }
-        return result;
+        return dirs;
     }
     catch (std::string errorMsg)
     {
@@ -288,27 +272,25 @@ std::map<std::string, std::string> galaxy::client::impl::RListDirsInDirRecursive
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursive(const std::string& path, bool include_hidden) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursive(const FileAnalyzerResult& result, bool include_hidden) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         ListAllInDirRecursiveRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
         request.set_include_hidden(include_hidden);
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_from_cell(result.configs().from_cell_config().cell());
         ListAllInDirRecursiveResponse response = client.ListAllInDirRecursive(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
             throw "Fail to call RListFilesInDirRecursive.";
         }
-        std::map<std::string, std::string> result;
+        std::map<std::string, std::string> files;
         for (const auto& sub_file : response.sub_files()) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), ProtoMessageToString(sub_file.second)});
+            files.insert({galaxy::util::ConvertToCellPath(sub_file.first, result.configs().to_cell_config()),
+                          ProtoMessageToString(sub_file.second)});
         }
-        return result;
+        return files;
     }
     catch (std::string errorMsg)
     {
@@ -317,17 +299,14 @@ std::map<std::string, std::string> galaxy::client::impl::RListFilesInDirRecursiv
     }
 }
 
-void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const int mode) {
-    GalaxyClientInternal client = GetChannelClient("");
+void galaxy::client::impl::RCreateFileIfNotExist(const FileAnalyzerResult& result, const int mode) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         CreateFileRequest request;
-        request.set_name(path);
+        request.set_name(result.path());
         request.set_mode(mode);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         CreateFileResponse response = client.CreateFileIfNotExist(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -340,22 +319,19 @@ void galaxy::client::impl::RCreateFileIfNotExist(const std::string& path, const 
     }
 }
 
-std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::string galaxy::client::impl::RFileOrDie(const FileAnalyzerResult& result) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         FileOrDieRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         FileOrDieResponse response = client.FileOrDie(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
             throw "Fail to call FileOrDie.";
         }
-        return galaxy::util::ConvertToCellPath(response.name());
+        return galaxy::util::ConvertToCellPath(response.name(), result.configs().to_cell_config());
     }
     catch (std::string errorMsg)
     {
@@ -364,17 +340,14 @@ std::string galaxy::client::impl::RFileOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::RRmFile(const std::string& path, bool is_hidden) {
-    GalaxyClientInternal client = GetChannelClient("");
+void galaxy::client::impl::RRmFile(const FileAnalyzerResult& result, bool is_hidden) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         RmFileRequest request;
-        request.set_name(path);
+        request.set_name(result.path());
         request.set_is_hidden(is_hidden);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         RmFileResponse response = client.RmFile(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -387,17 +360,14 @@ void galaxy::client::impl::RRmFile(const std::string& path, bool is_hidden) {
     }
 }
 
-void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::string& new_path) {
-    GalaxyClientInternal client = GetChannelClient("");
+void galaxy::client::impl::RRenameFile(const FileAnalyzerResult& old_result, const FileAnalyzerResult& new_result) {
+    GalaxyClientInternal client = GetChannelClient(old_result.configs());
     try {
         RenameFileRequest request;
-        request.set_old_name(old_path);
-        request.set_new_name(new_path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_old_name(old_result.path());
+        request.set_new_name(new_result.path());
+        request.mutable_cred()->set_password(old_result.configs().to_cell_config().fs_password());
+        request.set_from_cell(old_result.configs().from_cell_config().cell());
         RenameFileResponse response = client.RenameFile(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -410,16 +380,13 @@ void galaxy::client::impl::RRenameFile(const std::string& old_path, const std::s
     }
 }
 
-std::string galaxy::client::impl::RRead(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::string galaxy::client::impl::RRead(const FileAnalyzerResult& result) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         ReadRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         ReadResponse response = client.Read(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -434,45 +401,41 @@ std::string galaxy::client::impl::RRead(const std::string& path) {
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std::vector<std::string>& paths) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::map<std::string, std::string> galaxy::client::impl::RReadMultiple(const std::vector<FileAnalyzerResult>& results) {
+    GalaxyClientInternal client = GetChannelClient(results.at(0).configs());
     ReadMultipleRequest request;
-    std::map<std::string, std::string> result;
-    *request.mutable_names() = {paths.begin(), paths.end()};
-    request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-    char* cell_name = getenv("GALAXY_fs_cell");
-    if (cell_name != NULL) {
-        request.set_from_cell(cell_name);
+    std::map<std::string, std::string> data_map;
+    for (const auto& result : results) {
+        request.add_names(result.path());
     }
+    request.mutable_cred()->set_password(results.at(0).configs().to_cell_config().fs_password());
+    request.set_from_cell(results.at(0).configs().from_cell_config().cell());
     ReadMultipleResponse response = client.ReadMultiple(request);
     for (const auto& pair : response.data()) {
-        std::string path = galaxy::util::ConvertToCellPath(pair.first);
+        std::string path = galaxy::util::ConvertToCellPath(pair.first, results.at(0).configs().to_cell_config());
         if (pair.second.status().return_code() != 1) {
             LOG(ERROR) << "Failed to read data for file " << path;
         } else {
-            result.insert({path, pair.second.data()});
+            data_map.insert({path, pair.second.data()});
         }
     }
-    return result;
+    return data_map;
 }
 
-void galaxy::client::impl::RWrite(const std::string& path, const std::string& data, const std::string& mode) {
-    GalaxyClientInternal client = GetChannelClient("");
-    CHECK(mode == "a" || mode == "w");
+void galaxy::client::impl::RWrite(const FileAnalyzerResult& result, const std::string& data, const std::string& mode) {
+    CHECK(mode == "a" || mode == "w") << "Mode has to be either a or w";
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         WriteRequest request;
-        request.set_name(path);
+        request.set_name(result.path());
         request.set_data(data);
         if (mode == "a") {
             request.set_mode(WriteMode::APPEND);
         } else {
             request.set_mode(WriteMode::OVERWRITE);
         }
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         WriteResponse response = client.Write(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -485,8 +448,8 @@ void galaxy::client::impl::RWrite(const std::string& path, const std::string& da
     }
 }
 
-void galaxy::client::impl::RWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode) {
-    GalaxyClientInternal client = GetChannelClient("");
+void galaxy::client::impl::RWriteMultiple(const std::vector<std::pair<galaxy_schema::FileAnalyzerResult, std::string>>& path_data_map, const std::string& mode) {
+    GalaxyClientInternal client = GetChannelClient(path_data_map.begin()->first.configs());
     CHECK(mode == "a" || mode == "w");
     try {
         WriteMultipleRequest request;
@@ -495,15 +458,15 @@ void galaxy::client::impl::RWriteMultiple(const std::map<std::string, std::strin
         } else {
             request.set_mode(WriteMode::OVERWRITE);
         }
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        *request.mutable_data() = {path_data_map.begin(), path_data_map.end()};
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
+        request.mutable_cred()->set_password(path_data_map.begin()->first.configs().to_cell_config().fs_password());
+        request.set_from_cell(path_data_map.begin()->first.configs().from_cell_config().cell());
+
+        for (const auto& val : path_data_map) {
+            (*request.mutable_data())[val.first.path()] = val.second;
         }
         WriteMultipleResponse response = client.WriteMultiple(request);
         for (const auto& pair : response.data()) {
-            std::string path = galaxy::util::ConvertToCellPath(pair.first);
+            std::string path = galaxy::util::ConvertToCellPath(pair.first, path_data_map.begin()->first.configs().to_cell_config());
             if (pair.second.status().return_code() != 1) {
                 LOG(ERROR) << "Failed to write data for file " << path;
             }
@@ -515,16 +478,13 @@ void galaxy::client::impl::RWriteMultiple(const std::map<std::string, std::strin
     }
 }
 
-std::string galaxy::client::impl::RGetAttr(const std::string& path) {
-    GalaxyClientInternal client = GetChannelClient("");
+std::string galaxy::client::impl::RGetAttr(const FileAnalyzerResult& result) {
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         GetAttrRequest request;
-        request.set_name(path);
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.set_name(result.path());
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         GetAttrResponse response = client.GetAttr(request);
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
@@ -540,14 +500,13 @@ std::string galaxy::client::impl::RGetAttr(const std::string& path) {
 }
 
 std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
-    GalaxyClientInternal client = GetChannelClient(cell);
+    std::string path = galaxy::util::GetGalaxyFsPrefixPath(cell);
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    GalaxyClientInternal client = GetChannelClient(result.configs());
     try {
         HealthCheckRequest request;
-        request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-        char* cell_name = getenv("GALAXY_fs_cell");
-        if (cell_name != NULL) {
-            request.set_from_cell(cell_name);
-        }
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
         HealthCheckResponse response = client.CheckHealth(request);
         if (!response.healthy()) {
             throw "cell " + cell +" is unhealthy.";
@@ -561,10 +520,10 @@ std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
     }
 }
 
-void galaxy::client::impl::LCreateDirIfNotExist(const std::string& path, const int mode) {
+void galaxy::client::impl::LCreateDirIfNotExist(const FileAnalyzerResult& result, const int mode) {
     try {
         GalaxyFs fs("");
-        auto status = fs.CreateDirIfNotExist(path, mode);
+        auto status = fs.CreateDirIfNotExist(result.path(), mode);
         if (!status.ok()) {
             throw "CreateDirIfNotExist failed with error " + status.ToString() + '.';
         }
@@ -575,15 +534,15 @@ void galaxy::client::impl::LCreateDirIfNotExist(const std::string& path, const i
     }
 }
 
-std::string galaxy::client::impl::LDirOrDie(const std::string& path) {
+std::string galaxy::client::impl::LDirOrDie(const FileAnalyzerResult& result) {
     try {
         GalaxyFs fs("");
         std::string out_path;
-        auto status = fs.DieDirIfNotExist(path, out_path);
+        auto status = fs.DieDirIfNotExist(result.path(), out_path);
         if (!status.ok()) {
             throw "DirOrDie failed with error " + status.ToString() + '.';
         }
-        return galaxy::util::ConvertToCellPath(out_path);
+        return galaxy::util::ConvertToCellPath(out_path, result.configs().from_cell_config());
     }
     catch (std::string errorMsg)
     {
@@ -592,10 +551,10 @@ std::string galaxy::client::impl::LDirOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::LRmDir(const std::string& path, bool include_hidden) {
+void galaxy::client::impl::LRmDir(const FileAnalyzerResult& result, bool include_hidden) {
     try {
         GalaxyFs fs("");
-        auto status = fs.RmDir(path, include_hidden);
+        auto status = fs.RmDir(result.path(), include_hidden);
         if (!status.ok()) {
             throw "RmDir failed with error " + status.ToString() + '.';
         }
@@ -606,10 +565,10 @@ void galaxy::client::impl::LRmDir(const std::string& path, bool include_hidden) 
     }
 }
 
-void galaxy::client::impl::LRmDirRecursive(const std::string& path, bool include_hidden) {
+void galaxy::client::impl::LRmDirRecursive(const FileAnalyzerResult& result, bool include_hidden) {
     try {
         GalaxyFs fs("");
-        auto status = fs.RmDirRecursive(path, include_hidden);
+        auto status = fs.RmDirRecursive(result.path(), include_hidden);
         if (!status.ok()) {
             throw "RmDirRecursive failed with error " + status.ToString() + '.';
         }
@@ -620,19 +579,19 @@ void galaxy::client::impl::LRmDirRecursive(const std::string& path, bool include
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::LListDirsInDir(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListDirsInDir(const FileAnalyzerResult& result) {
     try {
         absl::flat_hash_map<std::string, struct stat> sub_dirs;
         GalaxyFs fs("");
-        auto status = fs.ListDirsInDir(path, sub_dirs);
+        auto status = fs.ListDirsInDir(result.path(), sub_dirs);
         if (!status.ok()) {
             throw "ListDirsInDir failed with error " + status.ToString() + '.';
         }
-        std::map<std::string, std::string> result;
+        std::map<std::string, std::string> dirs;
         for (const auto& sub_dir : sub_dirs) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), StatbufToString(sub_dir.second)});
+            dirs.insert({galaxy::util::ConvertToCellPath(sub_dir.first, result.configs().from_cell_config()), StatbufToString(sub_dir.second)});
         }
-        return result;
+        return dirs;
     }
     catch (std::string errorMsg)
     {
@@ -641,19 +600,19 @@ std::map<std::string, std::string> galaxy::client::impl::LListDirsInDir(const st
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::LListFilesInDir(const std::string& path, bool include_hidden) {
+std::map<std::string, std::string> galaxy::client::impl::LListFilesInDir(const FileAnalyzerResult& result, bool include_hidden) {
     try {
         absl::flat_hash_map<std::string, struct stat> sub_files;
         GalaxyFs fs("");
-        auto status = fs.ListFilesInDir(path, sub_files, include_hidden);
+        auto status = fs.ListFilesInDir(result.path(), sub_files, include_hidden);
         if (!status.ok()) {
             throw "ListFilesInDir failed with error " + status.ToString() + '.';
         }
-        std::map<std::string, std::string> result;
+        std::map<std::string, std::string> files;
         for (const auto& sub_file : sub_files) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), StatbufToString(sub_file.second)});
+            files.insert({galaxy::util::ConvertToCellPath(sub_file.first, result.configs().from_cell_config()), StatbufToString(sub_file.second)});
         }
-        return result;
+        return files;
     }
     catch (std::string errorMsg)
     {
@@ -662,20 +621,20 @@ std::map<std::string, std::string> galaxy::client::impl::LListFilesInDir(const s
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::LListDirsInDirRecursive(const std::string& path) {
+std::map<std::string, std::string> galaxy::client::impl::LListDirsInDirRecursive(const FileAnalyzerResult& result) {
     try {
         absl::flat_hash_map<std::string, struct stat> sub_files;
         absl::flat_hash_map<std::string, struct stat> sub_dirs;
         GalaxyFs fs("");
-        auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files);
+        auto status = fs.ListAllInDirRecursive(result.path(), sub_dirs, sub_files);
         if (!status.ok()) {
             throw "ListDirsInDirRecursive failed with error " + status.ToString() + '.';
         }
-        std::map<std::string, std::string> result;
+        std::map<std::string, std::string> dirs;
         for (const auto& sub_dir : sub_dirs) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_dir.first), StatbufToString(sub_dir.second)});
+            dirs.insert({galaxy::util::ConvertToCellPath(sub_dir.first, result.configs().from_cell_config()), StatbufToString(sub_dir.second)});
         }
-        return result;
+        return dirs;
     }
     catch (std::string errorMsg)
     {
@@ -684,20 +643,20 @@ std::map<std::string, std::string> galaxy::client::impl::LListDirsInDirRecursive
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::LListFilesInDirRecursive(const std::string& path, bool include_hidden) {
+std::map<std::string, std::string> galaxy::client::impl::LListFilesInDirRecursive(const FileAnalyzerResult& result, bool include_hidden) {
     try {
         absl::flat_hash_map<std::string, struct stat> sub_files;
         absl::flat_hash_map<std::string, struct stat> sub_dirs;
         GalaxyFs fs("");
-        auto status = fs.ListAllInDirRecursive(path, sub_dirs, sub_files, include_hidden);
+        auto status = fs.ListAllInDirRecursive(result.path(), sub_dirs, sub_files, include_hidden);
         if (!status.ok()) {
             throw "ListFilesInDirRecursive failed with error " + status.ToString() + '.';
         }
-        std::map<std::string, std::string> result;
+        std::map<std::string, std::string> files;
         for (const auto& sub_file : sub_files) {
-            result.insert({galaxy::util::ConvertToCellPath(sub_file.first), StatbufToString(sub_file.second)});
+            files.insert({galaxy::util::ConvertToCellPath(sub_file.first, result.configs().from_cell_config()), StatbufToString(sub_file.second)});
         }
-        return result;
+        return files;
     }
     catch (std::string errorMsg)
     {
@@ -707,10 +666,10 @@ std::map<std::string, std::string> galaxy::client::impl::LListFilesInDirRecursiv
 }
 
 
-void galaxy::client::impl::LCreateFileIfNotExist(const std::string& path, const int mode) {
+void galaxy::client::impl::LCreateFileIfNotExist(const FileAnalyzerResult& result, const int mode) {
     try {
         GalaxyFs fs("");
-        auto status = fs.CreateFileIfNotExist(path, mode);
+        auto status = fs.CreateFileIfNotExist(result.path(), mode);
         if (!status.ok()) {
             throw "CreateFileIfNotExist failed with error " + status.ToString() + '.';
         }
@@ -721,15 +680,15 @@ void galaxy::client::impl::LCreateFileIfNotExist(const std::string& path, const 
     }
 }
 
-std::string galaxy::client::impl::LFileOrDie(const std::string& path) {
+std::string galaxy::client::impl::LFileOrDie(const FileAnalyzerResult& result) {
     try {
         GalaxyFs fs("");
         std::string out_path;
-        auto status = fs.DieFileIfNotExist(path, out_path);
+        auto status = fs.DieFileIfNotExist(result.path(), out_path);
         if (!status.ok()) {
             throw "FileOrDie failed with error " + status.ToString() + '.';
         }
-        return galaxy::util::ConvertToCellPath(out_path);
+        return galaxy::util::ConvertToCellPath(out_path, result.configs().from_cell_config());
     }
     catch (std::string errorMsg)
     {
@@ -738,10 +697,10 @@ std::string galaxy::client::impl::LFileOrDie(const std::string& path) {
     }
 }
 
-void galaxy::client::impl::LRmFile(const std::string& path, bool is_hidden) {
+void galaxy::client::impl::LRmFile(const FileAnalyzerResult& result, bool is_hidden) {
     try {
         GalaxyFs fs("");
-        auto status = fs.RmFile(path, !is_hidden);
+        auto status = fs.RmFile(result.path(), !is_hidden);
         if (!status.ok()) {
             throw "RmFile failed with error " + status.ToString() + '.';
         }
@@ -752,10 +711,10 @@ void galaxy::client::impl::LRmFile(const std::string& path, bool is_hidden) {
     }
 }
 
-void galaxy::client::impl::LRenameFile(const std::string& old_path, const std::string& new_path) {
+void galaxy::client::impl::LRenameFile(const FileAnalyzerResult& old_result, const FileAnalyzerResult& new_result) {
     try {
         GalaxyFs fs("");
-        auto status = fs.RenameFile(old_path, new_path);
+        auto status = fs.RenameFile(old_result.path(), new_result.path());
         if (!status.ok()) {
             throw "RenameFile failed with error " + status.ToString() + '.';
         }
@@ -766,11 +725,11 @@ void galaxy::client::impl::LRenameFile(const std::string& old_path, const std::s
     }
 }
 
-std::string galaxy::client::impl::LRead(const std::string& path) {
+std::string galaxy::client::impl::LRead(const FileAnalyzerResult& result) {
     try {
         GalaxyFs fs("");
         std::string data;
-        auto status = fs.Read(path, data);
+        auto status = fs.Read(result.path(), data);
         if (!status.ok()) {
             throw "Read failed with error " + status.ToString() + '.';
         }
@@ -783,26 +742,26 @@ std::string galaxy::client::impl::LRead(const std::string& path) {
     }
 }
 
-std::map<std::string, std::string> galaxy::client::impl::LReadMultiple(const std::vector<std::string>& paths) {
+std::map<std::string, std::string> galaxy::client::impl::LReadMultiple(const std::vector<FileAnalyzerResult>& results) {
     GalaxyFs fs("");
     std::map<std::string, std::string> data_map;
-    for (const auto& path : paths) {
+    for (const auto& result : results) {
         std::string data;
-        auto status = fs.Read(path, data);
+        auto status = fs.Read(result.path(), data);
         if (!status.ok()) {
-            LOG(ERROR) << "Read " << path <<" failed with error " << status.ToString();
-            data_map.insert({galaxy::util::ConvertToCellPath(path), ""});
+            LOG(ERROR) << "Read " << result.path() <<" failed with error " << status.ToString();
+            data_map.insert({galaxy::util::ConvertToCellPath(result.path(), result.configs().from_cell_config()), ""});
         } else {
-            data_map.insert({galaxy::util::ConvertToCellPath(path), data});
+            data_map.insert({galaxy::util::ConvertToCellPath(result.path(), result.configs().from_cell_config()), data});
         }
     }
     return data_map;
 }
 
-void galaxy::client::impl::LWrite(const std::string& path, const std::string& data, const std::string& mode) {
+void galaxy::client::impl::LWrite(const FileAnalyzerResult& result, const std::string& data, const std::string& mode) {
     try {
         GalaxyFs fs("");
-        auto status = fs.Write(path, data, mode);
+        auto status = fs.Write(result.path(), data, mode);
         if (!status.ok()) {
             throw "Write failed with error " + status.ToString() + '.';
         }
@@ -814,21 +773,21 @@ void galaxy::client::impl::LWrite(const std::string& path, const std::string& da
 
 }
 
-void galaxy::client::impl::LWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode) {
+void galaxy::client::impl::LWriteMultiple(const std::vector<std::pair<galaxy_schema::FileAnalyzerResult, std::string>>& path_data_map, const std::string& mode) {
     GalaxyFs fs("");
     for (const auto& val : path_data_map) {
-        auto status = fs.Write(val.first, val.second, mode);
+        auto status = fs.Write(val.first.path(), val.second, mode);
         if (!status.ok()) {
-            LOG(ERROR) << "Write " << val.first <<" failed with error " << status.ToString();
+            LOG(ERROR) << "Write " << val.first.path() <<" failed with error " << status.ToString();
         }
     }
 }
 
-std::string galaxy::client::impl::LGetAttr(const std::string& path) {
+std::string galaxy::client::impl::LGetAttr(const FileAnalyzerResult& result) {
     try {
         GalaxyFs fs("");
         struct stat statbuf;
-        auto status = fs.GetAttr(path, &statbuf);
+        auto status = fs.GetAttr(result.path(), &statbuf);
         if (!status.ok()) {
             throw "GetAttr failed with error " + status.ToString() + '.';
         }
@@ -844,276 +803,220 @@ std::string galaxy::client::impl::LGetAttr(const std::string& path) {
 
 // actual functions calls
 void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RCreateDirIfNotExist(*path_or, mode);
+        galaxy::client::impl::RCreateDirIfNotExist(result, mode);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            galaxy::client::impl::LCreateDirIfNotExist(*local_path_or, mode);
-        }
+        galaxy::client::impl::LCreateDirIfNotExist(result, mode);
     }
 }
 
 std::string galaxy::client::DirOrDie(const std::string& path) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RDirOrDie(*path_or);
+        return galaxy::client::impl::RDirOrDie(result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LDirOrDie(*local_path_or);
-        }
+        return galaxy::client::impl::LDirOrDie(result);
     }
 }
 
 void galaxy::client::RmDir(const std::string& path, bool include_hidden) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RRmDir(*path_or, include_hidden);
+        galaxy::client::impl::RRmDir(result, include_hidden);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            galaxy::client::impl::LRmDir(*local_path_or, include_hidden);
-        }
+        galaxy::client::impl::LRmDir(result, include_hidden);
     }
 }
 
 void galaxy::client::RmDirRecursive(const std::string& path, bool include_hidden) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RRmDirRecursive(*path_or, include_hidden);
+        galaxy::client::impl::RRmDirRecursive(result, include_hidden);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            galaxy::client::impl::LRmDirRecursive(*local_path_or, include_hidden);
-        }
+        galaxy::client::impl::LRmDirRecursive(result, include_hidden);
     }
 }
 
 std::map<std::string, std::string> galaxy::client::ListDirsInDir(const std::string& path) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RListDirsInDir(*path_or);
+        return galaxy::client::impl::RListDirsInDir(result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LListDirsInDir(*local_path_or);
-        }
+        return galaxy::client::impl::LListDirsInDir(result);
     }
 }
 
 std::map<std::string, std::string> galaxy::client::ListFilesInDir(const std::string& path, bool include_hidden) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RListFilesInDir(*path_or, include_hidden);
+        return galaxy::client::impl::RListFilesInDir(result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LListFilesInDir(*local_path_or, include_hidden);
-        }
+        return galaxy::client::impl::LListFilesInDir(result);
     }
 }
 
 std::map<std::string, std::string> galaxy::client::ListDirsInDirRecursive(const std::string& path) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RListDirsInDirRecursive(*path_or);
+        return galaxy::client::impl::RListDirsInDirRecursive(result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LListDirsInDirRecursive(*local_path_or);
-        }
+        return galaxy::client::impl::LListDirsInDirRecursive(result);
     }
 }
 
 std::map<std::string, std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path, bool include_hidden) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RListFilesInDirRecursive(*path_or, include_hidden);
+        return galaxy::client::impl::RListFilesInDirRecursive(result, include_hidden);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LListFilesInDirRecursive(*local_path_or, include_hidden);
-        }
+        return galaxy::client::impl::LListFilesInDirRecursive(result, include_hidden);
     }
 }
 
 void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mode) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RCreateFileIfNotExist(*path_or, mode);
+        galaxy::client::impl::RCreateFileIfNotExist(result, mode);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            galaxy::client::impl::LCreateFileIfNotExist(*local_path_or, mode);
-        }
+        galaxy::client::impl::LCreateFileIfNotExist(result, mode);
     }
 }
 
 std::string galaxy::client::FileOrDie(const std::string& path) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RFileOrDie(*path_or);
+        return galaxy::client::impl::RFileOrDie(result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LFileOrDie(*local_path_or);
-        }
+        return galaxy::client::impl::LFileOrDie(result);
     }
 }
 
 void galaxy::client::RmFile(const std::string& path, bool is_hidden) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RRmFile(*path_or, is_hidden);
+        galaxy::client::impl::RRmFile(result, is_hidden);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            galaxy::client::impl::LRmFile(*local_path_or, is_hidden);
-        }
+        galaxy::client::impl::LRmFile(result, is_hidden);
     }
 }
 
 void galaxy::client::RenameFile(const std::string& old_path, const std::string& new_path) {
-    absl::StatusOr<std::string> old_path_or = galaxy::util::InitClient(old_path);
-    std::string old_cell = absl::GetFlag(FLAGS_fs_cell);
-    absl::StatusOr<std::string> new_path_or = galaxy::util::InitClient(new_path);
-    std::string new_cell = absl::GetFlag(FLAGS_fs_cell);
-    if (old_path_or.ok() && new_path_or.ok()) {
+    FileAnalyzerResult old_result = galaxy::util::InitClient(old_path);
+    FileAnalyzerResult new_result = galaxy::util::InitClient(new_path);
+    CHECK_EQ(old_result.is_remote(), new_result.is_remote()) << "Both paths need to be either remote or local.";
+    if (old_result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        CHECK_EQ(old_cell, new_cell) << "Files are in different cells.";
-        galaxy::client::impl::RRenameFile(*old_path_or, *new_path_or);
+        CHECK_EQ(old_result.configs().to_cell_config().cell(), new_result.configs().to_cell_config().cell()) << "Files are in different cells.";
+        galaxy::client::impl::RRenameFile(old_result, new_result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_old_path_or = galaxy::util::ConvertToLocalPath(old_path);
-        absl::StatusOr<std::string> local_new_path_or = galaxy::util::ConvertToLocalPath(new_path);
-        if (!local_old_path_or.ok() || !local_new_path_or.ok()) {
-            throw "Invalid Path " + old_path + " and " + new_path;
-        } else {
-            galaxy::client::impl::LRenameFile(*local_old_path_or, *local_new_path_or);
-        }
+        galaxy::client::impl::LRenameFile(old_result, new_result);
     }
 
 }
 
 std::string galaxy::client::Read(const std::string& path) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RRead(*path_or);
+        return galaxy::client::impl::RRead(result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LRead(*local_path_or);
-        }
+        return galaxy::client::impl::LRead(result);
     }
 }
 
 std::map<std::string, std::string> galaxy::client::ReadMultiple(const std::vector<std::string>& paths) {
-    std::vector<std::string> remote_paths, local_paths;
+    std::vector<FileAnalyzerResult> local_results, remote_results;
+    std::string cell = "";
     for (const auto& path : paths) {
-        absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-        if (path_or.ok()) {
-            VLOG(2) << "Using remote mode for " << path;
-            remote_paths.push_back(*path_or);
-        } else {
-            VLOG(1) << "Using local mode for " << path;
-            absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-            if (local_path_or.ok()) {
-                local_paths.push_back(*local_path_or);
+        FileAnalyzerResult result = galaxy::util::InitClient(path);
+        if (result.is_remote()) {
+            if (cell.empty()) {
+                cell = result.configs().to_cell_config().cell();
+            } else {
+                CHECK_EQ(cell, result.configs().to_cell_config().cell()) << "Only support multiple read to the same cell.";
             }
+            remote_results.push_back(result);
+        } else {
+            local_results.push_back(result);
         }
     }
 
-    std::map<std::string, std::string> result;
-    if (!remote_paths.empty()) {
-        std::map<std::string, std::string> remote_result = galaxy::client::impl::RReadMultiple(remote_paths);
-        result.insert(remote_result.begin(), remote_result.end());
+    std::map<std::string, std::string> data_map;
+    if (!remote_results.empty()) {
+        std::map<std::string, std::string> remote_result = galaxy::client::impl::RReadMultiple(remote_results);
+        data_map.insert(remote_result.begin(), remote_result.end());
     }
-    if (!local_paths.empty()) {
-        std::map<std::string, std::string> local_result = galaxy::client::impl::LReadMultiple(local_paths);
-        result.insert(local_result.begin(), local_result.end());
+    if (!local_results.empty()) {
+        std::map<std::string, std::string> local_result = galaxy::client::impl::LReadMultiple(local_results);
+        data_map.insert(local_result.begin(), local_result.end());
     }
-    return result;
+    return data_map;
 }
 
+
 void galaxy::client::Write(const std::string& path, const std::string& data, const std::string& mode) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        galaxy::client::impl::RWrite(*path_or, data, mode);
+        galaxy::client::impl::RWrite(result, data, mode);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            galaxy::client::impl::LWrite(*local_path_or, data, mode);
-        }
+        galaxy::client::impl::LWrite(result, data, mode);
     }
 }
 
 void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode) {
-    std::map<std::string, std::string> local_data, remote_data;
+    std::vector<std::pair<FileAnalyzerResult, std::string>> local_data, remote_data;
+    std::string cell = "";
     for (const auto& val : path_data_map) {
-        absl::StatusOr<std::string> path_or = galaxy::util::InitClient(val.first);
-        if (path_or.ok()) {
-            VLOG(2) << "Using remote mode for " << val.first;
-            remote_data.insert({*path_or, val.second});
-        } else {
-            VLOG(1) << "Using local mode for " << val.first;
-            absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(val.first);
-            if (local_path_or.ok()) {
-                local_data.insert({*local_path_or, val.second});
+        FileAnalyzerResult result = galaxy::util::InitClient(val.first);
+        if (result.is_remote()) {
+            if (cell.empty()) {
+                cell = result.configs().to_cell_config().cell();
+            } else {
+                CHECK_EQ(cell, result.configs().to_cell_config().cell()) << "Only support multiple write to the same cell.";
             }
+            remote_data.push_back(std::make_pair(result, val.second));
+        } else {
+            local_data.push_back(std::make_pair(result, val.second));
         }
     }
     if (!remote_data.empty()) {
@@ -1125,30 +1028,20 @@ void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& pat
 }
 
 std::string galaxy::client::GetAttr(const std::string& path) {
-    absl::StatusOr<std::string> path_or = galaxy::util::InitClient(path);
-    if (path_or.ok()) {
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    // If the path is a local path.
+    if(result.is_remote()) {
         VLOG(2) << "Using remote mode";
-        return galaxy::client::impl::RGetAttr(*path_or);
+        return galaxy::client::impl::RGetAttr(result);
     } else {
         VLOG(1) << "Using local mode";
-        absl::StatusOr<std::string> local_path_or = galaxy::util::ConvertToLocalPath(path);
-        if (!local_path_or.ok()) {
-            throw "Invalid Path " + path;
-        } else {
-            return galaxy::client::impl::LGetAttr(*local_path_or);
-        }
+        return galaxy::client::impl::LGetAttr(result);
     }
 }
 
 
 std::vector<std::string> galaxy::client::ListCells() {
-    absl::StatusOr<std::vector<std::string>> cells_ok = galaxy::util::ParseGlobalConfigAndGetCells();
-    if (cells_ok.ok()) {
-        return *cells_ok;
-    } else {
-        VLOG(1) << "Failed to list the cells.";
-        return std::vector<std::string>();
-    }
+    return galaxy::util::GetAllCells();
 }
 
 std::string galaxy::client::CheckHealth(const std::string& cell) {

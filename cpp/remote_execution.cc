@@ -13,6 +13,8 @@ using grpc::Status;
 using galaxy_schema::RemoteExecutionRequest;
 using galaxy_schema::RemoteExecutionResponse;
 
+using galaxy_schema::CellConfig;
+
 namespace galaxy
 {
     RemoteExecutionResponse remote_execution::GalaxyRemoteExe::RemoteExecution(const RemoteExecutionRequest &request)
@@ -32,13 +34,11 @@ namespace galaxy
         }
     }
 
-    remote_execution::GalaxyRemoteExe remote_execution::GetRemoteExeClient(const std::string &cell)
+    remote_execution::GalaxyRemoteExe remote_execution::GetRemoteExeClient(const CellConfig& config)
     {
-        absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false, cell);
-        CHECK(result.ok()) << "Fail to parse the global config.";
         grpc::ChannelArguments ch_args;
         ch_args.SetMaxReceiveMessageSize(-1);
-        remote_execution::GalaxyRemoteExe client(grpc::CreateCustomChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials(), ch_args));
+        remote_execution::GalaxyRemoteExe client(grpc::CreateCustomChannel(config.fs_ip() + std::to_string(config.fs_port()), grpc::InsecureChannelCredentials(), ch_args));
         return client;
     }
 }

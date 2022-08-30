@@ -3,49 +3,50 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "schema/fileserver.pb.h"
 
 
 namespace galaxy {
     namespace client {
         namespace impl {
             // Remote clients
-            void RCreateDirIfNotExist(const std::string& path, const int mode=0777);
-            std::string RDirOrDie(const std::string& path);
-            void RRmDir(const std::string& path, bool include_hidden=false);
-            void RRmDirRecursive(const std::string& path, bool include_hidden=false);
-            std::map<std::string, std::string> RListDirsInDir(const std::string& path);
-            std::map<std::string, std::string> RListFilesInDir(const std::string& path, bool include_hidden=false);
-            std::map<std::string, std::string> RListDirsInDirRecursive(const std::string& path);
-            std::map<std::string, std::string> RListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
-            void RCreateFileIfNotExist(const std::string& path, const int mode=0777);
-            std::string RFileOrDie(const std::string& path);
-            void RRmFile(const std::string& path, bool is_hidden=false);
-            void RRenameFile(const std::string& old_path, const std::string& new_path);
-            std::string RRead(const std::string& path);
-            std::map<std::string, std::string> RReadMultiple(const std::vector<std::string>& paths);
-            void RWrite(const std::string& path, const std::string& data, const std::string& mode="w");
-            void RWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode="w");
-            std::string RGetAttr(const std::string& path);
+            void RCreateDirIfNotExist(const galaxy_schema::FileAnalyzerResult& result, const int mode=0777);
+            std::string RDirOrDie(const galaxy_schema::FileAnalyzerResult& result);
+            void RRmDir(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            void RRmDirRecursive(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            std::map<std::string, std::string> RListDirsInDir(const galaxy_schema::FileAnalyzerResult& result);
+            std::map<std::string, std::string> RListFilesInDir(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            std::map<std::string, std::string> RListDirsInDirRecursive(const galaxy_schema::FileAnalyzerResult& result);
+            std::map<std::string, std::string> RListFilesInDirRecursive(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            void RCreateFileIfNotExist(const galaxy_schema::FileAnalyzerResult& result, const int mode=0777);
+            std::string RFileOrDie(const galaxy_schema::FileAnalyzerResult& result);
+            void RRmFile(const galaxy_schema::FileAnalyzerResult& result, bool is_hidden=false);
+            void RRenameFile(const galaxy_schema::FileAnalyzerResult& old_result, const galaxy_schema::FileAnalyzerResult& new_result);
+            std::string RRead(const galaxy_schema::FileAnalyzerResult& result);
+            std::map<std::string, std::string> RReadMultiple(const std::vector<galaxy_schema::FileAnalyzerResult>& results);
+            void RWrite(const galaxy_schema::FileAnalyzerResult& result, const std::string& data, const std::string& mode="w");
+            void RWriteMultiple(const std::vector<std::pair<galaxy_schema::FileAnalyzerResult, std::string>>& path_data_map, const std::string& mode="w");
+            std::string RGetAttr(const galaxy_schema::FileAnalyzerResult& result);
             std::string RCheckHealth(const std::string& cell);
 
             // Local clients
-            void LCreateDirIfNotExist(const std::string& path, const int mode=0777);
-            std::string LDirOrDie(const std::string& path);
-            void LRmDir(const std::string& path, bool include_hidden=false);
-            void LRmDirRecursive(const std::string& path, bool include_hidden=false);
-            std::map<std::string, std::string> LListDirsInDir(const std::string& path);
-            std::map<std::string, std::string> LListFilesInDir(const std::string& path, bool include_hidden=false);
-            std::map<std::string, std::string> LListDirsInDirRecursive(const std::string& path);
-            std::map<std::string, std::string> LListFilesInDirRecursive(const std::string& path, bool include_hidden=false);
-            void LCreateFileIfNotExist(const std::string& path, const int mode=0777);
-            std::string LFileOrDie(const std::string& path);
-            void LRmFile(const std::string& path, bool is_hidden=false);
-            void LRenameFile(const std::string& old_path, const std::string& new_path);
-            std::string LRead(const std::string& path);
-            std::map<std::string, std::string> LReadMultiple(const std::vector<std::string>& paths);
-            void LWrite(const std::string& path, const std::string& data, const std::string& mode="w");
-            void LWriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode="w");
-            std::string LGetAttr(const std::string& path);
+            void LCreateDirIfNotExist(const galaxy_schema::FileAnalyzerResult& result, const int mode=0777);
+            std::string LDirOrDie(const galaxy_schema::FileAnalyzerResult& result);
+            void LRmDir(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            void LRmDirRecursive(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            std::map<std::string, std::string> LListDirsInDir(const galaxy_schema::FileAnalyzerResult& result);
+            std::map<std::string, std::string> LListFilesInDir(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            std::map<std::string, std::string> LListDirsInDirRecursive(const galaxy_schema::FileAnalyzerResult& result);
+            std::map<std::string, std::string> LListFilesInDirRecursive(const galaxy_schema::FileAnalyzerResult& result, bool include_hidden=false);
+            void LCreateFileIfNotExist(const galaxy_schema::FileAnalyzerResult& result, const int mode=0777);
+            std::string LFileOrDie(const galaxy_schema::FileAnalyzerResult& result);
+            void LRmFile(const galaxy_schema::FileAnalyzerResult& result, bool is_hidden=false);
+            void LRenameFile(const galaxy_schema::FileAnalyzerResult& old_result, const galaxy_schema::FileAnalyzerResult& new_result);
+            std::string LRead(const galaxy_schema::FileAnalyzerResult& result);
+            std::map<std::string, std::string> LReadMultiple(const std::vector<galaxy_schema::FileAnalyzerResult>& results);
+            void LWrite(const galaxy_schema::FileAnalyzerResult& result, const std::string& data, const std::string& mode="w");
+            void LWriteMultiple(const std::vector<std::pair<galaxy_schema::FileAnalyzerResult, std::string>>& path_data_map, const std::string& mode="w");
+            std::string LGetAttr(const galaxy_schema::FileAnalyzerResult& result);
         }
         void CreateDirIfNotExist(const std::string& path, const int mode=0777);
         std::string DirOrDie(const std::string& path);

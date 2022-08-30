@@ -1,18 +1,21 @@
 #include <string>
-#include "cpp/tool/fileutil.h"
-#include "cpp/core/galaxy_flag.h"
-#include "cpp/util/galaxy_util.h"
-#include "glog/logging.h"
 #include "absl/flags/flag.h"
+#include "glog/logging.h"
+#include "cpp/core/galaxy_flag.h"
+#include "cpp/tool/fileutil.h"
+#include "cpp/util/galaxy_util.h"
 
 int main(int argc, char* argv[]) {
-    absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false, "");
-    CHECK(result.ok()) << "Fail to parse the global config.";
-    FLAGS_colorlogtostderr = true;
-    FLAGS_log_dir = absl::GetFlag(FLAGS_fs_log_dir);
-    FLAGS_alsologtostderr = absl::GetFlag(FLAGS_fs_alsologtostderr);
-    FLAGS_stderrthreshold = 3;
-    google::EnableLogCleaner(absl::GetFlag(FLAGS_fs_log_ttl));
+    absl::StatusOr<galaxy_schema::CellConfig> config = galaxy::util::ParseCellConfig(absl::GetFlag(FLAGS_fs_cell));
+    if (config.ok()) {
+        FLAGS_colorlogtostderr = true;
+        FLAGS_log_dir = config->fs_log_dir();;
+        FLAGS_alsologtostderr = config->fs_alsologtostderr();
+        FLAGS_stderrthreshold = 3;
+        google::EnableLogCleaner(config->fs_log_ttl());
+    } else {
+        LOG(WARNING) << "Calling from a server outside galaxy.";
+    }
     google::InitGoogleLogging(argv[0]);
     CHECK_GT(argc, 1) << "Need more than 1 arguments";
     LOG(INFO) << "Getting cmd:";

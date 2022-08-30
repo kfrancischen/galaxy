@@ -18,7 +18,7 @@ namespace galaxy
             std::unique_ptr<galaxy_schema::FileSystem::Stub> stub_;
         };
 
-        GalaxyRemoteExe GetRemoteExeClient(const std::string &cell);
+        GalaxyRemoteExe GetRemoteExeClient(const galaxy_schema::CellConfig& config);
     } // namespace remote_execution
 } // namespace galaxy
 

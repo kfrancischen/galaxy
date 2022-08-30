@@ -9,6 +9,7 @@ cc_library(
     deps= [
         "//cpp/core:galaxy_fs_lib",
         "//cpp/util:galaxy_util_lib",
+        "@google_glog//:glog",
     ]
 )
 
@@ -25,6 +26,5 @@ cc_binary(
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
-        "@google_glog//:glog",
     ]
 )

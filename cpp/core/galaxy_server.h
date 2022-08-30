@@ -2,8 +2,8 @@
 #define CPP_CORE_GALAXY_SERVER_H_
 
 #include <grpcpp/grpcpp.h>
-#include "schema/fileserver.grpc.pb.h"
 #include "absl/status/status.h"
+#include "schema/fileserver.grpc.pb.h"
 
 namespace galaxy
 {

@@ -3,18 +3,21 @@
 #include <string>
 #include <thread>
 
-#include "cpp/tool/fileutil.h"
-#include "cpp/core/galaxy_flag.h"
-#include "cpp/internal/galaxy_const.h"
-#include "cpp/util/galaxy_util.h"
-#include "cpp/client.h"
 #include "absl/flags/flag.h"
 #include "glog/logging.h"
+
+#include "cpp/client.h"
+#include "cpp/core/galaxy_flag.h"
+#include "cpp/internal/galaxy_const.h"
+#include "cpp/tool/fileutil.h"
+#include "cpp/util/galaxy_util.h"
 
 using grpc::ClientContext;
 using grpc::Status;
 using grpc::ClientReader;
 using grpc::ClientWriter;
+using galaxy_schema::CellConfig;
+using galaxy_schema::FileAnalyzerResult;
 
 using galaxy_schema::FileSystemStatus;
 using galaxy_schema::DownloadRequest;
@@ -59,11 +62,9 @@ namespace galaxy
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         std::unique_ptr<ClientReader<DownloadResponse>> reader(stub_->DownloadFile(&context, request));
         DownloadResponse reply;
-        std::string from_cell = absl::GetFlag(FLAGS_fs_cell);
         while (reader->Read(&reply))
         {
             client::Write(request.to_name(), reply.data(), "a");
-            absl::SetFlag(&FLAGS_fs_cell, from_cell);
         }
         Status status = reader->Finish();
         if (status.ok())
@@ -117,29 +118,25 @@ namespace galaxy
         }
     }
 
-    impl::GalaxyFileutil GetFileutilClient() {
-        absl::StatusOr<std::string> result = galaxy::util::ParseGlobalConfig(false, "");
-        CHECK(result.ok()) << "Fail to parse the global config.";
+    impl::GalaxyFileutil GetFileutilClient(const CellConfig& config) {
         grpc::ChannelArguments ch_args;
         ch_args.SetMaxReceiveMessageSize(-1);
-        impl::GalaxyFileutil client(grpc::CreateCustomChannel(absl::GetFlag(FLAGS_fs_address), grpc::InsecureChannelCredentials(), ch_args));
+        impl::GalaxyFileutil client(grpc::CreateCustomChannel(config.fs_ip() + std::to_string(config.fs_port()), grpc::InsecureChannelCredentials(), ch_args));
         return client;
     }
 
     void GetFileCmd(const std::string& from_path, const std::string& to_path) {
         try {
-            absl::StatusOr<std::string> from_path_or = galaxy::util::InitClient(from_path);
-            absl::StatusOr<std::string> to_path_or = galaxy::util::InitClient(to_path);
-            CHECK(from_path_or.ok() && !to_path_or.ok()) << "Please make sure the first path is remote and the second path is local.";
-            auto client = GetFileutilClient();
+            absl::StatusOr<FileAnalyzerResult> from_result = util::RunFileAnalyzer(from_path);
+            absl::StatusOr<FileAnalyzerResult> to_result = util::RunFileAnalyzer(to_path);
+            CHECK(from_result.ok() && to_result.ok()) << "Paths are not valid.";
+            CHECK(!from_result->is_remote() && to_result->is_remote()) << "Please make sure the first path is remote and the second path is local.";
+            auto client = GetFileutilClient(to_result->configs().to_cell_config());
             DownloadRequest request;
-            request.set_from_name(*from_path_or);
-            request.set_to_name(to_path);
-            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-            char* cell_name = getenv("GALAXY_fs_cell");
-            if (cell_name != NULL) {
-                request.set_from_cell(cell_name);
-            }
+            request.set_from_name(from_result->path());
+            request.set_to_name(to_result->path());
+            request.mutable_cred()->set_password(to_result->configs().to_cell_config().fs_password());
+            request.set_from_cell(to_result->configs().from_cell_config().cell());
             DownloadResponse response = client.DownloadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Get cmd.";
@@ -153,18 +150,16 @@ namespace galaxy
 
     void UploadFileCmd(const std::string& from_path, const std::string& to_path) {
         try {
-            absl::StatusOr<std::string> from_path_or = util::InitClient(from_path);
-            absl::StatusOr<std::string> to_path_or = util::InitClient(to_path);
-            CHECK(!from_path_or.ok() && to_path_or.ok()) << "Please make sure the first path is local and the second path is remote.";
-            auto client = GetFileutilClient();
+            absl::StatusOr<FileAnalyzerResult> from_result = util::RunFileAnalyzer(from_path);
+            absl::StatusOr<FileAnalyzerResult> to_result = util::RunFileAnalyzer(to_path);
+            CHECK(from_result.ok() && to_result.ok()) << "Paths are not valid.";
+            CHECK(!from_result->is_remote() && to_result->is_remote()) << "Please make sure the first path is local and the second path is remote.";
+            auto client = GetFileutilClient(to_result->configs().to_cell_config());
             UploadRequest request;
-            request.set_from_name(from_path);
-            request.set_to_name(*to_path_or);
-            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-            char* cell_name = getenv("GALAXY_fs_cell");
-            if (cell_name != NULL) {
-                request.set_from_cell(cell_name);
-            }
+            request.set_from_name(from_result->path());
+            request.set_to_name(to_result->path());
+            request.mutable_cred()->set_password(to_result->configs().to_cell_config().fs_password());
+            request.set_from_cell(to_result->configs().from_cell_config().cell());
             UploadResponse response = client.UploadFile(request);
             FileSystemStatus status = response.status();
             CHECK_EQ(status.return_code(), 1) << "Fail to call Upload cmd.";
@@ -213,18 +208,15 @@ namespace galaxy
                 LOG(FATAL) << "File already exists. Please use --f to overwrite.";
                 return;
             }
-            absl::StatusOr<std::string> to_path_or = galaxy::util::InitClient(to_path);
-            absl::StatusOr<std::string> from_path_or = galaxy::util::InitClient(from_path);
-            CHECK(from_path_or.ok() && to_path_or.ok()) << "Please make sure the paths are remote.";
-            auto client = GetFileutilClient();
+            absl::StatusOr<FileAnalyzerResult> from_result = util::RunFileAnalyzer(from_path);
+            absl::StatusOr<FileAnalyzerResult> to_result = util::RunFileAnalyzer(to_path);
+            CHECK(from_result.ok() && to_result.ok()) << "Please make sure the paths are remote.";
+            auto client = GetFileutilClient(to_result->configs().to_cell_config());
             DownloadRequest request;
-            request.set_from_name(*from_path_or);
+            request.set_from_name(from_result->path());
             request.set_to_name(to_path);
-            request.mutable_cred()->set_password(absl::GetFlag(FLAGS_fs_password));
-            char* cell_name = getenv("GALAXY_fs_cell");
-            if (cell_name != NULL) {
-                request.set_from_cell(cell_name);
-            }
+            request.mutable_cred()->set_password(to_result->configs().to_cell_config().fs_password());
+            request.set_from_cell(to_result->configs().from_cell_config().cell());
             client::RmFile(to_path);
             DownloadResponse response = client.CopyFile(request);
             FileSystemStatus status = response.status();

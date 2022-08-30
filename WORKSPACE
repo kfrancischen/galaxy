@@ -85,8 +85,9 @@ http_archive(
 # OpenCensus depends on jupp0r/prometheus-cpp
 http_archive(
     name = "com_github_jupp0r_prometheus_cpp",
-    strip_prefix = "prometheus-cpp-master",
-    urls = ["https://github.com/jupp0r/prometheus-cpp/archive/master.zip"],
+    strip_prefix = "prometheus-cpp-91dd416d7636342df57cf2064453f91e3bfda464",
+    urls = ["https://github.com/jupp0r/prometheus-cpp/archive/91dd416d7636342df57cf2064453f91e3bfda464.zip"],
+    sha256 = "f97a8feb370f53d840f1ff14436104df30e247584a07781978448379918d1167",
 )
 
 load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
