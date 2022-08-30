@@ -6,116 +6,103 @@
 
 namespace {
 
-    TEST(GalaxyUtilTest, GetCellAndPathFromPathRemote) {
-        std::string path = "/galaxy/aa-d/test";
-        auto result = galaxy::util::GetCellAndPathFromPath(path);
-        EXPECT_TRUE(result.ok());
-        EXPECT_EQ((*result).first, "aa");
-        EXPECT_EQ((*result).second, "test");
+    TEST(GalaxyUtilTest, GetAllCells) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        auto cells = galaxy::util::GetAllCells();
+        EXPECT_EQ(cells[0], "zz");
+        EXPECT_EQ(cells[1], "zzz");
     }
 
-    TEST(GalaxyUtilTest, GetCellAndPathFromPathLocal) {
-        std::string path = "/home/test";
-        auto result = galaxy::util::GetCellAndPathFromPath(path);
+    TEST(GalaxyUtilTest, GetGalaxyFsPrefixPath) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        auto path = galaxy::util::GetGalaxyFsPrefixPath("zz");
+        EXPECT_EQ(path, "/galaxy/zz-d");
+    }
+
+    TEST(GalaxyUtilTest, RunFileAnalyzerSuccess) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        auto result = galaxy::util::RunFileAnalyzer("/galaxy/zz-d/test");
+        EXPECT_TRUE(result.ok());
+        EXPECT_EQ(result->path(), "/home/galaxy/test");
+    }
+
+    TEST(GalaxyUtilTest, RunFileAnalyzerFailure) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        auto result = galaxy::util::RunFileAnalyzer("/galaxy/yz-d/test");
         EXPECT_FALSE(result.ok());
     }
 
-    TEST(GalaxyUtilTest, ConvertToCellPathInGalaxy) {
+    TEST(GalaxyUtilTest, ParseCellConfigSuccess) {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
-        std::string path = "/home/galaxy/test";
-        auto result = galaxy::util::ConvertToCellPath(path);
-        EXPECT_EQ(result, "/galaxy/zz-d/test");
-    }
-
-    TEST(GalaxyUtilTest, ConvertToCellPathOutsideGalaxy) {
-        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        setenv("GALAXY_fs_cell", "zzz", 1);
-        std::string path = "/mnt/galaxy/test";
-        auto result = galaxy::util::ConvertToCellPath(path);
-        EXPECT_EQ(result, "/mnt/galaxy/test");
-    }
-
-    TEST(GalaxyUtilTest, ConvertToLocalPathInGalaxy) {
-        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
         setenv("GALAXY_fs_cell", "zz", 1);
-        std::string path = "/galaxy/zz-d/test";
-        auto result = galaxy::util::ConvertToLocalPath(path);
+        auto result = galaxy::util::ParseCellConfig("zz");
         EXPECT_TRUE(result.ok());
-        EXPECT_EQ(*result, "/home/galaxy/test");
+        EXPECT_EQ(result->fs_root(), "/home/galaxy");
     }
 
-    TEST(GalaxyUtilTest, ConvertToLocalPathLocal) {
+    TEST(GalaxyUtilTest, ParseCellConfigFailure) {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
         setenv("GALAXY_fs_cell", "zz", 1);
-        std::string path = "/LOCAL/test";
-        auto result = galaxy::util::ConvertToLocalPath(path);
-        EXPECT_TRUE(result.ok());
-        EXPECT_EQ(*result, "/home/galaxy/test");
+        auto result = galaxy::util::ParseCellConfig("yz");
+        EXPECT_FALSE(result.ok());
     }
 
-    TEST(GalaxyUtilTest, ConvertToLocalPathDiffCell) {
+    TEST(GalaxyUtilTest, InitClientCase1) {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
-        setenv("GALAXY_fs_cell", "zz", 1);
-        std::string path = "/galaxy/zzz-d/test";
-        auto result = galaxy::util::ConvertToLocalPath(path);
-        EXPECT_TRUE(result.ok());
-        EXPECT_EQ(*result, "/galaxy/zzz-d/test");
-    }
-
-    TEST(GalaxyUtilTest, ConvertToLocalPathOutsideGalaxy) {
-        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
         setenv("GALAXY_fs_cell", "zz", 1);
         std::string path = "/home/test";
-        auto result = galaxy::util::ConvertToLocalPath(path);
-        EXPECT_TRUE(result.ok());
-        EXPECT_EQ(*result, "/home/test");
-    }
-
-    TEST(GalaxyUtilTest, InitClientV2Case1) {
-        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
-        setenv("GALAXY_fs_cell", "zz", 1);
-        std::string path = "/home/test";
-        auto result = galaxy::util::InitClientV2(path);
+        auto result = galaxy::util::InitClient(path);
         EXPECT_EQ(result.path(), "/home/test");
         EXPECT_FALSE(result.is_remote());
     }
 
-    TEST(GalaxyUtilTest, InitClientV2Case2) {
+    TEST(GalaxyUtilTest, InitClientCase2) {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
         setenv("GALAXY_fs_cell", "zz", 1);
         std::string path = "/galaxy/zz-d/test";
-        auto result = galaxy::util::InitClientV2(path);
+        auto result = galaxy::util::InitClient(path);
         EXPECT_EQ(result.path(), "/home/galaxy/test");
         EXPECT_FALSE(result.is_remote());
     }
 
-    TEST(GalaxyUtilTest, InitClientV2Case3) {
+    TEST(GalaxyUtilTest, InitClientCase3) {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
         setenv("GALAXY_fs_cell", "zz", 1);
         std::string path = "test";
-        auto result = galaxy::util::InitClientV2(path);
+        auto result = galaxy::util::InitClient(path);
         EXPECT_EQ(result.path(), "test");
         EXPECT_FALSE(result.is_remote());
     }
 
-    TEST(GalaxyUtilTest, InitClientV2Case4) {
+    TEST(GalaxyUtilTest, InitClientCase4) {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
-        absl::SetFlag(&FLAGS_fs_cell, "zz");
         setenv("GALAXY_fs_cell", "zz", 1);
         std::string path = "/galaxy/zzz-d/test";
-        auto result = galaxy::util::InitClientV2(path);
-        std::cout << result.DebugString() << std::endl;
+        auto result = galaxy::util::InitClient(path);
         EXPECT_EQ(result.path(), "/home/galaxy/test");
         EXPECT_TRUE(result.is_remote());
     }
 
+    TEST(GalaxyUtilTest, ConvertToCellPathCase1) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        std::string path = "/home/galaxy/test";
+        auto config = galaxy::util::ParseCellConfig("zz");
+        auto result = galaxy::util::ConvertToCellPath(path, *config);
+        EXPECT_EQ(result, "/galaxy/zz-d/test");
+    }
+
+    TEST(GalaxyUtilTest, ConvertToCellPathCase2) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        std::string path = "/root/test";
+        auto config = galaxy::util::ParseCellConfig("zz");
+        auto result = galaxy::util::ConvertToCellPath(path, *config);
+        EXPECT_EQ(result, "/root/test");
+    }
 
 }  // namespace

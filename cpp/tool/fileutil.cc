@@ -130,8 +130,8 @@ namespace galaxy
             absl::StatusOr<FileAnalyzerResult> from_result = util::RunFileAnalyzer(from_path);
             absl::StatusOr<FileAnalyzerResult> to_result = util::RunFileAnalyzer(to_path);
             CHECK(from_result.ok() && to_result.ok()) << "Paths are not valid.";
-            CHECK(!from_result->is_remote() && to_result->is_remote()) << "Please make sure the first path is remote and the second path is local.";
-            auto client = GetFileutilClient(to_result->configs().to_cell_config());
+            CHECK(from_result->is_remote() && !to_result->is_remote()) << "Please make sure the first path is remote and the second path is local.";
+            auto client = GetFileutilClient(from_result->configs().to_cell_config());
             DownloadRequest request;
             request.set_from_name(from_result->path());
             request.set_to_name(to_result->path());
