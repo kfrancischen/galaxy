@@ -7,6 +7,9 @@ package(default_visibility = ["//visibility:public"])
 proto_library(
     name = "fileserver_proto",
     srcs = ["fileserver.proto"],
+    deps = [
+        "@com_google_protobuf//:any_proto",
+    ]
 )
 
 cc_proto_library(

@@ -28,6 +28,8 @@ namespace galaxy {
             void RWriteMultiple(const std::vector<std::pair<galaxy_schema::FileAnalyzerResult, std::string>>& path_data_map, const std::string& mode="w");
             std::string RGetAttr(const galaxy_schema::FileAnalyzerResult& result);
             std::string RCheckHealth(const std::string& cell);
+            void RCopyFile(const galaxy_schema::FileAnalyzerResult& from_result, const galaxy_schema::FileAnalyzerResult& to_result);
+            void RMoveFile(const galaxy_schema::FileAnalyzerResult& from_result, const galaxy_schema::FileAnalyzerResult& to_result);
 
             // Local clients
             void LCreateDirIfNotExist(const galaxy_schema::FileAnalyzerResult& result, const int mode=0777);
@@ -47,6 +49,8 @@ namespace galaxy {
             void LWrite(const galaxy_schema::FileAnalyzerResult& result, const std::string& data, const std::string& mode="w");
             void LWriteMultiple(const std::vector<std::pair<galaxy_schema::FileAnalyzerResult, std::string>>& path_data_map, const std::string& mode="w");
             std::string LGetAttr(const galaxy_schema::FileAnalyzerResult& result);
+            void LCopyFile(const galaxy_schema::FileAnalyzerResult& from_result, const galaxy_schema::FileAnalyzerResult& to_result);
+            void LMoveFile(const galaxy_schema::FileAnalyzerResult& from_result, const galaxy_schema::FileAnalyzerResult& to_result);
         }
         void CreateDirIfNotExist(const std::string& path, const int mode=0777);
         std::string DirOrDie(const std::string& path);
@@ -67,6 +71,8 @@ namespace galaxy {
         std::string GetAttr(const std::string& path);
         std::vector<std::string> ListCells();
         std::string CheckHealth(const std::string& cell);
+        void CopyFile(const std::string& from_path, const std::string& to_path);
+        void MoveFile(const std::string& from_path, const std::string& to_path);
     }  // namespace client
 } // namespace galaxy
 

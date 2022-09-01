@@ -22,8 +22,20 @@ namespace galaxy {
     absl::Status GalaxyFs::CreateDirIfNotExist(const std::string& path, mode_t mode) {
         std::string abs_path = internal::JoinPath(root_, path);
         return impl::CreateDirIfNotExist(abs_path, mode);
-
     }
+
+    absl::Status GalaxyFs::CopyFile(const std::string& from_path, const std::string& to_path) {
+        std::string abs_from_path = internal::JoinPath(root_, from_path);
+        std::string abs_to_path = internal::JoinPath(root_, to_path);
+        return impl::CopyFile(abs_from_path, abs_to_path);
+    }
+
+    absl::Status GalaxyFs::MoveFile(const std::string& from_path, const std::string& to_path) {
+        std::string abs_from_path = internal::JoinPath(root_, from_path);
+        std::string abs_to_path = internal::JoinPath(root_, to_path);
+        return impl::MoveFile(abs_from_path, abs_to_path);
+    }
+
     absl::Status GalaxyFs::DieDirIfNotExist(const std::string& path, std::string& out_path) {
         std::string abs_path = internal::JoinPath(root_, path);
         return impl::DieDirIfNotExist(abs_path, out_path);

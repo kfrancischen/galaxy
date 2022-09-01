@@ -243,7 +243,6 @@ namespace galaxy
             }
             std::vector<std::thread> threads;
             for (auto& file : all_files) {
-                std::cout << file << std::endl;
                 std::string new_file(file);
                 new_file.replace(0, from_path.length(), to_path);
                 threads.push_back(std::thread(CopyCmdHelper, file, new_file, overwrite));

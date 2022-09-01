@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package galaxy_schema;
+import "google/protobuf/any.proto";
 
 service FileSystem {
     // attribute RPC
@@ -25,15 +26,18 @@ service FileSystem {
     rpc Write( WriteRequest ) returns ( WriteResponse ) {}
     rpc WriteMultiple( WriteMultipleRequest ) returns ( WriteMultipleResponse ) {}
 
-    // Download/upload file
-    rpc DownloadFile( DownloadRequest ) returns (stream DownloadResponse) {}
-    rpc UploadFile( stream UploadRequest ) returns ( UploadResponse) {}
+    // Copy/Move file
+    rpc CopyFile( CopyRequest ) returns ( stream CopyResponse ) {}
+    rpc MoveFile( CopyRequest ) returns ( stream CopyResponse ) {}
 
     // Health check
     rpc CheckHealth( HealthCheckRequest ) returns ( HealthCheckResponse ) {}
 
     // Remote execution
     rpc RemoteExecution( RemoteExecutionRequest ) returns ( RemoteExecutionResponse ) {}
+
+    // Cross cell
+    rpc CrossCellCall( CrossCellRequest ) returns ( CrossCellResponse ) {}
 }
 
 message FileSystemStatus {
@@ -284,19 +288,22 @@ message WriteMultipleRequest {
     string from_cell = 4;
 }
 
-message DownloadRequest {
+message CopyRequest {
     string from_name = 1;
     string to_name = 2;
     Credential cred = 3;
     string from_cell = 4;
 }
 
-message UploadRequest {
-    string from_name = 1;
-    string to_name = 2;
-    bytes data = 3;
-    Credential cred = 4;
-    string from_cell = 5;
+message CrossCellRequest {
+    string request_type = 1;
+    google.protobuf.Any request = 2;
+    Credential cred = 3;
+}
+
+message CrossCellResponse {
+    string response_type = 1;
+    google.protobuf.Any response = 2;
 }
 
 message WriteResponse {
@@ -307,12 +314,7 @@ message WriteMultipleResponse {
     map<string, WriteResponse> data = 1;
 }
 
-message DownloadResponse {
-    bytes data = 1;
-    FileSystemStatus status = 2;
-}
-
-message UploadResponse {
+message CopyResponse {
     FileSystemStatus status = 1;
 }
 

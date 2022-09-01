@@ -12,6 +12,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/time/clock.h"
 #include "glog/logging.h"
+#include "cpp/client.h"
 #include "cpp/core/galaxy_fs.h"
 #include "cpp/core/galaxy_server.h"
 #include "cpp/internal/galaxy_const.h"
@@ -36,8 +37,10 @@ using galaxy_schema::CreateFileRequest;
 using galaxy_schema::CreateFileResponse;
 using galaxy_schema::DirOrDieRequest;
 using galaxy_schema::DirOrDieResponse;
-using galaxy_schema::DownloadRequest;
-using galaxy_schema::DownloadResponse;
+using galaxy_schema::CopyRequest;
+using galaxy_schema::CopyResponse;
+using galaxy_schema::CrossCellRequest;
+using galaxy_schema::CrossCellResponse;
 using galaxy_schema::FileOrDieRequest;
 using galaxy_schema::FileOrDieResponse;
 using galaxy_schema::GetAttrRequest;
@@ -60,8 +63,6 @@ using galaxy_schema::RmDirRequest;
 using galaxy_schema::RmDirResponse;
 using galaxy_schema::RmFileRequest;
 using galaxy_schema::RmFileResponse;
-using galaxy_schema::UploadRequest;
-using galaxy_schema::UploadResponse;
 using galaxy_schema::WriteRequest;
 using galaxy_schema::WriteResponse;
 using galaxy_schema::WriteMultipleRequest;
@@ -507,7 +508,12 @@ namespace galaxy
             if (absl_status.ok())
             {
                 std::string abs_path;
-                GalaxyFs::Instance()->DieFileIfNotExist(path, abs_path);
+                absl::Status fs_status = GalaxyFs::Instance()->DieFileIfNotExist(path, abs_path);
+                if (!fs_status.ok())
+                {
+                    LOG(ERROR) << "WriteMultipleInternal failed during function call WriteMultipleInternal with error " << fs_status;
+                    return Status(StatusCode::INTERNAL, fs_status.ToString());
+                }
                 WriteRequest write_request;
                 write_request.set_name(path);
                 write_request.mutable_cred()->CopyFrom(request->cred());
@@ -524,19 +530,19 @@ namespace galaxy
         return Status::OK;
     }
 
-    Status GalaxyServerImpl::DownloadFileInternal(ServerContext *context, const DownloadRequest *request,
-                                                  ServerWriter<DownloadResponse> *reply)
+    Status GalaxyServerImpl::CopyFileInternal(ServerContext *context, const CopyRequest *request,
+                                              ServerWriter<CopyResponse> *reply)
     {
         if (!GalaxyServerImpl::VerifyPassword(request->cred()).ok())
         {
-            LOG(ERROR) << "Wrong password from client during function call DownloadFile.";
+            LOG(ERROR) << "Wrong password from client during function call CopyFile.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call DownloadFile.");
         }
         std::string out_path;
         absl::Status fs_status = GalaxyFs::Instance()->DieFileIfNotExist(request->from_name(), out_path);
         if (!fs_status.ok())
         {
-            LOG(ERROR) << "DownloadFile failed during function call DownloadFile with error " << fs_status;
+            LOG(ERROR) << "CopyFile failed during function call CopyFile with error " << fs_status;
             return Status(StatusCode::INTERNAL, fs_status.ToString());
         }
         else
@@ -548,11 +554,11 @@ namespace galaxy
             {
                 infile.read(buffer.data(), buffer.size());
                 std::streamsize s = infile.gcount();
-                DownloadResponse response;
+                CopyResponse response;
                 FileSystemStatus status;
                 status.set_return_code(1);
                 response.mutable_status()->CopyFrom(status);
-                response.set_data(std::string(buffer.begin(), buffer.begin() + s));
+                galaxy::client::Write(request->to_name(), std::string(buffer.begin(), buffer.begin() + s), "a");
                 reply->Write(response);
             }
             GalaxyFs::Instance()->Unlock(request->from_name());
@@ -561,38 +567,44 @@ namespace galaxy
         }
     }
 
-    Status GalaxyServerImpl::UploadFileInternal(ServerContext *context, ServerReader<UploadRequest> *request,
-                                                UploadResponse *reply)
+    Status GalaxyServerImpl::MoveFileInternal(ServerContext *context, const CopyRequest *request,
+                                              ServerWriter<CopyResponse> *reply)
     {
-        UploadRequest write_request;
-        bool is_locked = false;
-        while (request->Read(&write_request))
-        {
-            if (!is_locked)
-            {
-                GalaxyFs::Instance()->Lock(write_request.to_name());
-                is_locked = true;
-            }
-
-            if (!GalaxyServerImpl::VerifyPassword(write_request.cred()).ok())
-            {
-                LOG(ERROR) << "Wrong password from client during function call Write.";
-                GalaxyFs::Instance()->Unlock(write_request.to_name());
-                return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Write.");
-            }
-
-            absl::Status fs_status = GalaxyFs::Instance()->Write(write_request.to_name(), write_request.data(), "a", false);
-            if (!fs_status.ok())
-            {
-                LOG(ERROR) << "Write failed during function call Write with error " << fs_status;
-                GalaxyFs::Instance()->Unlock(write_request.to_name());
-                return Status(StatusCode::INTERNAL, fs_status.ToString());
-            }
+        Status status = GalaxyServerImpl::CopyFileInternal(context, request, reply);
+        if (status.ok()) {
+            galaxy::client::RmFile(request->to_name());
+        } else {
+            LOG(ERROR) << "MoveFile failed during function call MoveFile with error " << status.error_code();
+            return status;
         }
-        GalaxyFs::Instance()->Unlock(write_request.to_name());
+    }
+
+    Status GalaxyServerImpl::CrossCellCallInternal(ServerContext *context, const CrossCellRequest *request,
+                                                   CrossCellResponse *reply)
+    {
+        if (!GalaxyServerImpl::VerifyPassword(request->cred()).ok())
+        {
+            LOG(ERROR) << "Wrong password from client during function call CrossCellCall.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call CrossCellCall.");
+        }
+        if (request->request_type() != "CopyFile" || request->request_type() != "MoveFile") {
+            return Status(StatusCode::INTERNAL, "Wrong request type. Only CopyFile and MoveFile are supported, but got " + request->request_type() + ".");
+        }
+        CopyRequest copy_request;
+        auto any_request = request->request();
+        any_request.UnpackTo(&copy_request);
+        if (request->request_type() == "CopyFile") {
+            galaxy::client::CopyFile(copy_request.from_name(), copy_request.to_name());
+        } else {
+            galaxy::client::MoveFile(copy_request.from_name(), copy_request.to_name());
+        }
+
         FileSystemStatus status;
+        CopyResponse response;
         status.set_return_code(1);
-        reply->mutable_status()->CopyFrom(status);
+        response.mutable_status()->CopyFrom(status);
+        reply->set_response_type(request->request_type());
+        reply->mutable_response()->PackFrom(response);
         return Status::OK;
     }
 
@@ -905,29 +917,42 @@ namespace galaxy
         return status;
     }
 
-    Status GalaxyServerImpl::DownloadFile(ServerContext *context, const DownloadRequest *request,
-                                                  ServerWriter<DownloadResponse> *reply)
+    Status GalaxyServerImpl::CopyFile(ServerContext *context, const CopyRequest *request,
+                                      ServerWriter<CopyResponse> *reply)
     {
         absl::Time start = absl::Now();
-        Status status = GalaxyServerImpl::DownloadFileInternal(context, request, reply);
+        Status status = GalaxyServerImpl::CopyFileInternal(context, request, reply);
         absl::Time end = absl::Now();
         double latency_ms = absl::ToDoubleMilliseconds(end - start);
         opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
                                    {stats::internal::QueryCountMeasure(), 1}},
-                                  {{stats::internal::MethodKey(), "DownloadFile"}});
+                                  {{stats::internal::MethodKey(), "CopyFile"}});
         return status;
     }
 
-    Status GalaxyServerImpl::UploadFile(ServerContext *context, ServerReader<UploadRequest> *request,
-                                                  UploadResponse *reply)
+    Status GalaxyServerImpl::MoveFile(ServerContext *context, const CopyRequest *request,
+                                      ServerWriter<CopyResponse> *reply)
     {
         absl::Time start = absl::Now();
-        Status status = GalaxyServerImpl::UploadFileInternal(context, request, reply);
+        Status status = GalaxyServerImpl::MoveFileInternal(context, request, reply);
         absl::Time end = absl::Now();
         double latency_ms = absl::ToDoubleMilliseconds(end - start);
         opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
                                    {stats::internal::QueryCountMeasure(), 1}},
-                                  {{stats::internal::MethodKey(), "UploadFile"}});
+                                  {{stats::internal::MethodKey(), "MoveFile"}});
+        return status;
+    }
+
+    Status GalaxyServerImpl::CrossCellCall(ServerContext *context, const CrossCellRequest *request,
+                                           CrossCellResponse *reply)
+    {
+        absl::Time start = absl::Now();
+        Status status = GalaxyServerImpl::CrossCellCallInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
+                                   {stats::internal::QueryCountMeasure(), 1}},
+                                  {{stats::internal::MethodKey(), "CrossCellCall"}});
         return status;
     }
 

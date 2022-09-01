@@ -243,6 +243,31 @@ namespace galaxy {
             }
         }
 
+        absl::Status CopyFile(const std::string& from_path, const std::string& to_path) {
+            if (!internal::ExistFile(from_path)) {
+                LOG(ERROR) << "Path " << from_path << " does not exist during function call CopyFile.";
+                return absl::NotFoundError("Path " + from_path + " does not exist for CopyFile.");
+            } else {
+                std::ifstream source(from_path, std::ifstream::binary);
+                std::ofstream dest(to_path, std::ofstream::binary);
+
+                dest << source.rdbuf();
+
+                source.close();
+                dest.close();
+                return absl::OkStatus();
+            }
+        }
+
+        absl::Status MoveFile(const std::string& from_path, const std::string& to_path) {
+            absl::Status status = CopyFile(from_path, to_path);
+            if (!status.ok()) {
+                return absl::InternalError("Fail to copy file from " + from_path + " to " + to_path);
+            } else {
+                return RmFile(from_path, true);
+            }
+        }
+
         absl::Status DieDirIfNotExist(const std::string &path, std::string& out_path) {
             if (!internal::ExistDir(path)) {
                 LOG(ERROR) << "Path " << path << " does not exist during function call DieDirIfNotExist.";

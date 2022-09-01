@@ -42,4 +42,5 @@ PYBIND11_MODULE(_gclient, m)
     m.def("get_attr", &galaxy::client::GetAttr, "Wrapper for GetAttr", py::arg("path"));
     m.def("list_cells", &galaxy::client::ListCells, "Wrapper for ListCells");
     m.def("check_health", &galaxy::client::CheckHealth, "Wrapper for CheckHealth", py::arg("cell"));
+    m.def("copy_file", &galaxy::client::CopyFile, "Wrapper for CopyFile", py::arg("from_path"), py::arg("to_path"));
 }

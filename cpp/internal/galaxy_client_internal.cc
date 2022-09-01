@@ -12,11 +12,15 @@ using grpc::Status;
 using grpc::ClientReader;
 using grpc::ClientWriter;
 
+using galaxy_schema::CopyRequest;
+using galaxy_schema::CopyResponse;
 using galaxy_schema::FileSystemStatus;
 using galaxy_schema::CreateDirRequest;
 using galaxy_schema::CreateDirResponse;
 using galaxy_schema::CreateFileRequest;
 using galaxy_schema::CreateFileResponse;
+using galaxy_schema::CrossCellRequest;
+using galaxy_schema::CrossCellResponse;
 using galaxy_schema::DirOrDieRequest;
 using galaxy_schema::DirOrDieResponse;
 using galaxy_schema::FileOrDieRequest;
@@ -77,6 +81,67 @@ namespace galaxy
             throw status.error_message();
         }
     }
+
+    CopyResponse GalaxyClientInternal::CopyFile(const CopyRequest &request)
+    {
+        CopyResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        std::unique_ptr<ClientReader<CopyResponse>> reader(stub_->CopyFile(&context, request));
+         while (reader->Read(&reply))
+        {
+            if (reply.status().return_code() != 1) {
+                LOG(ERROR) << reply.status().return_message();
+                throw reply.status().return_message();
+            }
+        }
+        Status status = reader->Finish();
+        if (status.ok()) {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
+    CopyResponse GalaxyClientInternal::MoveFile(const CopyRequest &request)
+    {
+        CopyResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        std::unique_ptr<ClientReader<CopyResponse>> reader(stub_->MoveFile(&context, request));
+         while (reader->Read(&reply))
+        {
+            if (reply.status().return_code() != 1) {
+                LOG(ERROR) << reply.status().return_message();
+                throw reply.status().return_message();
+            }
+        }
+        Status status = reader->Finish();
+        if (status.ok()) {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
+
+
+    CrossCellResponse GalaxyClientInternal::CrossCellCall(const CrossCellRequest &request)
+    {
+        CrossCellResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        Status status = stub_->CrossCellCall(&context, request, &reply);
+        if (status.ok()) {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
 
     DirOrDieResponse GalaxyClientInternal::DirOrDie(const DirOrDieRequest &request)
     {

@@ -13,6 +13,9 @@ namespace galaxy
 
         galaxy_schema::GetAttrResponse GetAttr(const galaxy_schema::GetAttrRequest &request);
         galaxy_schema::CreateDirResponse CreateDirIfNotExist(const galaxy_schema::CreateDirRequest &request);
+        galaxy_schema::CopyResponse CopyFile(const galaxy_schema::CopyRequest &request);
+        galaxy_schema::CopyResponse MoveFile(const galaxy_schema::CopyRequest &request);
+        galaxy_schema::CrossCellResponse CrossCellCall(const galaxy_schema::CrossCellRequest& request);
         galaxy_schema::DirOrDieResponse DirOrDie(const galaxy_schema::DirOrDieRequest &request);
         galaxy_schema::RmDirResponse RmDir(const galaxy_schema::RmDirRequest &request);
         galaxy_schema::RmDirRecursiveResponse RmDirRecursive(const galaxy_schema::RmDirRecursiveRequest &request);

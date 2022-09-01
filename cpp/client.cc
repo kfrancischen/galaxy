@@ -28,10 +28,14 @@ using galaxy_schema::WriteMode;
 using galaxy_schema::SingleRequestCellConfigs;
 using galaxy_schema::FileAnalyzerResult;
 
+using galaxy_schema::CopyRequest;
+using galaxy_schema::CopyResponse;
 using galaxy_schema::CreateDirRequest;
 using galaxy_schema::CreateDirResponse;
 using galaxy_schema::CreateFileRequest;
 using galaxy_schema::CreateFileResponse;
+using galaxy_schema::CrossCellRequest;
+using galaxy_schema::CrossCellResponse;
 using galaxy_schema::DirOrDieRequest;
 using galaxy_schema::DirOrDieResponse;
 using galaxy_schema::FileOrDieRequest;
@@ -124,6 +128,100 @@ void galaxy::client::impl::RCreateDirIfNotExist(const FileAnalyzerResult& result
         FileSystemStatus status = response.status();
         if (status.return_code() != 1) {
             throw "Fail to call CreateDirIfNotExist.";
+        }
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+    }
+}
+
+void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
+    try {
+        std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
+        std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
+        if (to_galaxy_path.find(prefix) == std::string::npos) {
+            throw "The to_path is not in galaxy.";
+        }
+        if (!from_result.is_remote()) {
+            GalaxyClientInternal client = GetChannelClient(to_result.configs());
+            // Copy a local file to galaxy server
+            CopyRequest request;
+            request.mutable_cred()->set_password(to_result.configs().to_cell_config().fs_password());
+            request.set_from_name(from_result.path());
+            request.set_to_name(to_galaxy_path);
+            request.set_from_cell(from_result.configs().from_cell_config().cell());
+            CopyResponse response = client.CopyFile(request);
+            FileSystemStatus status = response.status();
+            if (status.return_code() != 1) {
+                throw "Fail to call CopyFile.";
+            }
+        } else {
+            // Copy a remote file to galaxy server
+            std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
+            GalaxyClientInternal client = GetChannelClient(from_result.configs());
+            CrossCellRequest request;
+            request.set_request_type("CopyFile");
+            CopyRequest copy_request;
+            copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
+            copy_request.set_from_name(from_galaxy_path);
+            copy_request.set_to_name(to_galaxy_path);
+            copy_request.set_from_cell(from_result.configs().from_cell_config().cell());
+            request.mutable_request()->PackFrom(copy_request);
+            CrossCellResponse response = client.CrossCellCall(request);
+            CopyResponse copy_response;
+            response.response().UnpackTo(&copy_response);
+            FileSystemStatus status = copy_response.status();
+            if (status.return_code() != 1) {
+                throw "Fail to call CopyFile.";
+            }
+        }
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(ERROR) << errorMsg;
+    }
+}
+
+void galaxy::client::impl::RMoveFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
+    try {
+        std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
+        std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
+        if (to_galaxy_path.find(prefix) == std::string::npos) {
+            throw "The to_path is not in galaxy.";
+        }
+        if (!from_result.is_remote()) {
+            GalaxyClientInternal client = GetChannelClient(to_result.configs());
+            // Copy a local file to galaxy server
+            CopyRequest request;
+            request.mutable_cred()->set_password(to_result.configs().to_cell_config().fs_password());
+            request.set_from_name(from_result.path());
+            request.set_to_name(to_galaxy_path);
+            request.set_from_cell(from_result.configs().from_cell_config().cell());
+            CopyResponse response = client.MoveFile(request);
+            FileSystemStatus status = response.status();
+            if (status.return_code() != 1) {
+                throw "Fail to call MoveFile.";
+            }
+        } else {
+            // Copy a remote file to galaxy server
+            std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
+            GalaxyClientInternal client = GetChannelClient(from_result.configs());
+            CrossCellRequest request;
+            request.set_request_type("MoveFile");
+            CopyRequest copy_request;
+            copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
+            copy_request.set_from_name(from_galaxy_path);
+            copy_request.set_to_name(to_galaxy_path);
+            copy_request.set_from_cell(from_result.configs().from_cell_config().cell());
+            request.mutable_request()->PackFrom(copy_request);
+            CrossCellResponse response = client.CrossCellCall(request);
+            CopyResponse copy_response;
+            response.response().UnpackTo(&copy_response);
+            FileSystemStatus status = copy_response.status();
+            if (status.return_code() != 1) {
+                throw "Fail to call MoveFile.";
+            }
         }
     }
     catch (std::string errorMsg)
@@ -534,6 +632,30 @@ void galaxy::client::impl::LCreateDirIfNotExist(const FileAnalyzerResult& result
     }
 }
 
+void galaxy::client::impl::LCopyFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
+    try {
+        GalaxyFs fs("");
+        auto status = fs.CopyFile(from_result.path(), to_result.path());
+        if (!status.ok()) {
+            throw "CopyFile failed with error " + status.ToString() + '.';
+        }
+    } catch (std::string errorMsg) {
+        LOG(ERROR) << errorMsg;
+    }
+}
+
+void galaxy::client::impl::LMoveFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
+    try {
+        GalaxyFs fs("");
+        auto status = fs.MoveFile(from_result.path(), to_result.path());
+        if (!status.ok()) {
+            throw "MoveFile failed with error " + status.ToString() + '.';
+        }
+    } catch (std::string errorMsg) {
+        LOG(ERROR) << errorMsg;
+    }
+}
+
 std::string galaxy::client::impl::LDirOrDie(const FileAnalyzerResult& result) {
     try {
         GalaxyFs fs("");
@@ -907,6 +1029,32 @@ void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mod
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LCreateFileIfNotExist(result, mode);
+    }
+}
+
+void galaxy::client::CopyFile(const std::string& from_path, const std::string& to_path) {
+    FileAnalyzerResult from_result = galaxy::util::InitClient(from_path);
+    FileAnalyzerResult to_result = galaxy::util::InitClient(to_path);
+    // If the path is a local path.
+    if (!from_result.is_remote() && !to_result.is_remote()) {
+        VLOG(1) << "Both path are using local mode";
+        galaxy::client::impl::LCopyFile(from_result, to_result);
+    } else {
+        VLOG(2) << "Using remote mode for at least one of the paths";
+        galaxy::client::impl::RCopyFile(from_result, to_result);
+    }
+}
+
+void galaxy::client::MoveFile(const std::string& from_path, const std::string& to_path) {
+    FileAnalyzerResult from_result = galaxy::util::InitClient(from_path);
+    FileAnalyzerResult to_result = galaxy::util::InitClient(to_path);
+    // If the path is a local path.
+    if (!from_result.is_remote() && !to_result.is_remote()) {
+        VLOG(1) << "Both path are using local mode";
+        galaxy::client::impl::LMoveFile(from_result, to_result);
+    } else {
+        VLOG(2) << "Using remote mode for at least one of the paths";
+        galaxy::client::impl::RMoveFile(from_result, to_result);
     }
 }
 

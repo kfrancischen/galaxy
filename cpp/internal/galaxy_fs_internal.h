@@ -39,7 +39,8 @@ namespace galaxy {
         void Unlock(const std::string& path);
         absl::Status CreateDirIfNotExist(const std::string& path, mode_t mode);
         absl::Status DieDirIfNotExist(const std::string& path, std::string& out_path);
-
+        absl::Status CopyFile(const std::string& from_path, const std::string& to_path);
+        absl::Status MoveFile(const std::string& from_path, const std::string& to_path);
         absl::Status CreateFileIfNotExist(const std::string& path, mode_t mode);
         absl::Status DieFileIfNotExist(const std::string& path, std::string& out_path);
         absl::Status ListFilesInDir(const std::string& path, absl::flat_hash_map<std::string, struct stat>& sub_files, bool include_hidden=false);
