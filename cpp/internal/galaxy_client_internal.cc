@@ -9,7 +9,6 @@
 
 using grpc::ClientContext;
 using grpc::Status;
-using grpc::ClientReader;
 using grpc::ClientWriter;
 
 using galaxy_schema::CopyRequest;
@@ -87,46 +86,36 @@ namespace galaxy
         CopyResponse reply;
         ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
-        std::unique_ptr<ClientReader<CopyResponse>> reader(stub_->CopyFile(&context, request));
-         while (reader->Read(&reply))
+        std::unique_ptr<ClientWriter<CopyRequest>> writer(stub_->CopyFile(&context, &reply));
+        std::ifstream infile(request.from_name(), std::ifstream::binary);
+        std::vector<char> buffer(galaxy::constant::kChunkSize, 0);
+        while (!infile.eof())
         {
-            if (reply.status().return_code() != 1) {
-                LOG(ERROR) << reply.status().return_message();
-                throw reply.status().return_message();
+            infile.read(buffer.data(), sizeof(buffer));
+            std::streamsize s = infile.gcount();
+            CopyRequest sub_request;
+            sub_request.set_from_name(request.from_name());
+            sub_request.set_to_name(request.to_name());
+            sub_request.mutable_cred()->set_password(request.cred().password());
+            sub_request.set_data(std::string(buffer.begin(), buffer.begin() + s));
+            if (!writer->Write(sub_request))
+            {
+                break;
             }
         }
-        Status status = reader->Finish();
-        if (status.ok()) {
+        infile.close();
+        writer->WritesDone();
+        Status status = writer->Finish();
+        if (status.ok())
+        {
             return reply;
-        } else {
+        }
+        else
+        {
             LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }
     }
-
-    CopyResponse GalaxyClientInternal::MoveFile(const CopyRequest &request)
-    {
-        CopyResponse reply;
-        ClientContext context;
-        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
-        std::unique_ptr<ClientReader<CopyResponse>> reader(stub_->MoveFile(&context, request));
-         while (reader->Read(&reply))
-        {
-            if (reply.status().return_code() != 1) {
-                LOG(ERROR) << reply.status().return_message();
-                throw reply.status().return_message();
-            }
-        }
-        Status status = reader->Finish();
-        if (status.ok()) {
-            return reply;
-        } else {
-            LOG(ERROR) << status.error_code() << ": " << status.error_message();
-            throw status.error_message();
-        }
-    }
-
-
 
     CrossCellResponse GalaxyClientInternal::CrossCellCall(const CrossCellRequest &request)
     {

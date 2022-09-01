@@ -27,8 +27,7 @@ service FileSystem {
     rpc WriteMultiple( WriteMultipleRequest ) returns ( WriteMultipleResponse ) {}
 
     // Copy/Move file
-    rpc CopyFile( CopyRequest ) returns ( stream CopyResponse ) {}
-    rpc MoveFile( CopyRequest ) returns ( stream CopyResponse ) {}
+    rpc CopyFile( stream CopyRequest ) returns ( CopyResponse ) {}
 
     // Health check
     rpc CheckHealth( HealthCheckRequest ) returns ( HealthCheckResponse ) {}
@@ -292,7 +291,8 @@ message CopyRequest {
     string from_name = 1;
     string to_name = 2;
     Credential cred = 3;
-    string from_cell = 4;
+    bytes data = 4;
+    string from_cell = 5;
 }
 
 message CrossCellRequest {

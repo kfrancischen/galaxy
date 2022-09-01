@@ -20,7 +20,6 @@
 
 using grpc::ServerContext;
 using grpc::ServerReader;
-using grpc::ServerWriter;
 using grpc::Status;
 using grpc::StatusCode;
 
@@ -530,53 +529,39 @@ namespace galaxy
         return Status::OK;
     }
 
-    Status GalaxyServerImpl::CopyFileInternal(ServerContext *context, const CopyRequest *request,
-                                              ServerWriter<CopyResponse> *reply)
+    Status GalaxyServerImpl::CopyFileInternal(ServerContext *context, ServerReader<CopyRequest> *request,
+                                              CopyResponse *reply)
     {
-        if (!GalaxyServerImpl::VerifyPassword(request->cred()).ok())
+        CopyRequest copy_request;
+        bool is_locked = false;
+        while (request->Read(&copy_request))
         {
-            LOG(ERROR) << "Wrong password from client during function call CopyFile.";
-            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call DownloadFile.");
-        }
-        std::string out_path;
-        absl::Status fs_status = GalaxyFs::Instance()->DieFileIfNotExist(request->from_name(), out_path);
-        if (!fs_status.ok())
-        {
-            LOG(ERROR) << "CopyFile failed during function call CopyFile with error " << fs_status;
-            return Status(StatusCode::INTERNAL, fs_status.ToString());
-        }
-        else
-        {
-            GalaxyFs::Instance()->Lock(request->from_name());
-            std::ifstream infile(out_path, std::ifstream::binary);
-            std::vector<char> buffer(galaxy::constant::kChunkSize, 0);
-            while (!infile.eof())
+            if (!is_locked)
             {
-                infile.read(buffer.data(), buffer.size());
-                std::streamsize s = infile.gcount();
-                CopyResponse response;
-                FileSystemStatus status;
-                status.set_return_code(1);
-                response.mutable_status()->CopyFrom(status);
-                galaxy::client::Write(request->to_name(), std::string(buffer.begin(), buffer.begin() + s), "a");
-                reply->Write(response);
+                GalaxyFs::Instance()->Lock(copy_request.to_name());
+                is_locked = true;
             }
-            GalaxyFs::Instance()->Unlock(request->from_name());
-            infile.close();
-            return Status::OK;
-        }
-    }
 
-    Status GalaxyServerImpl::MoveFileInternal(ServerContext *context, const CopyRequest *request,
-                                              ServerWriter<CopyResponse> *reply)
-    {
-        Status status = GalaxyServerImpl::CopyFileInternal(context, request, reply);
-        if (status.ok()) {
-            galaxy::client::RmFile(request->to_name());
-        } else {
-            LOG(ERROR) << "MoveFile failed during function call MoveFile with error " << status.error_code();
-            return status;
+            if (!GalaxyServerImpl::VerifyPassword(copy_request.cred()).ok())
+            {
+                LOG(ERROR) << "Wrong password from client during function call Write.";
+                GalaxyFs::Instance()->Unlock(copy_request.to_name());
+                return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Write.");
+            }
+
+            absl::Status fs_status = GalaxyFs::Instance()->Write(copy_request.to_name(), copy_request.data(), "a", false);
+            if (!fs_status.ok())
+            {
+                LOG(ERROR) << "Write failed during function call Write with error " << fs_status;
+                GalaxyFs::Instance()->Unlock(copy_request.to_name());
+                return Status(StatusCode::INTERNAL, fs_status.ToString());
+            }
         }
+        GalaxyFs::Instance()->Unlock(copy_request.to_name());
+        FileSystemStatus status;
+        status.set_return_code(1);
+        reply->mutable_status()->CopyFrom(status);
+        return Status::OK;
     }
 
     Status GalaxyServerImpl::CrossCellCallInternal(ServerContext *context, const CrossCellRequest *request,
@@ -593,10 +578,9 @@ namespace galaxy
         CopyRequest copy_request;
         auto any_request = request->request();
         any_request.UnpackTo(&copy_request);
-        if (request->request_type() == "CopyFile") {
-            galaxy::client::CopyFile(copy_request.from_name(), copy_request.to_name());
-        } else {
-            galaxy::client::MoveFile(copy_request.from_name(), copy_request.to_name());
+        galaxy::client::CopyFile(copy_request.from_name(), copy_request.to_name());
+        if (request->request_type() == "MoveFile") {
+            galaxy::client::RmFile(copy_request.from_name());
         }
 
         FileSystemStatus status;
@@ -917,8 +901,8 @@ namespace galaxy
         return status;
     }
 
-    Status GalaxyServerImpl::CopyFile(ServerContext *context, const CopyRequest *request,
-                                      ServerWriter<CopyResponse> *reply)
+    Status GalaxyServerImpl::CopyFile(ServerContext *context, ServerReader<CopyRequest> *request,
+                                      CopyResponse *reply)
     {
         absl::Time start = absl::Now();
         Status status = GalaxyServerImpl::CopyFileInternal(context, request, reply);
@@ -927,19 +911,6 @@ namespace galaxy
         opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
                                    {stats::internal::QueryCountMeasure(), 1}},
                                   {{stats::internal::MethodKey(), "CopyFile"}});
-        return status;
-    }
-
-    Status GalaxyServerImpl::MoveFile(ServerContext *context, const CopyRequest *request,
-                                      ServerWriter<CopyResponse> *reply)
-    {
-        absl::Time start = absl::Now();
-        Status status = GalaxyServerImpl::MoveFileInternal(context, request, reply);
-        absl::Time end = absl::Now();
-        double latency_ms = absl::ToDoubleMilliseconds(end - start);
-        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
-                                   {stats::internal::QueryCountMeasure(), 1}},
-                                  {{stats::internal::MethodKey(), "MoveFile"}});
         return status;
     }
 

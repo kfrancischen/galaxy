@@ -143,6 +143,8 @@ void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, cons
         if (to_galaxy_path.find(prefix) == std::string::npos) {
             throw "The to_path is not in galaxy.";
         }
+        std::cout << from_result.DebugString() << "\t" << to_result.DebugString() << std::endl;
+        std::cout << to_galaxy_path << std::endl;
         if (!from_result.is_remote()) {
             GalaxyClientInternal client = GetChannelClient(to_result.configs());
             // Copy a local file to galaxy server
@@ -198,10 +200,12 @@ void galaxy::client::impl::RMoveFile(const FileAnalyzerResult& from_result, cons
             request.set_from_name(from_result.path());
             request.set_to_name(to_galaxy_path);
             request.set_from_cell(from_result.configs().from_cell_config().cell());
-            CopyResponse response = client.MoveFile(request);
+            CopyResponse response = client.CopyFile(request);
             FileSystemStatus status = response.status();
             if (status.return_code() != 1) {
                 throw "Fail to call MoveFile.";
+            } else {
+                galaxy::client::RmFile(from_result.path());
             }
         } else {
             // Copy a remote file to galaxy server

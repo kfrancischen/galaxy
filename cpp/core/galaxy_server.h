@@ -58,11 +58,8 @@ namespace galaxy
         grpc::Status WriteMultiple(grpc::ServerContext *context, const galaxy_schema::WriteMultipleRequest *request,
                                    galaxy_schema::WriteMultipleResponse *reply) override;
 
-        grpc::Status CopyFile(grpc::ServerContext *context, const galaxy_schema::CopyRequest *request,
-                              grpc::ServerWriter<galaxy_schema::CopyResponse> *reply) override;
-
-        grpc::Status MoveFile(grpc::ServerContext *context, const galaxy_schema::CopyRequest *request,
-                              grpc::ServerWriter<galaxy_schema::CopyResponse> *reply) override;
+        grpc::Status CopyFile(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::CopyRequest> *request,
+                              galaxy_schema::CopyResponse *reply) override;
 
         grpc::Status CrossCellCall(grpc::ServerContext *context, const galaxy_schema::CrossCellRequest *request,
                                    galaxy_schema::CrossCellResponse *reply) override;
@@ -127,11 +124,8 @@ namespace galaxy
         grpc::Status WriteMultipleInternal(grpc::ServerContext *context, const galaxy_schema::WriteMultipleRequest *request,
                                            galaxy_schema::WriteMultipleResponse *reply);
 
-        grpc::Status CopyFileInternal(grpc::ServerContext *context, const galaxy_schema::CopyRequest *request,
-                                      grpc::ServerWriter<galaxy_schema::CopyResponse> *reply);
-
-        grpc::Status MoveFileInternal(grpc::ServerContext *context, const galaxy_schema::CopyRequest *request,
-                                      grpc::ServerWriter<galaxy_schema::CopyResponse> *reply);
+        grpc::Status CopyFileInternal(grpc::ServerContext *context, grpc::ServerReader<galaxy_schema::CopyRequest> *request,
+                                      galaxy_schema::CopyResponse *reply);
 
         grpc::Status CrossCellCallInternal(grpc::ServerContext *context, const galaxy_schema::CrossCellRequest *request,
                                            galaxy_schema::CrossCellResponse *reply);
