@@ -138,20 +138,13 @@ void galaxy::client::impl::RCreateDirIfNotExist(const FileAnalyzerResult& result
 
 void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
     try {
-        std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
-        std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
-        if (to_galaxy_path.find(prefix) == std::string::npos) {
-            throw "The to_path is not in galaxy.";
-        }
-        std::cout << from_result.DebugString() << "\t" << to_result.DebugString() << std::endl;
-        std::cout << to_galaxy_path << std::endl;
+        GalaxyClientInternal client = GetChannelClient(to_result.configs());
         if (!from_result.is_remote()) {
-            GalaxyClientInternal client = GetChannelClient(to_result.configs());
             // Copy a local file to galaxy server
             CopyRequest request;
             request.mutable_cred()->set_password(to_result.configs().to_cell_config().fs_password());
             request.set_from_name(from_result.path());
-            request.set_to_name(to_galaxy_path);
+            request.set_to_name(to_result.path());
             request.set_from_cell(from_result.configs().from_cell_config().cell());
             CopyResponse response = client.CopyFile(request);
             FileSystemStatus status = response.status();
@@ -160,8 +153,12 @@ void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, cons
             }
         } else {
             // Copy a remote file to galaxy server
+            std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
+            std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
+            if (to_galaxy_path.find(prefix) == std::string::npos) {
+                throw "The to_path is not in galaxy.";
+            }
             std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
-            GalaxyClientInternal client = GetChannelClient(from_result.configs());
             CrossCellRequest request;
             request.set_request_type("CopyFile");
             CopyRequest copy_request;
@@ -187,18 +184,13 @@ void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, cons
 
 void galaxy::client::impl::RMoveFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
     try {
-        std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
-        std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
-        if (to_galaxy_path.find(prefix) == std::string::npos) {
-            throw "The to_path is not in galaxy.";
-        }
+        GalaxyClientInternal client = GetChannelClient(to_result.configs());
         if (!from_result.is_remote()) {
-            GalaxyClientInternal client = GetChannelClient(to_result.configs());
             // Copy a local file to galaxy server
             CopyRequest request;
             request.mutable_cred()->set_password(to_result.configs().to_cell_config().fs_password());
             request.set_from_name(from_result.path());
-            request.set_to_name(to_galaxy_path);
+            request.set_to_name(to_result.path());
             request.set_from_cell(from_result.configs().from_cell_config().cell());
             CopyResponse response = client.CopyFile(request);
             FileSystemStatus status = response.status();
@@ -209,8 +201,12 @@ void galaxy::client::impl::RMoveFile(const FileAnalyzerResult& from_result, cons
             }
         } else {
             // Copy a remote file to galaxy server
+            std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
+            std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
+            if (to_galaxy_path.find(prefix) == std::string::npos) {
+                throw "The to_path is not in galaxy.";
+            }
             std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
-            GalaxyClientInternal client = GetChannelClient(from_result.configs());
             CrossCellRequest request;
             request.set_request_type("MoveFile");
             CopyRequest copy_request;
