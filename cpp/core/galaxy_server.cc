@@ -572,7 +572,7 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call CrossCellCall.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call CrossCellCall.");
         }
-        if (request->request_type() != "CopyFile" || request->request_type() != "MoveFile") {
+        if (request->request_type() != "CopyFile" && request->request_type() != "MoveFile") {
             return Status(StatusCode::INTERNAL, "Wrong request type. Only CopyFile and MoveFile are supported, but got " + request->request_type() + ".");
         }
         CopyRequest copy_request;

@@ -166,6 +166,7 @@ void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, cons
             copy_request.set_from_name(from_galaxy_path);
             copy_request.set_to_name(to_galaxy_path);
             copy_request.set_from_cell(from_result.configs().from_cell_config().cell());
+            *request.mutable_cred() = copy_request.cred();
             request.mutable_request()->PackFrom(copy_request);
             CrossCellResponse response = client.CrossCellCall(request);
             CopyResponse copy_response;
