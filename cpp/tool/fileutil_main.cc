@@ -25,20 +25,34 @@ int main(int argc, char* argv[]) {
     if (strcmp(argv[1], "ls") == 0) {
         CHECK_EQ(argc,  3) << "Need 2 arguments for ls cmd.";
         galaxy::LsCmd(argv[2]);
-    } else if (strcmp(argv[1], "cp") == 0) {
+    } else if (strcmp(argv[1], "cp_file") == 0) {
         CHECK_GE(argc,  4) << "Need at least 3 arguments for cp cmd.";
         bool overwrite = false;
         if (argc == 5 && strcmp(argv[4], "--f") == 0) {
             overwrite = true;
         }
-        galaxy::CopyCmd(argv[2], argv[3], overwrite);
-    } else if (strcmp(argv[1], "mv") == 0) {
+        galaxy::CopyFileCmd(argv[2], argv[3], overwrite);
+    } else if (strcmp(argv[1], "mv_file") == 0) {
         CHECK_GE(argc,  4) << "Need at least 3 arguments for mv cmd.";
         bool overwrite = false;
         if (argc == 5 && strcmp(argv[4], "--f") == 0) {
             overwrite = true;
         }
-        galaxy::MoveCmd(argv[2], argv[3], overwrite);
+        galaxy::MoveFileCmd(argv[2], argv[3], overwrite);
+    } else if (strcmp(argv[1], "cp_dir") == 0) {
+        CHECK_GE(argc,  4) << "Need at least 3 arguments for cp cmd.";
+        bool overwrite = false;
+        if (argc == 5 && strcmp(argv[4], "--f") == 0) {
+            overwrite = true;
+        }
+        galaxy::CopyDirCmd(argv[2], argv[3], overwrite);
+    } else if (strcmp(argv[1], "mv_dir") == 0) {
+        CHECK_GE(argc,  4) << "Need at least 3 arguments for mv cmd.";
+        bool overwrite = false;
+        if (argc == 5 && strcmp(argv[4], "--f") == 0) {
+            overwrite = true;
+        }
+        galaxy::MoveDirCmd(argv[2], argv[3], overwrite);
     } else if (strcmp(argv[1], "rm") == 0) {
         CHECK_GE(argc,  3) << "Need at least 2 arguments for cp cmd.";
         bool recursive = false;

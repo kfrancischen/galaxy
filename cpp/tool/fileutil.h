@@ -9,8 +9,11 @@ namespace galaxy
     void LsCmd(const std::string& path);
     void RmCmd(const std::string& path, bool recursive);
 
-    void CopyCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
-    void MoveCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
+    void CopyFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
+    void MoveFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
+
+    void CopyDirCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
+    void MoveDirCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
     void ListCellsCmd();
 } // namespace galaxy
 

@@ -42,14 +42,21 @@ namespace galaxy
     }
 
 
-    void CopyCmdHelper(const std::string& from_path, const std::string& to_path, bool overwrite) {
+    void CopyFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         if (!overwrite && !galaxy::client::FileOrDie(to_path).empty()) {
             return;
         }
         galaxy::client::CopyFile(from_path, to_path);
     }
 
-    void CopyCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+    void MoveFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+        if (!overwrite && !galaxy::client::FileOrDie(to_path).empty()) {
+            return;
+        }
+        galaxy::client::MoveFile(from_path, to_path);
+    }
+
+    void CopyDirCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
             std::map<std::string, std::string> sub_files = client::ListFilesInDirRecursive(from_path);
             // Needs to push back from_path in case from_path is a file name.
@@ -64,7 +71,7 @@ namespace galaxy
             for (auto& file : all_files) {
                 std::string new_file(file);
                 new_file.replace(0, from_path.length(), to_path);
-                threads.push_back(std::thread(CopyCmdHelper, file, new_file, overwrite));
+                threads.push_back(std::thread(CopyFileCmd, file, new_file, overwrite));
             }
 
             for (auto& th : threads) {
@@ -77,9 +84,9 @@ namespace galaxy
         }
     }
 
-    void MoveCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
+    void MoveDirCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         try {
-            CopyCmd(from_path, to_path, overwrite);
+            CopyDirCmd(from_path, to_path, overwrite);
             client::RmDirRecursive(from_path);
             client::RmFile(from_path);
             std::cout << "Done moving from " << from_path << " to " << to_path << std::endl;

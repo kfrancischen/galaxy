@@ -298,7 +298,7 @@ namespace galaxy
         absl::Status fs_status = GalaxyFs::Instance()->ListAllInDirRecursive(request->name(), dirs, files, request->include_hidden());
         if (!fs_status.ok())
         {
-            LOG(ERROR) << "ListFilesInDir failed during function call ListAllInDirRecursive with error" << fs_status;
+            LOG(ERROR) << "ListFilesInDir failed during function call ListAllInDirRecursive with error " << fs_status;
             return Status(StatusCode::INTERNAL, fs_status.ToString());
         }
         else
@@ -550,7 +550,7 @@ namespace galaxy
                 return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call Write.");
             }
 
-            absl::Status fs_status = GalaxyFs::Instance()->Write(copy_request.to_name(), copy_request.data(), "a", false);
+            absl::Status fs_status = GalaxyFs::Instance()->Write(copy_request.to_name(), copy_request.data(), "w", false);
             if (!fs_status.ok())
             {
                 LOG(ERROR) << "Write failed during function call Write with error " << fs_status;
