@@ -38,6 +38,8 @@ using galaxy_schema::ReadMultipleRequest;
 using galaxy_schema::ReadMultipleResponse;
 using galaxy_schema::RenameFileRequest;
 using galaxy_schema::RenameFileResponse;
+using galaxy_schema::RemoteExecutionRequest;
+using galaxy_schema::RemoteExecutionResponse;
 using galaxy_schema::RmDirRecursiveRequest;
 using galaxy_schema::RmDirRecursiveResponse;
 using galaxy_schema::RmDirRequest;
@@ -335,6 +337,23 @@ namespace galaxy
         if (status.ok()) {
             return reply;
         } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
+    RemoteExecutionResponse GalaxyClientInternal::RemoteExecution(const RemoteExecutionRequest &request)
+    {
+        RemoteExecutionResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        Status status = stub_->RemoteExecution(&context, request, &reply);
+        if (status.ok())
+        {
+            return reply;
+        }
+        else
+        {
             LOG(ERROR) << status.error_code() << ": " << status.error_message();
             throw status.error_message();
         }

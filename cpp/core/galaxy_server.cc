@@ -29,6 +29,7 @@ using galaxy_schema::FileSystemStatus;
 using galaxy_schema::FileSystemUsage;
 using galaxy_schema::Owner;
 using galaxy_schema::WriteMode;
+using galaxy_schema::CrossCellCallType;
 
 using galaxy_schema::CreateDirRequest;
 using galaxy_schema::CreateDirResponse;
@@ -572,14 +573,11 @@ namespace galaxy
             LOG(ERROR) << "Wrong password from client during function call CrossCellCall.";
             return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call CrossCellCall.");
         }
-        if (request->request_type() != "CopyFile" && request->request_type() != "MoveFile") {
-            return Status(StatusCode::INTERNAL, "Wrong request type. Only CopyFile and MoveFile are supported, but got " + request->request_type() + ".");
-        }
         CopyRequest copy_request;
         auto any_request = request->request();
         any_request.UnpackTo(&copy_request);
         galaxy::client::CopyFile(copy_request.from_name(), copy_request.to_name());
-        if (request->request_type() == "MoveFile") {
+        if (request->call_type() == CrossCellCallType::MOVEFILE) {
             galaxy::client::RmFile(copy_request.from_name());
         }
 
@@ -587,7 +585,7 @@ namespace galaxy
         CopyResponse response;
         status.set_return_code(1);
         response.mutable_status()->CopyFrom(status);
-        reply->set_response_type(request->request_type());
+        reply->set_call_type(request->call_type());
         reply->mutable_response()->PackFrom(response);
         return Status::OK;
     }

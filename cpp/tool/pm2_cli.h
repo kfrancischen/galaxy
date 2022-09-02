@@ -2,7 +2,6 @@
 #define CPP_TOOL_PM2_CLI_H_
 
 #include <grpcpp/grpcpp.h>
-#include "schema/fileserver.grpc.pb.h"
 
 namespace galaxy
 {

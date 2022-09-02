@@ -73,6 +73,7 @@ namespace galaxy {
         std::string CheckHealth(const std::string& cell);
         void CopyFile(const std::string& from_path, const std::string& to_path);
         void MoveFile(const std::string& from_path, const std::string& to_path);
+        void RemoteExecute(const std::string& cell, const std::string& home_dir, const std::string main, const std::vector<std::string>& program_args, const std::map<std::string, std::string>& env_kargs={});
     }  // namespace client
 } // namespace galaxy
 

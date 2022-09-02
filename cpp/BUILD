@@ -42,21 +42,3 @@ cc_library(
         "@rapidjson",
     ]
 )
-
-cc_library(
-    name = "remote_execution",
-    srcs = [
-        "remote_execution.h",
-        "remote_execution.cc",
-    ],
-    visibility = ["//visibility:public"],
-    deps= [
-        "//schema:fileserver_cc_grpc",
-        "//cpp/core:galaxy_flag_lib",
-        "//cpp/internal:galaxy_const_lib",
-        "//cpp/util:galaxy_util_lib",
-        "@com_google_absl//absl/flags:flag",
-        "@google_glog//:glog",
-        "@com_github_grpc_grpc//:grpc++",
-    ]
-)

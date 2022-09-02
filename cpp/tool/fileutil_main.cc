@@ -22,13 +22,7 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
         LOG(INFO) << "\tArg[" << i << "]: " << argv[i];
     }
-    if (strcmp(argv[1], "get") == 0) {
-        CHECK_EQ(argc,  4) << "Need 3 arguments for get cmd.";
-        galaxy::GetFileCmd(argv[2], argv[3]);
-    } else if (strcmp(argv[1], "upload") == 0) {
-        CHECK_EQ(argc,  4) << "Need 3 arguments for upload cmd.";
-        galaxy::UploadFileCmd(argv[2], argv[3]);
-    } else if (strcmp(argv[1], "ls") == 0) {
+    if (strcmp(argv[1], "ls") == 0) {
         CHECK_EQ(argc,  3) << "Need 2 arguments for ls cmd.";
         galaxy::LsCmd(argv[2]);
     } else if (strcmp(argv[1], "cp") == 0) {

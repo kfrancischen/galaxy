@@ -24,6 +24,7 @@ using galaxy_schema::FileSystemUsage;
 using galaxy_schema::Credential;
 using galaxy_schema::Attribute;
 using galaxy_schema::WriteMode;
+using galaxy_schema::CrossCellCallType;
 
 using galaxy_schema::SingleRequestCellConfigs;
 using galaxy_schema::FileAnalyzerResult;
@@ -54,6 +55,8 @@ using galaxy_schema::ReadMultipleRequest;
 using galaxy_schema::ReadMultipleResponse;
 using galaxy_schema::RenameFileRequest;
 using galaxy_schema::RenameFileResponse;
+using galaxy_schema::RemoteExecutionRequest;
+using galaxy_schema::RemoteExecutionResponse;
 using galaxy_schema::RmDirRecursiveRequest;
 using galaxy_schema::RmDirRecursiveResponse;
 using galaxy_schema::RmDirRequest;
@@ -138,9 +141,9 @@ void galaxy::client::impl::RCreateDirIfNotExist(const FileAnalyzerResult& result
 
 void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
     try {
-        GalaxyClientInternal client = GetChannelClient(to_result.configs());
         if (!from_result.is_remote()) {
             // Copy a local file to galaxy server
+            GalaxyClientInternal client = GetChannelClient(to_result.configs());
             CopyRequest request;
             request.mutable_cred()->set_password(to_result.configs().to_cell_config().fs_password());
             request.set_from_name(from_result.path());
@@ -158,9 +161,11 @@ void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, cons
             if (to_galaxy_path.find(prefix) == std::string::npos) {
                 throw "The to_path is not in galaxy.";
             }
+            // First, send the request to the correct cell.
+            GalaxyClientInternal client = GetChannelClient(from_result.configs());
             std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
             CrossCellRequest request;
-            request.set_request_type("CopyFile");
+            request.set_call_type(CrossCellCallType::COPYFILE);
             CopyRequest copy_request;
             copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
             copy_request.set_from_name(from_galaxy_path);
@@ -209,7 +214,7 @@ void galaxy::client::impl::RMoveFile(const FileAnalyzerResult& from_result, cons
             }
             std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
             CrossCellRequest request;
-            request.set_request_type("MoveFile");
+            request.set_call_type(CrossCellCallType::MOVEFILE);
             CopyRequest copy_request;
             copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
             copy_request.set_from_name(from_galaxy_path);
@@ -1200,5 +1205,31 @@ std::string galaxy::client::CheckHealth(const std::string& cell) {
     } else {
         VLOG(1) << "Local mode doest not support health check.";
         return "";
+    }
+}
+
+void galaxy::client::RemoteExecute(const std::string& cell, const std::string& home_dir, const std::string main, const std::vector<std::string>& program_args, const std::map<std::string, std::string>& env_kargs) {
+    std::string path = galaxy::util::GetGalaxyFsPrefixPath(cell);
+    FileAnalyzerResult result = galaxy::util::InitClient(path);
+    GalaxyClientInternal client = GetChannelClient(result.configs());
+    try
+    {
+        RemoteExecutionRequest request;
+        request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+        request.set_from_cell(result.configs().from_cell_config().cell());
+        request.set_home_dir(home_dir);
+        request.set_main(main);
+        *request.mutable_program_args() = {program_args.begin(), program_args.end()};
+        *request.mutable_env_kargs() = {env_kargs.begin(), env_kargs.end()};
+        RemoteExecutionResponse response = client.RemoteExecution(request);
+        FileSystemStatus status = response.status();
+        CHECK_EQ(status.return_code(), 1) << "Fail to call RemoteExecute.";
+        std::cout << "Done executing cmd [" << response.raw_cmd() << "]"
+                    << " on cell [" << cell << "] with output:" << std::endl;
+        std::cout << response.data() << std::endl;
+    }
+    catch (std::string errorMsg)
+    {
+        LOG(FATAL) << errorMsg;
     }
 }
