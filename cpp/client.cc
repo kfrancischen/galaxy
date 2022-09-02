@@ -155,30 +155,38 @@ void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, cons
                 throw "Fail to call CopyFile.";
             }
         } else {
-            // Copy a remote file to galaxy server
-            std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
-            std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
-            if (to_galaxy_path.find(prefix) == std::string::npos) {
-                throw "The to_path is not in galaxy.";
-            }
-            // First, send the request to the correct cell.
-            GalaxyClientInternal client = GetChannelClient(from_result.configs());
             std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
-            CrossCellRequest request;
-            request.set_call_type(CrossCellCallType::COPYFILE);
-            CopyRequest copy_request;
-            copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
-            copy_request.set_from_name(from_galaxy_path);
-            copy_request.set_to_name(to_galaxy_path);
-            copy_request.set_from_cell(from_result.configs().from_cell_config().cell());
-            *request.mutable_cred() = copy_request.cred();
-            request.mutable_request()->PackFrom(copy_request);
-            CrossCellResponse response = client.CrossCellCall(request);
-            CopyResponse copy_response;
-            response.response().UnpackTo(&copy_response);
-            FileSystemStatus status = copy_response.status();
-            if (status.return_code() != 1) {
-                throw "Fail to call CopyFile.";
+            if (!to_result.is_remote()) {
+                // from_path is remote, and to_path is local.
+                std::string data = galaxy::client::Read(from_galaxy_path);
+                if (!data.empty()) {
+                    galaxy::client::Write(to_result.path(), data, "w");
+                }
+            } else {
+                // from_path and to_path are both remote.
+                std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
+                std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
+                if (to_galaxy_path.find(prefix) == std::string::npos) {
+                    throw "The to_path is not in galaxy.";
+                }
+                // First, send the request to the correct cell.
+                GalaxyClientInternal client = GetChannelClient(from_result.configs());
+                std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
+                CrossCellRequest request;
+                request.set_call_type(CrossCellCallType::COPYFILE);
+                CopyRequest copy_request;
+                copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
+                copy_request.set_from_name(from_galaxy_path);
+                copy_request.set_to_name(to_galaxy_path);
+                copy_request.set_from_cell(from_result.configs().from_cell_config().cell());
+                request.mutable_request()->PackFrom(copy_request);
+                CrossCellResponse response = client.CrossCellCall(request);
+                CopyResponse copy_response;
+                response.response().UnpackTo(&copy_response);
+                FileSystemStatus status = copy_response.status();
+                if (status.return_code() != 1) {
+                    throw "Fail to call CopyFile.";
+                }
             }
         }
     }
@@ -190,9 +198,9 @@ void galaxy::client::impl::RCopyFile(const FileAnalyzerResult& from_result, cons
 
 void galaxy::client::impl::RMoveFile(const FileAnalyzerResult& from_result, const FileAnalyzerResult& to_result) {
     try {
-        GalaxyClientInternal client = GetChannelClient(to_result.configs());
         if (!from_result.is_remote()) {
             // Copy a local file to galaxy server
+            GalaxyClientInternal client = GetChannelClient(to_result.configs());
             CopyRequest request;
             request.mutable_cred()->set_password(to_result.configs().to_cell_config().fs_password());
             request.set_from_name(from_result.path());
@@ -206,27 +214,39 @@ void galaxy::client::impl::RMoveFile(const FileAnalyzerResult& from_result, cons
                 galaxy::client::RmFile(from_result.path());
             }
         } else {
-            // Copy a remote file to galaxy server
-            std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
-            std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
-            if (to_galaxy_path.find(prefix) == std::string::npos) {
-                throw "The to_path is not in galaxy.";
-            }
             std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
-            CrossCellRequest request;
-            request.set_call_type(CrossCellCallType::MOVEFILE);
-            CopyRequest copy_request;
-            copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
-            copy_request.set_from_name(from_galaxy_path);
-            copy_request.set_to_name(to_galaxy_path);
-            copy_request.set_from_cell(from_result.configs().from_cell_config().cell());
-            request.mutable_request()->PackFrom(copy_request);
-            CrossCellResponse response = client.CrossCellCall(request);
-            CopyResponse copy_response;
-            response.response().UnpackTo(&copy_response);
-            FileSystemStatus status = copy_response.status();
-            if (status.return_code() != 1) {
-                throw "Fail to call MoveFile.";
+            if (!to_result.is_remote()) {
+                // from_path is remote, and to_path is local.
+                std::string data = galaxy::client::Read(from_galaxy_path);
+                if (!data.empty()) {
+                    galaxy::client::Write(to_result.path(), data, "w");
+                }
+                galaxy::client::RmFile(from_galaxy_path);
+            } else {
+                // from_path and to_path are both remote.
+                std::string to_galaxy_path = galaxy::util::ConvertToCellPath(to_result.path(), to_result.configs().to_cell_config());
+                std::string prefix = galaxy::util::GetGalaxyFsPrefixPath(to_result.configs().to_cell_config().cell());
+                if (to_galaxy_path.find(prefix) == std::string::npos) {
+                    throw "The to_path is not in galaxy.";
+                }
+                // First, send the request to the correct cell.
+                GalaxyClientInternal client = GetChannelClient(from_result.configs());
+                std::string from_galaxy_path = galaxy::util::ConvertToCellPath(from_result.path(), from_result.configs().to_cell_config());
+                CrossCellRequest request;
+                request.set_call_type(CrossCellCallType::MOVEFILE);
+                CopyRequest copy_request;
+                copy_request.mutable_cred()->set_password(from_result.configs().to_cell_config().fs_password());
+                copy_request.set_from_name(from_galaxy_path);
+                copy_request.set_to_name(to_galaxy_path);
+                copy_request.set_from_cell(from_result.configs().from_cell_config().cell());
+                request.mutable_request()->PackFrom(copy_request);
+                CrossCellResponse response = client.CrossCellCall(request);
+                CopyResponse copy_response;
+                response.response().UnpackTo(&copy_response);
+                FileSystemStatus status = copy_response.status();
+                if (status.return_code() != 1) {
+                    throw "Fail to call MoveFile.";
+                }
             }
         }
     }

@@ -44,6 +44,7 @@ namespace galaxy
 
     void CopyFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         if (!overwrite && !galaxy::client::FileOrDie(to_path).empty()) {
+            LOG(WARNING) << "File already exist. Pass.";
             return;
         }
         galaxy::client::CopyFile(from_path, to_path);
@@ -51,6 +52,7 @@ namespace galaxy
 
     void MoveFileCmd(const std::string& from_path, const std::string& to_path, bool overwrite) {
         if (!overwrite && !galaxy::client::FileOrDie(to_path).empty()) {
+            LOG(WARNING) << "File already exist. Pass";
             return;
         }
         galaxy::client::MoveFile(from_path, to_path);

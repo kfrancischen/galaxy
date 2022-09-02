@@ -22,7 +22,6 @@ namespace galaxy {
 
         std::string JoinPath(const std::string& root_path, const std::string& added_path) {
             if (root_path.empty()) {
-                LOG(WARNING) << "In local mode.";
                 return added_path;
             }
             if (root_path.back() != galaxy::constant::kSeparator) {
