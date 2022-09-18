@@ -13,6 +13,7 @@ namespace galaxy {
         std::string GetGalaxyFsPrefixPath(const std::string& cell);
         absl::StatusOr<galaxy_schema::FileAnalyzerResult> RunFileAnalyzer(const std::string& path);
         absl::StatusOr<galaxy_schema::CellConfig> ParseCellConfig(const std::string& cell);
+        bool IsLocalPath(const std::string& path);
         galaxy_schema::FileAnalyzerResult InitClient(const std::string& path);
         std::string ConvertToCellPath(const std::string& path, const galaxy_schema::CellConfig& config);
     }  // namespace util

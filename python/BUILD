@@ -9,6 +9,7 @@ pybind_extension(
     srcs = ["client.cc"],
     deps = [
         "//cpp:client",
+        "//cpp/util:galaxy_util_lib",
         "@google_glog//:glog",
     ],
     linkstatic = True,

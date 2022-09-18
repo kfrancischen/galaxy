@@ -218,6 +218,15 @@ absl::StatusOr<FileAnalyzerResult> galaxy::util::RunFileAnalyzer(const std::stri
     return result;
 }
 
+bool galaxy::util::IsLocalPath(const std::string& path) {
+    auto result = galaxy::util::RunFileAnalyzer(path);
+    if (!result.ok()) {
+        return true;
+    } else {
+        return !result->is_remote();
+    }
+}
+
 FileAnalyzerResult galaxy::util::InitClient(const std::string& path) {
     absl::StatusOr<FileAnalyzerResult> result = galaxy::util::RunFileAnalyzer(path);
     CHECK(result.ok()) << result.status();

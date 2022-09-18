@@ -3,6 +3,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "cpp/client.h"
+#include "cpp/util/galaxy_util.h"
 #include "glog/logging.h"
 
 namespace py = pybind11;
@@ -11,6 +12,7 @@ PYBIND11_MODULE(_gclient, m)
 {
     google::InitGoogleLogging("GALAXY_CLIENT");
     m.doc() = "galaxy client"; // optional module docstring
+    // Functions from client namespace
     m.def("create_dir_if_not_exist", &galaxy::client::CreateDirIfNotExist, "Wrapper for CreateDirIfNotExist",
         py::arg("path"), py::arg("mode") = 0777);
     m.def("dir_or_die", &galaxy::client::DirOrDie, "Wrapper for DirOrDie", py::arg("path"));
@@ -45,4 +47,7 @@ PYBIND11_MODULE(_gclient, m)
     m.def("copy_file", &galaxy::client::CopyFile, "Wrapper for CopyFile", py::arg("from_path"), py::arg("to_path"));
     m.def("move_file", &galaxy::client::MoveFile, "Wrapper for MoveFile", py::arg("from_path"), py::arg("to_path"));
     m.def("remote_execute", &galaxy::client::RemoteExecute, "Wrapper for RemoteExecute", py::arg("cell"), py::arg("home_dir"), py::arg("main"), py::arg("program_args"), py::arg("env_kargs"));
+
+    // Functions from util namespace
+    m.def("is_local_path", &galaxy::util::IsLocalPath, "Wrapper for IsLocalPath", py::arg("path"));
 }
