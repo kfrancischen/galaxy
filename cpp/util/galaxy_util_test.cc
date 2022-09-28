@@ -92,7 +92,7 @@ namespace {
         setenv("GALAXY_fs_cell", "zz", 1);
         std::string path = "/SHARED/test";
         auto result = galaxy::util::InitClient(path);
-        EXPECT_EQ(result.path(), "/home/galaxy/test");
+        EXPECT_EQ(result.path(), "/SHARED/test");
         EXPECT_FALSE(result.is_remote());
         EXPECT_TRUE(result.is_shared());
     }
