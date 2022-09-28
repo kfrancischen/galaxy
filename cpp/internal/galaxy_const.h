@@ -8,6 +8,7 @@ namespace galaxy {
         constexpr char kCellPrefix[] = "/galaxy";
         constexpr char kLockNameTemplate[] = ".$0.lock";
         constexpr char kLocalPrefix[] = "/LOCAL";
+        constexpr char kSharedPrefix[] = "/SHARED";
         constexpr int kChunkSize = 1048576;  // 1MB
         constexpr int kLockRetrySec = 1;
     }  // namespace const

@@ -70,6 +70,7 @@ message FileAnalyzerResult {
     string path = 3;
     bool is_remote = 4;
     SingleRequestCellConfigs configs = 5;
+    bool is_shared = 6;
 }
 
 message FileSystemUsage {

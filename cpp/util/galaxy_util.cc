@@ -144,14 +144,21 @@ absl::StatusOr<FileAnalyzerResult> galaxy::util::RunFileAnalyzer(const std::stri
     std::string output_path(path);
     rapidjson::Document cells_config = ParseCellsConfigDoc();
     std::string local_prefix(galaxy::constant::kLocalPrefix);
+    std::string shared_prefix(galaxy::constant::kSharedPrefix);
 
     std::string from_cell = absl::GetFlag(FLAGS_fs_cell);
     // If the request is not from a cell in galaxy, reformat it if necessary.
     if (from_cell.empty()) {
         char* fs_root_char = getenv("GALAXY_fs_root");
-         // It is a path started with /LOCAL but not in the galaxy system.
-        if (fs_root_char != NULL && output_path.find(local_prefix) != std::string::npos) {
-            output_path.replace(0, local_prefix.length(), NormalizeDir(fs_root_char));
+        if (fs_root_char != NULL) {
+            // It is a path started with /SHARED but not in the galaxy system.
+            if (output_path.find(shared_prefix) != std::string::npos) {
+                result.set_is_shared(true);
+                output_path.replace(0, shared_prefix.length(), NormalizeDir(fs_root_char));
+            } else if (output_path.find(local_prefix) != std::string::npos) {
+                // It is a path started with /LOCAL but not in the galaxy system.
+                output_path.replace(0, local_prefix.length(), NormalizeDir(fs_root_char));
+            }
         }
     } else {  // If the request is from a cell, validate the cell config.
         if (!cells_config.HasMember(from_cell.c_str())) {
@@ -167,8 +174,13 @@ absl::StatusOr<FileAnalyzerResult> galaxy::util::RunFileAnalyzer(const std::stri
         if (output_path.find(local_prefix) != std::string::npos) {
             // Output path trims the prefixing /LOCAL and replaces it with fs_root.
             output_path.replace(0, local_prefix.length(), from_cell_fs_root);
+        } else if (output_path.find(shared_prefix) != std::string::npos) {
+            // Case 2: the request path starts with /SHARED
+            // Output path trims the prefixing /SHARED and replaces it with fs_root.
+            result.set_is_shared(true);
+            output_path.replace(0, shared_prefix.length(), from_cell_fs_root);
         } else if (output_path.find(path_prefix) != std::string::npos) {
-            // Case 2: the path is in the format of /galaxy/CELL-d/.., where CELL is the current server cell.
+            // Case 3: the path is in the format of /galaxy/CELL-d/.., where CELL is the current server cell.
             // Output path trims the prefixing and repalces it wwith fs_root.
             output_path.replace(0, path_prefix.length(), from_cell_fs_root);
         }

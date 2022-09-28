@@ -87,6 +87,16 @@ namespace {
         EXPECT_TRUE(result.is_remote());
     }
 
+    TEST(GalaxyUtilTest, InitClientCase5) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        std::string path = "/SHARED/test";
+        auto result = galaxy::util::InitClient(path);
+        EXPECT_EQ(result.path(), "/home/galaxy/test");
+        EXPECT_FALSE(result.is_remote());
+        EXPECT_TRUE(result.is_shared());
+    }
+
     TEST(GalaxyUtilTest, ConvertToCellPathCase1) {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
         setenv("GALAXY_fs_cell", "zz", 1);
