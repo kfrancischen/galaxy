@@ -242,3 +242,28 @@ FileAnalyzerResult galaxy::util::InitClient(const std::string& path) {
     CHECK(result.ok()) << result.status();
     return *result;
 }
+
+std::vector<std::string> galaxy::util::BroadcastSharedPath(const std::string &path, const std::vector<std::string> &cells)
+{
+    std::string shared_prefix(galaxy::constant::kSharedPrefix);
+    CHECK(path.find(shared_prefix) != std::string::npos) << "Path needs to have /SHARED as the prefix.";
+    std::vector<std::string> output_paths;
+    if (cells.empty())
+    {
+        std::string local_prefix(galaxy::constant::kLocalPrefix);
+        std::string out_path(path);
+        out_path.replace(0, shared_prefix.length(), local_prefix);
+        output_paths.push_back(out_path);
+    }
+    else
+    {
+        for (const auto &cell : cells)
+        {
+            std::string path_prefix = galaxy::util::GetGalaxyFsPrefixPath(cell);
+            std::string out_path(path);
+            out_path.replace(0, shared_prefix.length(), path_prefix);
+            output_paths.push_back(out_path);
+        }
+    }
+    return output_paths;
+}
