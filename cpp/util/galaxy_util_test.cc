@@ -115,4 +115,21 @@ namespace {
         EXPECT_EQ(result, "/root/test");
     }
 
+    TEST(GalaxyUtilTest,BroadcastSharedPathCase1) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        std::string path = "/SHARED/test";
+        auto paths = galaxy::util::BroadcastSharedPath(path, {});
+        EXPECT_EQ(paths.at(0), "/LOCAL/test");
+    }
+
+    TEST(GalaxyUtilTest,BroadcastSharedPathCase2) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        std::string path = "/SHARED/test";
+        auto paths = galaxy::util::BroadcastSharedPath(path, galaxy::util::GetAllCells());
+        EXPECT_EQ(paths.at(0), "/galaxy/zz-d/test");
+        EXPECT_EQ(paths.at(1), "/galaxy/zzz-d/test");
+    }
+
 }  // namespace
