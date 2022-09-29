@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <set>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <google/protobuf/util/json_util.h>
@@ -953,9 +954,15 @@ std::string galaxy::client::impl::LGetAttr(const FileAnalyzerResult& result) {
 void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RCreateDirIfNotExist(result, mode);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::CreateDirIfNotExist(new_path, mode);
+        }
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LCreateDirIfNotExist(result, mode);
@@ -965,9 +972,13 @@ void galaxy::client::CreateDirIfNotExist(const std::string& path, const int mode
 std::string galaxy::client::DirOrDie(const std::string& path) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RDirOrDie(result);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::DirOrDie(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LDirOrDie(result);
@@ -977,9 +988,15 @@ std::string galaxy::client::DirOrDie(const std::string& path) {
 void galaxy::client::RmDir(const std::string& path, bool include_hidden) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RRmDir(result, include_hidden);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::RmDir(new_path, include_hidden);
+        }
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LRmDir(result, include_hidden);
@@ -989,9 +1006,15 @@ void galaxy::client::RmDir(const std::string& path, bool include_hidden) {
 void galaxy::client::RmDirRecursive(const std::string& path, bool include_hidden) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RRmDirRecursive(result, include_hidden);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::RmDirRecursive(new_path, include_hidden);
+        }
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LRmDirRecursive(result, include_hidden);
@@ -1001,9 +1024,13 @@ void galaxy::client::RmDirRecursive(const std::string& path, bool include_hidden
 std::map<std::string, std::string> galaxy::client::ListDirsInDir(const std::string& path) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListDirsInDir(result);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::ListDirsInDir(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LListDirsInDir(result);
@@ -1013,9 +1040,13 @@ std::map<std::string, std::string> galaxy::client::ListDirsInDir(const std::stri
 std::map<std::string, std::string> galaxy::client::ListFilesInDir(const std::string& path, bool include_hidden) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListFilesInDir(result);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::ListFilesInDir(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LListFilesInDir(result);
@@ -1025,9 +1056,13 @@ std::map<std::string, std::string> galaxy::client::ListFilesInDir(const std::str
 std::map<std::string, std::string> galaxy::client::ListDirsInDirRecursive(const std::string& path) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListDirsInDirRecursive(result);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::ListDirsInDirRecursive(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LListDirsInDirRecursive(result);
@@ -1037,9 +1072,13 @@ std::map<std::string, std::string> galaxy::client::ListDirsInDirRecursive(const 
 std::map<std::string, std::string> galaxy::client::ListFilesInDirRecursive(const std::string& path, bool include_hidden) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RListFilesInDirRecursive(result, include_hidden);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::ListFilesInDirRecursive(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LListFilesInDirRecursive(result, include_hidden);
@@ -1049,9 +1088,15 @@ std::map<std::string, std::string> galaxy::client::ListFilesInDirRecursive(const
 void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mode) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RCreateFileIfNotExist(result, mode);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::CreateFileIfNotExist(new_path, mode);
+        }
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LCreateFileIfNotExist(result, mode);
@@ -1061,6 +1106,17 @@ void galaxy::client::CreateFileIfNotExist(const std::string& path, const int mod
 void galaxy::client::CopyFile(const std::string& from_path, const std::string& to_path) {
     FileAnalyzerResult from_result = galaxy::util::InitClient(from_path);
     FileAnalyzerResult to_result = galaxy::util::InitClient(to_path);
+    if (from_result.is_shared()) {
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(from_path, {});
+        galaxy::client::CopyFile(paths.at(0), to_path);
+        return;
+    } else if (to_result.is_shared()) {
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(to_path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::CopyFile(from_path, new_path);
+        }
+        return;
+    }
     // If the path is a local path.
     if (!from_result.is_remote() && !to_result.is_remote()) {
         VLOG(1) << "Both path are using local mode";
@@ -1074,6 +1130,17 @@ void galaxy::client::CopyFile(const std::string& from_path, const std::string& t
 void galaxy::client::MoveFile(const std::string& from_path, const std::string& to_path) {
     FileAnalyzerResult from_result = galaxy::util::InitClient(from_path);
     FileAnalyzerResult to_result = galaxy::util::InitClient(to_path);
+    if (from_result.is_shared()) {
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(from_path, {});
+        galaxy::client::MoveFile(paths.at(0), to_path);
+        return;
+    } else if (to_result.is_shared()) {
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(to_path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::MoveFile(from_path, new_path);
+        }
+        return;
+    }
     // If the path is a local path.
     if (!from_result.is_remote() && !to_result.is_remote()) {
         VLOG(1) << "Both path are using local mode";
@@ -1087,9 +1154,13 @@ void galaxy::client::MoveFile(const std::string& from_path, const std::string& t
 std::string galaxy::client::FileOrDie(const std::string& path) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RFileOrDie(result);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::FileOrDie(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LFileOrDie(result);
@@ -1099,9 +1170,15 @@ std::string galaxy::client::FileOrDie(const std::string& path) {
 void galaxy::client::RmFile(const std::string& path, bool is_hidden) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RRmFile(result, is_hidden);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::RmFile(new_path, is_hidden);
+        }
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LRmFile(result, is_hidden);
@@ -1111,6 +1188,21 @@ void galaxy::client::RmFile(const std::string& path, bool is_hidden) {
 void galaxy::client::RenameFile(const std::string& old_path, const std::string& new_path) {
     FileAnalyzerResult old_result = galaxy::util::InitClient(old_path);
     FileAnalyzerResult new_result = galaxy::util::InitClient(new_path);
+    if (old_result.is_shared() && !new_result.is_shared()) {
+        LOG(FATAL) << "Both need to be shared path in this case.";
+    }
+    if (!old_result.is_shared() && new_result.is_shared()) {
+        LOG(FATAL) << "Both need to be shared path in this case.";
+    }
+    if (old_result.is_shared()) {
+        std::vector<std::string> old_paths = galaxy::util::BroadcastSharedPath(old_path, galaxy::client::ListCells());
+        std::vector<std::string> new_paths = galaxy::util::BroadcastSharedPath(new_path, galaxy::client::ListCells());
+        CHECK_EQ(old_paths.size(), new_paths.size()) << "Failed to broadcast paths.";
+        for (size_t i = 0; i < old_paths.size(); i++) {
+            galaxy::client::RenameFile(old_paths.at(i), new_paths.at(i));
+        }
+        return;
+    }
     CHECK_EQ(old_result.is_remote(), new_result.is_remote()) << "Both paths need to be either remote or local.";
     if (old_result.is_remote()) {
         VLOG(2) << "Using remote mode";
@@ -1126,9 +1218,13 @@ void galaxy::client::RenameFile(const std::string& old_path, const std::string& 
 std::string galaxy::client::Read(const std::string& path) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RRead(result);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::Read(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LRead(result);
@@ -1148,6 +1244,11 @@ std::map<std::string, std::string> galaxy::client::ReadMultiple(const std::vecto
             }
             remote_results.push_back(result);
         } else {
+            if (result.is_shared()) {
+                VLOG(3) << "Using shared mode";
+                std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+                result = galaxy::util::InitClient(paths.at(0));
+            }
             local_results.push_back(result);
         }
     }
@@ -1168,9 +1269,15 @@ std::map<std::string, std::string> galaxy::client::ReadMultiple(const std::vecto
 void galaxy::client::Write(const std::string& path, const std::string& data, const std::string& mode) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         galaxy::client::impl::RWrite(result, data, mode);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, galaxy::client::ListCells());
+        for (const auto& new_path : paths) {
+            galaxy::client::Write(new_path, data);
+        }
     } else {
         VLOG(1) << "Using local mode";
         galaxy::client::impl::LWrite(result, data, mode);
@@ -1179,9 +1286,16 @@ void galaxy::client::Write(const std::string& path, const std::string& data, con
 
 void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode) {
     std::vector<std::pair<FileAnalyzerResult, std::string>> local_data, remote_data;
+    std::set<std::string> visited_path;
     std::string cell = "";
     for (const auto& val : path_data_map) {
         FileAnalyzerResult result = galaxy::util::InitClient(val.first);
+        if (visited_path.find(result.path()) == visited_path.end()) {
+            visited_path.insert(result.path());
+        } else {
+            VLOG(3) << result.path() << " already parsed.";
+            continue;
+        }
         if (result.is_remote()) {
             if (cell.empty()) {
                 cell = result.configs().to_cell_config().cell();
@@ -1190,6 +1304,10 @@ void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& pat
             }
             remote_data.push_back(std::make_pair(result, val.second));
         } else {
+            if (result.is_shared()) {
+                std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(val.first, {});
+                result = galaxy::util::InitClient(paths.at(0));
+            }
             local_data.push_back(std::make_pair(result, val.second));
         }
     }
@@ -1204,9 +1322,13 @@ void galaxy::client::WriteMultiple(const std::map<std::string, std::string>& pat
 std::string galaxy::client::GetAttr(const std::string& path) {
     FileAnalyzerResult result = galaxy::util::InitClient(path);
     // If the path is a local path.
-    if(result.is_remote()) {
+    if (result.is_remote()) {
         VLOG(2) << "Using remote mode";
         return galaxy::client::impl::RGetAttr(result);
+    } else if (result.is_shared()) {
+        VLOG(3) << "Using shared mode";
+        std::vector<std::string> paths = galaxy::util::BroadcastSharedPath(path, {});
+        return galaxy::client::GetAttr(paths.at(0));
     } else {
         VLOG(1) << "Using local mode";
         return galaxy::client::impl::LGetAttr(result);
