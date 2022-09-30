@@ -8,7 +8,8 @@ This is a toy-version of distributed file system developed based on gRPC, and it
 
 ## Core concepts
 - `cell`: a cell is a machine that can be added as part of the filesystem, and is associated with a cell name. In galaxy, we use a two letter name for a cell, i.e. `aa`. The path for a cell in galaxy filesystem starts with `/galaxy/${CELL}-d/...`, where the `${CELL}` is the name of the cell. To make a machine as a cell in the filesystem, one just needs to launch the server code on the machine. Details are discussed in the next section.
-- `special indicator`: a path started with `/LOCAL/...` instead of `/galaxy/${CELL}-d/...` will be considered a path specifically for the cell where the galaxy server is hosted. For instance if the server is hosted at cell `aa`, then special indicator of `/LOCAL/...` is equal to `/galaxy/aa-d/...`, but there exists one difference: path with `/LOCAL/...` does not go through gRPC calls under requests, and instead vanilla local IO are performed. This special indicator is useful when user knows that the IO on the path is local.
+- `/LOCAL`: a path started with `/LOCAL/...` instead of `/galaxy/${CELL}-d/...` will be considered a path specifically for the cell where the galaxy server is hosted. For instance if the server is hosted at cell `aa`, then special indicator of `/LOCAL/...` is equal to `/galaxy/aa-d/...`, but there exists one difference: path with `/LOCAL/...` does not go through gRPC calls under requests, and instead vanilla local IO are performed. This special indicator is useful when user knows that the IO on the path is local.
+- `/SHARED`:a path started with `/SHARED/...` will be considered a path for all the cells in the galaxy system. For instance, a folder named `/SHARED/test` will appear in all cells with format `/galaxy/${CELL}-d/` for all cells. This allows file updates to all cells with one function call.
 - `global config`: a configuration file containing configurations for each cell in the galaxy filesystem. An example of it is in [server_config_example.json](https://github.com/kfrancischen/galaxy/blob/master/example/cpp/server_config_example.json).
 
 ## Server Entry Points
@@ -153,6 +154,61 @@ get_attr(path)
 * Args:
     1. path: the path to the file or directory
 
+```python
+copy_file(from_path, to_path)
+```
+* Decription: copy a file from from_path to to_path. Note these two paths could be in the same cell or different cells.
+* Args:
+    1. from_path: the path to the file
+    2. to_path: the path to the copied file
+
+```python
+move_file(from_path, to_path)
+```
+* Decription: move a file from from_path to to_path. Note these two paths could be in the same cell or different cells.
+* Args:
+    1. from_path: the path to the file
+    2. to_path: the path to the moved file
+
+```python
+list_cells()
+```
+* Description: list all the cells in the galaxy system.
+
+```python
+check_health(cell)
+```
+* Decription: check the health of a cell server.
+* Args:
+    1. cell: the cell name.
+
+```python
+remote_execute(cell, home_dir, main, program_args, env_kargs)
+```
+* Decription: remotely execute a cmd to a remote cell.
+* Args:
+    1. cell: the cell where the cmd will be executed.
+    2. home_dir: the home director to execute the cmd.
+    3. main: the main program.
+    4. program_args: the arguments for the main program.
+    5. env_kargs: environmental variables.
+
+```python
+is_local_path(path)
+```
+* Decription: whether a path is remote or local.
+* Args:
+    1. path: the path to be checked.
+
+```python
+broadcast_shared_path(path, cells)
+```
+* Decription: broadcast a shared path to cell paths.
+* Args:
+    1. path: the path to be broadcasted. Has to start with `/SHARED/`.
+    2. cells: the cells to be broadcasted.
+
+
 In addition, in `gclient_ext` module, a few extension functions are provided
 
 ```python
@@ -218,23 +274,7 @@ list_all_in_dir_recursive(path)
     1. path: the path to the directory
 
 ```python
-cp_file(from_path, to_path)
-```
-* Decription: copy a file from from_path to to_path. Note these two paths could be in the same cell or different cells.
-* Args:
-    1. from_path: the path to the file
-    2. to_path: the path to the copied file
-
-```python
-mv_file(from_path, to_path)
-```
-* Decription: move a file from from_path to to_path. Note these two paths could be in the same cell or different cells.
-* Args:
-    1. from_path: the path to the file
-    2. to_path: the path to the moved file
-
-```python
-cp_folder(from_path, to_path)
+copy_folder(from_path, to_path)
 ```
 * Decription: copy a folder from from_path to to_path. Note these two paths could be in the same cell or different cells.
 * Args:
@@ -242,7 +282,7 @@ cp_folder(from_path, to_path)
     2. to_path: the path to the copied folder
 
 ```python
-mv_folder(from_path, to_path)
+move_folder(from_path, to_path)
 ```
 * Decription: move a folder from from_path to to_path. Note these two paths could be in the same cell or different cells.
 * Args:
@@ -295,29 +335,34 @@ fileutil ls ${DIR_NAME}
 * Description: list all the contents in the remote directory.
 
 ```shellscript
-fileutil get ${REMOTE_FILE} ${LOCAL_FILE}
+fileutil cp_file ${FILE_1} ${FILE_2} [--f]
 ```
-* Description: download remote file to local file.
+* Description: copy a file from `FILE_1` to `FILE_2`. Overwrite if `--f` is set.
 
 ```shellscript
-fileutil upload ${LOCAL_FILE} ${REMOTE_FILE}
+fileutil move_file ${FILE_1} ${FILE_2} [--f]
 ```
-* Description: upload local file to remote file.
+* Description: move a file from `FILE_1` to `FILE_2`. Overwrite if `--f` is set.
 
 ```shellscript
-fileutil cp ${REMOTE_FILE1/REMOTE_DIR1} ${REMOTE_FILE2/REMOTE_DIR2} [--f]
+fileutil cp_dir ${DIR_1} ${DIR_2} [--f]
 ```
-* Description: copy one remote file/directory to another remote file/directory. They can be at different cells. Overwrite if `--f` is set.
+* Description: copy a directory from `DIR_1` to `DIR_2`. Overwrite if `--f` is set.
 
 ```shellscript
-fileutil mv ${REMOTE_FILE1/REMOTE_DIR1} ${REMOTE_FILE2/REMOTE_DIR2} [--f]
+fileutil move_dir ${DIR_1} ${DIR_2} [--f]
 ```
-* Description: move one remote file/directory to another remote file/directory. They can be at different cells. Overwrite if `--f` is set.
+* Description: move a directory from `DIR_1` to `DIR_2`. Overwrite if `--f` is set.
 
 ```shellscript
 fileutil rm ${REMOTE_DIR/REMOTE_FILE} [--r]
 ```
 * Description: delete remote file/directory (recursively if `--r` is set).
+
+```shellscript
+fileutil lscells
+```
+* Description: list all cells in the galaxy system.
 
 ## Flags
 galaxy allows users to set following flags to customize server (mainly) and the client. These flags are defined in [galaxy_flag,h](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.h), and their definitions are at [galaxy_flag.cc](https://github.com/kfrancischen/galaxy/blob/master/cpp/core/galaxy_flag.cc). For servers the flags of `fs_root`, `fs_address`, `fs_password` must be specified, and the values of these flags are usually put in the global configuration file. Besides using the configuration file or using the cmd line fashion [abseil](https://abseil.io/docs/cpp/quickstart) supports, one can also specify the flags by using `GALAXY_${FLAG_NAME}` environment variable. For instance, setting `GALAXY_fs_root=/home` is equivalent to parsing `fs_root=/home` as cmd line argument.

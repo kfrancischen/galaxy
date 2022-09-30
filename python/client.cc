@@ -50,4 +50,6 @@ PYBIND11_MODULE(_gclient, m)
 
     // Functions from util namespace
     m.def("is_local_path", &galaxy::util::IsLocalPath, "Wrapper for IsLocalPath", py::arg("path"));
+    m.def("broadcast_shared_path", &galaxy::util::BroadcastSharedPath, "Wrapper for BroadcastSharedPath", py::arg("path"), py::arg("cells"));
+
 }
