@@ -68,6 +68,9 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         self._disable_disk_logging = disable_disk_logging
         self.setFormatter(GalaxyLoggingFormatter())
 
+    def disable_disk_logging(self, disabled):
+        self._disable_disk_logging = disabled
+
     def _get_file_name_from_record(self, record=None):
         levelno = record.levelno if record else None
         cur_date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
@@ -128,3 +131,10 @@ class glogging(object):
             return logger.handlers[0].get_file_name()
         except Exception as _:
             return ""
+
+    @classmethod
+    def disable_disk_logging(self, logger):
+        try:
+            logger.handlers[0].disable_disk_logging(disabled=True)
+        except Exception as _:
+            pass
