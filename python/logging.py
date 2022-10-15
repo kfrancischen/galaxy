@@ -88,8 +88,8 @@ class GalaxyLoggingHandler(logging.StreamHandler):
         return self._filename
 
     def update_log_all_date(self):
-        _, file_name = self._get_file_name_from_record(record=None)
-        gclient.create_file_if_not_exist(file_name)
+        _, self._file_name = self._get_file_name_from_record(record=None)
+        gclient.create_file_if_not_exist(self._file_name)
 
     def emit(self, record):
         if not self._disable_disk_logging:
