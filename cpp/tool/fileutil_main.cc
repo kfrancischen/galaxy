@@ -62,6 +62,10 @@ int main(int argc, char* argv[]) {
         galaxy::RmCmd(argv[2], recursive);
     } else if (strcmp(argv[1], "lscells") == 0) {
         galaxy::ListCellsCmd();
+    } else if (strcmp(argv[1], "enable_cell") == 0) {
+        galaxy::ModifyCellCmd(argv[2], true);
+    } else if (strcmp(argv[1], "disable_cell") == 0) {
+        galaxy::ModifyCellCmd(argv[2], false);
     } else {
         LOG(FATAL) << "Wrong cmd.";
     }

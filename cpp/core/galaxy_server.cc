@@ -17,6 +17,10 @@
 #include "cpp/core/galaxy_server.h"
 #include "cpp/internal/galaxy_const.h"
 #include "cpp/internal/galaxy_stats_internal.h"
+#include "include/rapidjson/istreamwrapper.h"
+#include "include/rapidjson/document.h"
+#include "include/rapidjson/prettywriter.h"
+#include "include/rapidjson/stringbuffer.h"
 
 using grpc::ServerContext;
 using grpc::ServerReader;
@@ -69,6 +73,8 @@ using galaxy_schema::WriteMultipleRequest;
 using galaxy_schema::WriteMultipleResponse;
 using galaxy_schema::HealthCheckRequest;
 using galaxy_schema::HealthCheckResponse;
+using galaxy_schema::ModifyCellAvailabilityRequest;
+using galaxy_schema::ModifyCellAvailabilityResponse;
 using galaxy_schema::RemoteExecutionRequest;
 using galaxy_schema::RemoteExecutionResponse;
 
@@ -635,6 +641,49 @@ namespace galaxy
         }
     }
 
+    Status GalaxyServerImpl::ChangeAvailabilityInternal(ServerContext *context, const ModifyCellAvailabilityRequest *request,
+                                                        ModifyCellAvailabilityResponse *reply)
+    {
+        if (!GalaxyServerImpl::VerifyPassword(request->cred()).ok())
+        {
+            LOG(ERROR) << "Wrong password from client during function call ChangeAvailability.";
+            return Status(StatusCode::PERMISSION_DENIED, "Wrong password from client during function call ChangeAvailability.");
+        }
+        std::string config_path = absl::GetFlag(FLAGS_fs_global_config);
+        std::ifstream infile;
+        rapidjson::IStreamWrapper isw(infile);
+        rapidjson::Document doc;
+        if (doc.ParseStream(isw).HasParseError()) {
+            infile.close();
+            return Status(StatusCode::INTERNAL, "Configuration json cannot be parsed.");
+        }
+        infile.close();
+        if (!doc.HasMember(request->target_cell().c_str())) {
+            return Status(StatusCode::INVALID_ARGUMENT, "Configuration cannot be found for cell [" + request->target_cell() + "].");
+        }
+        try {
+            rapidjson::Value& cell_config = doc[request->target_cell().c_str()];
+            cell_config.AddMember("disabled", rapidjson::Value().SetBool(!request->enable()), doc.GetAllocator());
+            std::ofstream output_stream(config_path);
+            rapidjson::StringBuffer sb;
+            rapidjson::PrettyWriter<StringBuffer> writer(sb);
+            doc.Accept(writer);
+            output_stream << sb.GetString();
+            output_stream.close();
+
+        }
+        catch (std::string errorMsg)
+        {
+            LOG(ERROR) << "ChangeAvailability failed during function call RemoteExecution with error " << errorMsg;
+            return Status(StatusCode::INVALID_ARGUMENT, errorMsg);
+        }
+
+        FileSystemStatus status;
+        status.set_return_code(1);
+        reply->mutable_status()->CopyFrom(status);
+        return Status::OK;
+    }
+
     std::string ExecuteCommand(const std::string& cmd)
     {
         std::array<char, 128> buffer;
@@ -942,6 +991,19 @@ namespace galaxy
                             {stats::internal::RamUsageMeasure(), ram_usage}},
                             {{stats::internal::MethodKey(), "CheckHealthUsage"}});
         }
+        return status;
+    }
+
+    Status GalaxyServerImpl::ChangeAvailability(ServerContext *context, const ModifyCellAvailabilityRequest *request,
+                                                ModifyCellAvailabilityResponse *reply)
+    {
+        absl::Time start = absl::Now();
+        Status status = GalaxyServerImpl::ChangeAvailabilityInternal(context, request, reply);
+        absl::Time end = absl::Now();
+        double latency_ms = absl::ToDoubleMilliseconds(end - start);
+        opencensus::stats::Record({{stats::internal::LatencyMsMeasure(), latency_ms},
+                                   {stats::internal::QueryCountMeasure(), 1}},
+                                  {{stats::internal::MethodKey(), "ChangeAvailability"}});
         return status;
     }
 

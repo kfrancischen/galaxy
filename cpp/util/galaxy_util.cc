@@ -123,13 +123,16 @@ absl::StatusOr<CellConfig> ParseCellConfigInternal(const rapidjson::Value& cell_
     return config;
 }
 
-std::vector<std::string> galaxy::util::GetAllCells() {
+std::vector<std::string> galaxy::util::GetAllCells(const bool bypass) {
     rapidjson::Document cells_config = ParseCellsConfigDoc();
     std::vector<std::string> cells;
     for (auto it = cells_config.MemberBegin(); it != cells_config.MemberEnd(); it++) {
         const std::string& cell_name = it->name.GetString();
         auto config = ParseCellConfigInternal(cells_config[cell_name.c_str()]);
-        if (!config.ok() || config->disabled()) {
+        if (!config.ok()) {
+            continue;
+        }
+        if (!bypass && config->disabled()) {
             continue;
         }
         cells.push_back(cell_name);
@@ -249,11 +252,13 @@ bool galaxy::util::IsLocalPath(const std::string& path) {
     }
 }
 
-FileAnalyzerResult galaxy::util::InitClient(const std::string& path) {
+FileAnalyzerResult galaxy::util::InitClient(const std::string& path, const bool bypass) {
     absl::StatusOr<FileAnalyzerResult> result = galaxy::util::RunFileAnalyzer(path);
     CHECK(result.ok()) << result.status();
-    CHECK(!result->configs().from_cell_config().disabled()) << "Cell [" + result->from_cell() + "] is disabled";
-    CHECK(!result->configs().to_cell_config().disabled()) << "Cell [" + result->to_cell() + "] is disabled";
+    if (!bypass) {
+        CHECK(!result->configs().from_cell_config().disabled()) << "Cell [" + result->from_cell() + "] is disabled";
+        CHECK(!result->configs().to_cell_config().disabled()) << "Cell [" + result->to_cell() + "] is disabled";
+    }
     return *result;
 }
 

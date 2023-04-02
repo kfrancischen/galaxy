@@ -9,13 +9,13 @@
 namespace galaxy {
     namespace util {
         // New Galaxy Util APIs
-        std::vector<std::string> GetAllCells();
+        std::vector<std::string> GetAllCells(const bool bypass=false);
         std::string GetGalaxyFsPrefixPath(const std::string& cell);
         std::vector<std::string> BroadcastSharedPath(const std::string& path, const std::vector<std::string>& cells);
         absl::StatusOr<galaxy_schema::FileAnalyzerResult> RunFileAnalyzer(const std::string& path);
         absl::StatusOr<galaxy_schema::CellConfig> ParseCellConfig(const std::string& cell);
         bool IsLocalPath(const std::string& path);
-        galaxy_schema::FileAnalyzerResult InitClient(const std::string& path);
+        galaxy_schema::FileAnalyzerResult InitClient(const std::string& path, const bool bypass=false);
         std::string ConvertToCellPath(const std::string& path, const galaxy_schema::CellConfig& config);
     }  // namespace util
 

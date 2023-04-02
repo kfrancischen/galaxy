@@ -32,6 +32,9 @@ service FileSystem {
     // Health check
     rpc CheckHealth( HealthCheckRequest ) returns ( HealthCheckResponse ) {}
 
+    // Change availability
+    rpc ChangeAvailability( ModifyCellAvailabilityRequest ) returns ( ModifyCellAvailabilityResponse ) {}
+
     // Remote execution
     rpc RemoteExecution( RemoteExecutionRequest ) returns ( RemoteExecutionResponse ) {}
 
@@ -335,6 +338,17 @@ message HealthCheckResponse {
     uint64 timestamp = 1;
     bool healthy = 2;
     FileSystemUsage usage = 3;
+}
+
+message ModifyCellAvailabilityRequest {
+    Credential cred = 1;
+    string from_cell = 2;
+    string target_cell = 3;
+    bool enable = 4;
+}
+
+message ModifyCellAvailabilityResponse {
+    FileSystemStatus status = 1;
 }
 
 message RemoteExecutionRequest {

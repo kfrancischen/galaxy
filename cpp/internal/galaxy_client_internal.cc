@@ -52,6 +52,8 @@ using galaxy_schema::WriteMultipleRequest;
 using galaxy_schema::WriteMultipleResponse;
 using galaxy_schema::HealthCheckRequest;
 using galaxy_schema::HealthCheckResponse;
+using galaxy_schema::ModifyCellAvailabilityRequest;
+using galaxy_schema::ModifyCellAvailabilityResponse;
 
 namespace galaxy
 {
@@ -334,6 +336,20 @@ namespace galaxy
         ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
         Status status = stub_->CheckHealth(&context, request, &reply);
+        if (status.ok()) {
+            return reply;
+        } else {
+            LOG(ERROR) << status.error_code() << ": " << status.error_message();
+            throw status.error_message();
+        }
+    }
+
+    ModifyCellAvailabilityResponse GalaxyClientInternal::ChangeAvailability(const ModifyCellAvailabilityRequest &request)
+    {
+        ModifyCellAvailabilityResponse reply;
+        ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(absl::GetFlag(FLAGS_fs_rpc_ddl)));
+        Status status = stub_->ChangeAvailability(&context, request, &reply);
         if (status.ok()) {
             return reply;
         } else {

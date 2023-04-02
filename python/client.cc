@@ -42,14 +42,14 @@ PYBIND11_MODULE(_gclient, m)
     m.def("write", &galaxy::client::Write, "Wrapper for Write", py::arg("path"), py::arg("data"), py::arg("mode")="w");
     m.def("write_multiple", &galaxy::client::WriteMultiple, "Wrapper for WriteMultiple", py::arg("path_data_map"), py::arg("mode")="w");
     m.def("get_attr", &galaxy::client::GetAttr, "Wrapper for GetAttr", py::arg("path"));
-    m.def("list_cells", &galaxy::client::ListCells, "Wrapper for ListCells");
+    m.def("list_cells", &galaxy::client::ListCells, "Wrapper for ListCells", py::arg("bypass")=false);
     m.def("check_health", &galaxy::client::CheckHealth, "Wrapper for CheckHealth", py::arg("cell"));
     m.def("copy_file", &galaxy::client::CopyFile, "Wrapper for CopyFile", py::arg("from_path"), py::arg("to_path"));
     m.def("move_file", &galaxy::client::MoveFile, "Wrapper for MoveFile", py::arg("from_path"), py::arg("to_path"));
     m.def("remote_execute", &galaxy::client::RemoteExecute, "Wrapper for RemoteExecute", py::arg("cell"), py::arg("home_dir"), py::arg("main"), py::arg("program_args"), py::arg("env_kargs"));
+    m.def("change_availability", &galaxy::client::ChangeAvailability, "Wrapper for ChangeAvailability", py::arg("cell"), py::arg("status"));
 
     // Functions from util namespace
     m.def("is_local_path", &galaxy::util::IsLocalPath, "Wrapper for IsLocalPath", py::arg("path"));
     m.def("broadcast_shared_path", &galaxy::util::BroadcastSharedPath, "Wrapper for BroadcastSharedPath", py::arg("path"), py::arg("cells"));
-
 }

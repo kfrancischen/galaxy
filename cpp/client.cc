@@ -70,6 +70,8 @@ using galaxy_schema::WriteMultipleRequest;
 using galaxy_schema::WriteMultipleResponse;
 using galaxy_schema::HealthCheckRequest;
 using galaxy_schema::HealthCheckResponse;
+using galaxy_schema::ModifyCellAvailabilityRequest;
+using galaxy_schema::ModifyCellAvailabilityResponse;
 
 using galaxy::GalaxyClientInternal;
 using galaxy::GalaxyFs;
@@ -642,6 +644,31 @@ std::string galaxy::client::impl::RCheckHealth(const std::string& cell) {
     {
         LOG(ERROR) << errorMsg;
         return "";
+    }
+}
+
+void galaxy::client::impl::RChangeAvailability(const std::string& cell, const bool status) {
+    std::vector<std::string> all_cells =  galaxy::client::ListCells(true);
+    for (const auto& to_cell : all_cells) {
+        std::string path = galaxy::util::GetGalaxyFsPrefixPath(to_cell);
+        FileAnalyzerResult result = galaxy::util::InitClient(path, true);
+        GalaxyClientInternal client = GetChannelClient(result.configs());
+        try {
+            ModifyCellAvailabilityRequest request;
+            request.mutable_cred()->set_password(result.configs().to_cell_config().fs_password());
+            request.set_from_cell(result.configs().from_cell_config().cell());
+            request.set_target_cell(cell);
+            request.set_enable(status);
+            ModifyCellAvailabilityResponse response = client.ChangeAvailability(request);
+            FileSystemStatus status = response.status();
+            if (status.return_code() != 1) {
+                throw "Fail to call ChangeAvailability.";
+            }
+        }
+        catch (std::string errorMsg)
+        {
+            LOG(ERROR) << errorMsg;
+        }
     }
 }
 
@@ -1336,8 +1363,8 @@ std::string galaxy::client::GetAttr(const std::string& path) {
 }
 
 
-std::vector<std::string> galaxy::client::ListCells() {
-    return galaxy::util::GetAllCells();
+std::vector<std::string> galaxy::client::ListCells(const bool bypass) {
+    return galaxy::util::GetAllCells(bypass);
 }
 
 std::string galaxy::client::CheckHealth(const std::string& cell) {
@@ -1347,6 +1374,15 @@ std::string galaxy::client::CheckHealth(const std::string& cell) {
     } else {
         VLOG(1) << "Local mode doest not support health check.";
         return "";
+    }
+}
+
+void galaxy::client::ChangeAvailability(const std::string& cell, const bool status) {
+    if (!cell.empty()) {
+        VLOG(2) << "Using remote mode";
+        galaxy::client::impl::RChangeAvailability(cell, status);
+    } else {
+        VLOG(1) << "Local mode doest not support change availability.";
     }
 }
 

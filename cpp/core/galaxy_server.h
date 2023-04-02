@@ -67,6 +67,9 @@ namespace galaxy
         grpc::Status CheckHealth(grpc::ServerContext *context, const galaxy_schema::HealthCheckRequest *request,
                                  galaxy_schema::HealthCheckResponse *reply) override;
 
+        grpc::Status ChangeAvailability(grpc::ServerContext *context, const galaxy_schema::ModifyCellAvailabilityRequest *request,
+                                        galaxy_schema::ModifyCellAvailabilityResponse *reply) override;
+
         grpc::Status RemoteExecution(grpc::ServerContext *context, const galaxy_schema::RemoteExecutionRequest *request,
                                      galaxy_schema::RemoteExecutionResponse *reply) override;
 
@@ -132,6 +135,9 @@ namespace galaxy
 
         grpc::Status CheckHealthInternal(grpc::ServerContext *context, const galaxy_schema::HealthCheckRequest *request,
                                          galaxy_schema::HealthCheckResponse *reply);
+
+        grpc::Status ChangeAvailabilityInternal(grpc::ServerContext *context, const galaxy_schema::ModifyCellAvailabilityRequest *request,
+                                                galaxy_schema::ModifyCellAvailabilityResponse *reply);
 
         grpc::Status RemoteExecutionInternal(grpc::ServerContext *context, const galaxy_schema::RemoteExecutionRequest *request,
                                              galaxy_schema::RemoteExecutionResponse *reply);

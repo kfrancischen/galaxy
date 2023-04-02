@@ -30,6 +30,7 @@ namespace galaxy
         galaxy_schema::WriteMultipleResponse WriteMultiple(const galaxy_schema::WriteMultipleRequest &request);
         galaxy_schema::WriteResponse Write(const galaxy_schema::WriteRequest &request);
         galaxy_schema::HealthCheckResponse CheckHealth(const galaxy_schema::HealthCheckRequest& request);
+        galaxy_schema::ModifyCellAvailabilityResponse ChangeAvailability(const galaxy_schema::ModifyCellAvailabilityRequest & request);
         galaxy_schema::RemoteExecutionResponse RemoteExecution(const galaxy_schema::RemoteExecutionRequest &request);
 
     private:

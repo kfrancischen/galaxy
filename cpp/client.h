@@ -28,6 +28,7 @@ namespace galaxy {
             void RWriteMultiple(const std::vector<std::pair<galaxy_schema::FileAnalyzerResult, std::string>>& path_data_map, const std::string& mode="w");
             std::string RGetAttr(const galaxy_schema::FileAnalyzerResult& result);
             std::string RCheckHealth(const std::string& cell);
+            void RChangeAvailability(const std::string& cell, const bool status);
             void RCopyFile(const galaxy_schema::FileAnalyzerResult& from_result, const galaxy_schema::FileAnalyzerResult& to_result);
             void RMoveFile(const galaxy_schema::FileAnalyzerResult& from_result, const galaxy_schema::FileAnalyzerResult& to_result);
 
@@ -69,8 +70,9 @@ namespace galaxy {
         void Write(const std::string& path, const std::string& data, const std::string& mode="w");
         void WriteMultiple(const std::map<std::string, std::string>& path_data_map, const std::string& mode="w");
         std::string GetAttr(const std::string& path);
-        std::vector<std::string> ListCells();
+        std::vector<std::string> ListCells(const bool bypass=false);
         std::string CheckHealth(const std::string& cell);
+        void ChangeAvailability(const std::string& cell, const bool status);
         void CopyFile(const std::string& from_path, const std::string& to_path);
         void MoveFile(const std::string& from_path, const std::string& to_path);
         void RemoteExecute(const std::string& cell, const std::string& home_dir, const std::string main, const std::vector<std::string>& program_args, const std::map<std::string, std::string>& env_kargs={});

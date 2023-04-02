@@ -98,4 +98,13 @@ namespace galaxy
             LOG(FATAL) << errorMsg;
         }
     }
+
+    void ModifyCellCmd(const std::string& cell_name, const bool enable) {
+        std::vector<std::string> cells = client::ListCells(true);
+        if (std::find(cells.begin(), cells.end(), cell_name) != cells.end())
+        {
+            client::ChangeAvailability(cell_name, enable);
+        }
+        LOG(FATAL) << cell_name << " does not exist in galaxy file system.";
+    }
 }

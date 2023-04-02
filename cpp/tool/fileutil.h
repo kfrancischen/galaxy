@@ -15,6 +15,7 @@ namespace galaxy
     void CopyDirCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
     void MoveDirCmd(const std::string& from_path, const std::string& to_path, bool overwrite);
     void ListCellsCmd();
+    void ModifyCellCmd(const std::string& cell_name, const bool enable);
 } // namespace galaxy
 
 #endif // CPP_TOOL_FILEUTIL_H_
