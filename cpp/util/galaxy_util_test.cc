@@ -10,8 +10,17 @@ namespace {
         absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config.json");
         setenv("GALAXY_fs_cell", "zz", 1);
         auto cells = galaxy::util::GetAllCells();
+        EXPECT_EQ(cells.size(), 2);
         EXPECT_EQ(cells[0], "zz");
         EXPECT_EQ(cells[1], "zzz");
+    }
+
+    TEST(GalaxyUtilTest, GetAllCellsV2) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config_v2.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        auto cells = galaxy::util::GetAllCells();
+        EXPECT_EQ(cells.size(), 1);
+        EXPECT_EQ(cells[0], "zz");
     }
 
     TEST(GalaxyUtilTest, GetGalaxyFsPrefixPath) {
@@ -42,6 +51,15 @@ namespace {
         auto result = galaxy::util::ParseCellConfig("zz");
         EXPECT_TRUE(result.ok());
         EXPECT_EQ(result->fs_root(), "/home/galaxy");
+        EXPECT_EQ(result->disabled(), false);
+    }
+
+    TEST(GalaxyUtilTest, ParseCellConfigSuccessV2) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config_v2.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        auto result = galaxy::util::ParseCellConfig("zzz");
+        EXPECT_TRUE(result.ok());
+        EXPECT_EQ(result->disabled(), true);
     }
 
     TEST(GalaxyUtilTest, ParseCellConfigFailure) {
@@ -128,8 +146,18 @@ namespace {
         setenv("GALAXY_fs_cell", "zz", 1);
         std::string path = "/SHARED/test";
         auto paths = galaxy::util::BroadcastSharedPath(path, galaxy::util::GetAllCells());
+        EXPECT_EQ(paths.size(), 2);
         EXPECT_EQ(paths.at(0), "/galaxy/zz-d/test");
         EXPECT_EQ(paths.at(1), "/galaxy/zzz-d/test");
+    }
+
+    TEST(GalaxyUtilTest,BroadcastSharedPathCase2V2) {
+        absl::SetFlag(&FLAGS_fs_global_config, "cpp/util/test/config_v2.json");
+        setenv("GALAXY_fs_cell", "zz", 1);
+        std::string path = "/SHARED/test";
+        auto paths = galaxy::util::BroadcastSharedPath(path, galaxy::util::GetAllCells());
+        EXPECT_EQ(paths.size(), 1);
+        EXPECT_EQ(paths.at(0), "/galaxy/zz-d/test");
     }
 
 }  // namespace

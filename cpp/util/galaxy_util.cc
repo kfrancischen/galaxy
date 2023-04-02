@@ -37,14 +37,6 @@ rapidjson::Document ParseCellsConfigDoc() {
     throw "Configuration json cannot be found";
 }
 
-std::vector<std::string> galaxy::util::GetAllCells() {
-    rapidjson::Document cells_config = ParseCellsConfigDoc();
-    std::vector<std::string> cells;
-    for (auto it = cells_config.MemberBegin(); it != cells_config.MemberEnd(); it++) {
-        cells.push_back(it->name.GetString());
-    }
-    return cells;
-}
 
 std::string galaxy::util::GetGalaxyFsPrefixPath(const std::string& cell) {
     std::string separator(1, galaxy::constant::kSeparator);
@@ -122,7 +114,27 @@ absl::StatusOr<CellConfig> ParseCellConfigInternal(const rapidjson::Value& cell_
     } else {
         config.set_fs_max_msg_size(40);
     }
+
+    if (cell_config.HasMember("disabled")) {
+        config.set_disabled(cell_config["disabled"].GetBool());
+    } else {
+        config.set_disabled(false);
+    }
     return config;
+}
+
+std::vector<std::string> galaxy::util::GetAllCells() {
+    rapidjson::Document cells_config = ParseCellsConfigDoc();
+    std::vector<std::string> cells;
+    for (auto it = cells_config.MemberBegin(); it != cells_config.MemberEnd(); it++) {
+        const std::string& cell_name = it->name.GetString();
+        auto config = ParseCellConfigInternal(cells_config[cell_name.c_str()]);
+        if (!config.ok() || config->disabled()) {
+            continue;
+        }
+        cells.push_back(cell_name);
+    }
+    return cells;
 }
 
 absl::StatusOr<CellConfig> galaxy::util::ParseCellConfig(const std::string& cell) {
@@ -240,6 +252,8 @@ bool galaxy::util::IsLocalPath(const std::string& path) {
 FileAnalyzerResult galaxy::util::InitClient(const std::string& path) {
     absl::StatusOr<FileAnalyzerResult> result = galaxy::util::RunFileAnalyzer(path);
     CHECK(result.ok()) << result.status();
+    CHECK(!result->configs().from_cell_config().disabled()) << "Cell [" + result->from_cell() + "] is disabled";
+    CHECK(!result->configs().to_cell_config().disabled()) << "Cell [" + result->to_cell() + "] is disabled";
     return *result;
 }
 

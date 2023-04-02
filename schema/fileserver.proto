@@ -57,6 +57,7 @@ message CellConfig {
     bool fs_alsologtostderr = 10;
     int32 fs_num_thread = 11;
     int32 fs_max_msg_size = 12;
+    bool disabled = 13;
 }
 
 message SingleRequestCellConfigs {
