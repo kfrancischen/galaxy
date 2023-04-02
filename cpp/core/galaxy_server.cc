@@ -653,6 +653,7 @@ namespace galaxy
         }
         std::string config_path = absl::GetFlag(FLAGS_fs_global_config);
         std::ifstream infile;
+        infile.open(config_path);
         rapidjson::IStreamWrapper isw(infile);
         rapidjson::Document doc;
         if (doc.ParseStream(isw).HasParseError()) {
@@ -665,7 +666,11 @@ namespace galaxy
         }
         try {
             rapidjson::Value& cell_config = doc[request->target_cell().c_str()];
-            cell_config.AddMember("disabled", rapidjson::Value().SetBool(!request->enable()), doc.GetAllocator());
+            if (cell_config.HasMember("disabled")) {
+                cell_config["disabled"] = !request->enable();
+            } else {
+                cell_config.AddMember("disabled", rapidjson::Value().SetBool(!request->enable()), doc.GetAllocator());
+            }
             std::ofstream output_stream(config_path);
             rapidjson::StringBuffer sb;
             rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
