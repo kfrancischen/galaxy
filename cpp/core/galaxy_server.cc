@@ -11,10 +11,12 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/time/clock.h"
+#include "absl/flags/flag.h"
 #include "glog/logging.h"
 #include "cpp/client.h"
 #include "cpp/core/galaxy_fs.h"
 #include "cpp/core/galaxy_server.h"
+#include "cpp/core/galaxy_flag.h"
 #include "cpp/internal/galaxy_const.h"
 #include "cpp/internal/galaxy_stats_internal.h"
 #include "include/rapidjson/istreamwrapper.h"
@@ -666,7 +668,7 @@ namespace galaxy
             cell_config.AddMember("disabled", rapidjson::Value().SetBool(!request->enable()), doc.GetAllocator());
             std::ofstream output_stream(config_path);
             rapidjson::StringBuffer sb;
-            rapidjson::PrettyWriter<StringBuffer> writer(sb);
+            rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
             doc.Accept(writer);
             output_stream << sb.GetString();
             output_stream.close();
