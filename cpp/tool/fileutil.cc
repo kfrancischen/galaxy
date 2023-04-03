@@ -104,6 +104,7 @@ namespace galaxy
         if (std::find(cells.begin(), cells.end(), cell_name) != cells.end())
         {
             client::ChangeAvailability(cell_name, enable);
+            return;
         }
         LOG(FATAL) << cell_name << " does not exist in galaxy file system.";
     }
